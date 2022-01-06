@@ -81,7 +81,19 @@ mod services {
     use crate::schema;
 
     schema::rpc_object!(Vessel);
-    schema::rpc_enum!(GameMode, [Sandbox, Science, Career]);
+    schema::rpc_enum!(
+        GameMode,
+        [
+            Sandbox,
+            Career,
+            Science,
+            ScienceSandbox,
+            Mission,
+            MissionBuilder,
+            Scenario,
+            ScenarioNonResumable
+        ]
+    );
 
     pub struct KRPC {
         client: Arc<Client>,
