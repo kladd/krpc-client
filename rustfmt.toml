@@ -1,4 +1,4 @@
 max_width = 80
-hard_tabs = true
+# hard_tabs = true
 # wrap_comments = true
 # normalize_comments = true
