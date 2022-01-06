@@ -1,0 +1,24 @@
+#+TITLE: kRPC Client
+
+Rust client for kRPC.
+
+* Development
+** Complete prototype
+
+Create a complete prototype of a service implementation to guide code generation.
+
+*** TODO Prototype a function with arguments
+*** TODO Prototype a function with complex return type
+
+e.g. Tuple, etc.
+
+** Code generation
+
+Generate service modules as prototyped based on the json files distributed with the kRPC server mod. Starting without a separate templating engine---see about generating by hand.
+
+*** TODO Create service mod template
+*** TODO Write classes and enums to template
+*** TODO Next steps
+
+** Later
+*** TODO Streams
