@@ -1,61 +1,21 @@
 mod schema {
     include!(concat!(env!("OUT_DIR"), "/krpc.schema.rs"));
 
-    impl From<ProcedureCall> for Request {
-        fn from(proc_call: ProcedureCall) -> Self {
-            Request {
-                calls: vec![proc_call],
+    macro_rules! from_response_numeric {
+        ($name:ident) => {
+            impl From<Response> for $name {
+                fn from(r: Response) -> Self {
+                    $name::from_le_bytes(
+                        r.results[0]
+                            .value
+                            .to_owned()
+                            .try_into()
+                            .expect(concat!("expecting ", stringify!($name))),
+                    )
+                }
             }
-        }
+        };
     }
-
-    impl From<Response> for f64 {
-        fn from(r: Response) -> Self {
-            let v = r.results[0].value.to_owned();
-            f64::from_le_bytes(v.try_into().expect("expecting f64"))
-        }
-    }
-
-    impl From<Response> for u64 {
-        fn from(r: Response) -> Self {
-            let v = r.results[0].value.to_owned();
-            u64::from_le_bytes(v.try_into().expect("expecting u64"))
-        }
-    }
-
-    impl From<Response> for u32 {
-        fn from(r: Response) -> Self {
-            let v = r.results[0].value.to_owned();
-            u32::from_le_bytes(v.try_into().expect("expecting u32"))
-        }
-    }
-
-    impl From<Response> for u8 {
-        fn from(r: Response) -> Self {
-            let v = r.results[0].value.to_owned();
-            u8::from_le_bytes(v.try_into().expect("expecting u8"))
-        }
-    }
-
-    impl From<Response> for i32 {
-        fn from(r: Response) -> Self {
-            let v = r.results[0].value.to_owned();
-            i32::from_le_bytes(v.try_into().expect("expecting i32"))
-        }
-    }
-}
-
-mod client;
-
-mod services {
-    use std::sync::Arc;
-
-    use num_derive::FromPrimitive;
-    use num_traits::FromPrimitive;
-    use prost::Message;
-
-    use crate::client::Client;
-    use crate::schema;
 
     macro_rules! rpc_object {
         ($name:ident) => {
@@ -75,14 +35,14 @@ mod services {
 
     macro_rules! rpc_enum {
 	($name:ident, [$($value:ident),+$(,)?]) => {
-	    #[derive(Debug, FromPrimitive)]
+	    #[derive(Debug, ::num_derive::FromPrimitive)]
 	    pub enum $name {$(
 		$value,
 	    )+}
 
 	    impl From<crate::schema::Response> for $name {
 		fn from(response: crate::schema::Response) -> Self {
-		    FromPrimitive::from_u8(u8::from(response))
+		    ::num_traits::FromPrimitive::from_u8(u8::from(response))
 			.expect("invalid enum value")
 		}
 	    }
@@ -90,8 +50,38 @@ mod services {
 	}
     }
 
-    rpc_object!(Vessel);
-    rpc_enum!(GameMode, [Sandbox, Career,]);
+    impl From<ProcedureCall> for Request {
+        fn from(proc_call: ProcedureCall) -> Self {
+            Request {
+                calls: vec![proc_call],
+            }
+        }
+    }
+
+    from_response_numeric!(u8);
+    from_response_numeric!(u32);
+    from_response_numeric!(u64);
+    from_response_numeric!(i32);
+    from_response_numeric!(i64);
+    from_response_numeric!(f32);
+    from_response_numeric!(f64);
+
+    pub(crate) use rpc_enum;
+    pub(crate) use rpc_object;
+}
+
+mod client;
+
+mod services {
+    use std::sync::Arc;
+
+    use prost::Message;
+
+    use crate::client::Client;
+    use crate::schema;
+
+    schema::rpc_object!(Vessel);
+    schema::rpc_enum!(GameMode, [Sandbox, Science, Career]);
 
     pub struct KRPC {
         client: Arc<Client>,
