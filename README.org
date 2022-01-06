@@ -7,7 +7,11 @@ Rust client for kRPC.
 
 Create a complete prototype of a service implementation to guide code generation.
 
-*** TODO Prototype a function with arguments
+*** DONE Prototype a function with arguments
+CLOSED: [2022-01-06 Thu 11:50]
+:LOGBOOK:
+CLOCK: [2022-01-06 Thu 11:01]--[2022-01-06 Thu 11:50] =>  0:49
+:END:
 *** TODO Prototype a function with complex return type
 
 e.g. Tuple, etc.

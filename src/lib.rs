@@ -1,6 +1,12 @@
 mod schema {
     include!(concat!(env!("OUT_DIR"), "/krpc.schema.rs"));
 
+    use protobuf::types::ProtobufType;
+
+    pub trait ToArgument {
+        fn to_argument(&self, pos: u32) -> Argument;
+    }
+
     macro_rules! from_response_numeric {
         ($name:ident) => {
             impl From<Response> for $name {
@@ -46,8 +52,43 @@ mod schema {
 			.expect("invalid enum value")
 		}
 	    }
-
 	}
+    }
+
+    macro_rules! to_argument {
+        ($t:ty, $fname:ident) => {
+            impl ToArgument for $t {
+                fn to_argument(&self, pos: u32) -> Argument {
+                    let mut buf: Vec<u8> = Vec::new();
+                    {
+                        let mut outstream =
+                            protobuf::CodedOutputStream::new(&mut buf);
+                        outstream.$fname(*self).unwrap();
+                        outstream.flush().unwrap();
+                    }
+
+                    Argument {
+                        position: pos,
+                        value: buf,
+                    }
+                }
+            }
+        };
+    }
+
+    macro_rules! from_response {
+        ($to:ty, $proto:ident) => {
+            impl From<Response> for $to {
+                fn from(response: Response) -> Self {
+                    protobuf::types::$proto::read(
+                        &mut protobuf::CodedInputStream::from_bytes(
+                            &response.results[0].value,
+                        ),
+                    )
+                    .unwrap()
+                }
+            }
+        };
     }
 
     impl From<ProcedureCall> for Request {
@@ -65,6 +106,23 @@ mod schema {
     from_response_numeric!(i64);
     from_response_numeric!(f32);
     from_response_numeric!(f64);
+    from_response!(String, ProtobufTypeString);
+
+    impl ToArgument for String {
+        fn to_argument(&self, pos: u32) -> Argument {
+            let mut buf: Vec<u8> = Vec::new();
+            {
+                let mut outstream = protobuf::CodedOutputStream::new(&mut buf);
+                outstream.write_string_no_tag(&self).unwrap();
+                outstream.flush().unwrap();
+            }
+
+            Argument {
+                position: pos,
+                value: buf,
+            }
+        }
+    }
 
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
@@ -78,7 +136,7 @@ mod services {
     use prost::Message;
 
     use crate::client::Client;
-    use crate::schema;
+    use crate::schema::{self, ToArgument};
 
     schema::rpc_object!(Vessel);
     schema::rpc_enum!(
@@ -150,6 +208,18 @@ mod services {
 
             GameMode::from(response)
         }
+
+        pub fn save(&self, name: String) {
+            let request = schema::Request::from(Client::proc_call(
+                "SpaceCenter",
+                "Save",
+                vec![name.to_argument(0)],
+            ));
+
+            let response = self.client.call(request);
+
+            dbg!(response);
+        }
     }
 }
 
@@ -171,5 +241,6 @@ mod test {
         dbg!(sc.get_ut());
         dbg!(krpc.get_status());
         dbg!(sc.get_game_mode());
+        dbg!(sc.save("test_save".into()));
     }
 }

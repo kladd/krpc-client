@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 bytes = "1.1"
 prost = "0.9"
+protobuf = "2.25.2"
 num-derive = "0.3"
 num-traits = "0.2"
 
