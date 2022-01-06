@@ -15,6 +15,34 @@ mod schema {
             f64::from_le_bytes(v.try_into().expect("expecting f64"))
         }
     }
+
+    impl From<Response> for u64 {
+        fn from(r: Response) -> Self {
+            let v = r.results[0].value.to_owned();
+            u64::from_le_bytes(v.try_into().expect("expecting u64"))
+        }
+    }
+
+    impl From<Response> for u32 {
+        fn from(r: Response) -> Self {
+            let v = r.results[0].value.to_owned();
+            u32::from_le_bytes(v.try_into().expect("expecting u32"))
+        }
+    }
+
+    impl From<Response> for u8 {
+        fn from(r: Response) -> Self {
+            let v = r.results[0].value.to_owned();
+            u8::from_le_bytes(v.try_into().expect("expecting u8"))
+        }
+    }
+
+    impl From<Response> for i32 {
+        fn from(r: Response) -> Self {
+            let v = r.results[0].value.to_owned();
+            i32::from_le_bytes(v.try_into().expect("expecting i32"))
+        }
+    }
 }
 
 mod client;
@@ -22,6 +50,8 @@ mod client;
 mod services {
     use std::sync::Arc;
 
+    use num_derive::FromPrimitive;
+    use num_traits::FromPrimitive;
     use prost::Message;
 
     use crate::client::Client;
@@ -31,7 +61,7 @@ mod services {
         ($name:ident) => {
             #[derive(Debug)]
             pub struct $name {
-                id: u64,
+                pub id: u64,
             }
             impl From<crate::schema::Response> for $name {
                 fn from(response: crate::schema::Response) -> Self {
@@ -42,6 +72,26 @@ mod services {
             }
         };
     }
+
+    macro_rules! rpc_enum {
+	($name:ident, [$($value:ident),+$(,)?]) => {
+	    #[derive(Debug, FromPrimitive)]
+	    pub enum $name {$(
+		$value,
+	    )+}
+
+	    impl From<crate::schema::Response> for $name {
+		fn from(response: crate::schema::Response) -> Self {
+		    FromPrimitive::from_u8(u8::from(response))
+			.expect("invalid enum value")
+		}
+	    }
+
+	}
+    }
+
+    rpc_object!(Vessel);
+    rpc_enum!(GameMode, [Sandbox, Career,]);
 
     pub struct KRPC {
         client: Arc<Client>,
@@ -86,6 +136,18 @@ mod services {
 
             f64::from(response)
         }
+
+        pub fn get_game_mode(&self) -> GameMode {
+            let request = schema::Request::from(Client::proc_call(
+                "SpaceCenter",
+                "get_GameMode",
+                Vec::new(),
+            ));
+
+            let response = self.client.call(request);
+
+            GameMode::from(response)
+        }
     }
 }
 
@@ -103,7 +165,9 @@ mod test {
 
         let krpc = services::KRPC::new(Arc::clone(&client));
         let sc = services::SpaceCenter::new(Arc::clone(&client));
+
         dbg!(sc.get_ut());
         dbg!(krpc.get_status());
+        dbg!(sc.get_game_mode());
     }
 }
