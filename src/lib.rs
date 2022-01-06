@@ -95,6 +95,12 @@ mod schema {
                     }
                 }
             }
+
+            impl ToArgument for $name {
+                fn to_argument(&self, pos: u32) -> crate::schema::Argument {
+                    self.id.to_argument(pos)
+                }
+            }
         };
     }
 
@@ -177,6 +183,7 @@ mod schema {
     from_response_numeric!(u8);
 
     to_argument!(String, write_string_no_tag);
+    to_argument_deref!(u64, write_uint64_no_tag);
 
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
@@ -288,6 +295,30 @@ mod services {
 
             HashMap::from(response)
         }
+
+        pub fn get_active_vessel(&self) -> Vessel {
+            let request = schema::Request::from(Client::proc_call(
+                "SpaceCenter",
+                "get_ActiveVessel",
+                vec![],
+            ));
+
+            let response = self.client.call(request);
+
+            Vessel::from(response)
+        }
+
+        pub fn vessel_get_name(&self, this: &Vessel) -> String {
+            let request = schema::Request::from(Client::proc_call(
+                "SpaceCenter",
+                "Vessel_get_Name",
+                vec![this.to_argument(0)],
+            ));
+
+            let response = self.client.call(request);
+
+            String::from(response)
+        }
     }
 }
 
@@ -306,7 +337,9 @@ mod test {
         let krpc = services::KRPC::new(Arc::clone(&client));
         let sc = services::SpaceCenter::new(Arc::clone(&client));
 
-        dbg!(sc.save("test_save_two".into()));
-        dbg!(sc.get_bodies());
+        let ship = sc.get_active_vessel();
+
+        dbg!(&ship);
+        dbg!(sc.vessel_get_name(&ship));
     }
 }
