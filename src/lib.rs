@@ -88,7 +88,7 @@ mod schema {
                 }
             }
 
-            impl DecodeUntagged for $name {
+            impl crate::schema::DecodeUntagged for $name {
                 fn decode_untagged(buf: &Vec<u8>) -> Self {
                     $name {
                         id: u64::decode_untagged(buf),
@@ -96,7 +96,7 @@ mod schema {
                 }
             }
 
-            impl ToArgument for $name {
+            impl crate::schema::ToArgument for $name {
                 fn to_argument(&self, pos: u32) -> crate::schema::Argument {
                     self.id.to_argument(pos)
                 }
@@ -192,60 +192,19 @@ mod schema {
 mod client;
 
 mod services {
+    include!(concat!(env!("OUT_DIR"), "/services.rs"));
+
+    use crate::schema;
+    use crate::schema::ToArgument;
+    use prost::Message;
     use std::collections::HashMap;
     use std::sync::Arc;
 
-    use prost::Message;
-
     use crate::client::Client;
-    use crate::schema::{self, DecodeUntagged, ToArgument};
 
-    schema::rpc_object!(Vessel);
-    schema::rpc_object!(CelestialBody);
-    schema::rpc_enum!(
-        GameMode,
-        [
-            Sandbox,
-            Career,
-            Science,
-            ScienceSandbox,
-            Mission,
-            MissionBuilder,
-            Scenario,
-            ScenarioNonResumable
-        ]
-    );
-
-    pub struct KRPC {
-        client: Arc<Client>,
-    }
-
-    impl KRPC {
+    impl space_center::SpaceCenter {
         pub fn new(client: Arc<Client>) -> Self {
-            KRPC { client }
-        }
-
-        pub fn get_status(&self) -> schema::Status {
-            let request = schema::Request::from(Client::proc_call(
-                "KRPC",
-                "GetStatus",
-                Vec::new(),
-            ));
-
-            let response = self.client.call(request);
-
-            schema::Status::decode(&response.results[0].value[..])
-                .expect("decode status")
-        }
-    }
-
-    pub struct SpaceCenter {
-        client: Arc<Client>,
-    }
-
-    impl SpaceCenter {
-        pub fn new(client: Arc<Client>) -> Self {
-            SpaceCenter { client }
+            Self { client }
         }
 
         pub fn get_ut(&self) -> f64 {
@@ -260,7 +219,7 @@ mod services {
             f64::from(response)
         }
 
-        pub fn get_game_mode(&self) -> GameMode {
+        pub fn get_game_mode(&self) -> space_center::GameMode {
             let request = schema::Request::from(Client::proc_call(
                 "SpaceCenter",
                 "get_GameMode",
@@ -269,7 +228,7 @@ mod services {
 
             let response = self.client.call(request);
 
-            GameMode::from(response)
+            space_center::GameMode::from(response)
         }
 
         pub fn save(&self, name: String) {
@@ -284,7 +243,9 @@ mod services {
             dbg!(response);
         }
 
-        pub fn get_bodies(&self) -> HashMap<String, CelestialBody> {
+        pub fn get_bodies(
+            &self,
+        ) -> HashMap<String, space_center::CelestialBody> {
             let request = schema::Request::from(Client::proc_call(
                 "SpaceCenter",
                 "get_Bodies",
@@ -296,7 +257,7 @@ mod services {
             HashMap::from(response)
         }
 
-        pub fn get_active_vessel(&self) -> Vessel {
+        pub fn get_active_vessel(&self) -> space_center::Vessel {
             let request = schema::Request::from(Client::proc_call(
                 "SpaceCenter",
                 "get_ActiveVessel",
@@ -305,10 +266,10 @@ mod services {
 
             let response = self.client.call(request);
 
-            Vessel::from(response)
+            space_center::Vessel::from(response)
         }
 
-        pub fn vessel_get_name(&self, this: &Vessel) -> String {
+        pub fn vessel_get_name(&self, this: &space_center::Vessel) -> String {
             let request = schema::Request::from(Client::proc_call(
                 "SpaceCenter",
                 "Vessel_get_Name",
@@ -334,8 +295,7 @@ mod test {
         let client =
             Arc::new(Client::new("rpc test", "127.0.0.1", 50000, 50001));
 
-        let krpc = services::KRPC::new(Arc::clone(&client));
-        let sc = services::SpaceCenter::new(Arc::clone(&client));
+        let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
         let ship = sc.get_active_vessel();
 
