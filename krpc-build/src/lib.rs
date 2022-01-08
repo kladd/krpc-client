@@ -1,3 +1,4 @@
+use codegen::Scope;
 use convert_case::{Case, Casing};
 use std::io::Error;
 use std::{fs, path::Path};
@@ -6,25 +7,25 @@ pub fn build<O: std::io::Write>(
     service_definitions: impl AsRef<Path>,
     out: &mut O,
 ) -> Result<(), Error> {
+    let mut scope = codegen::Scope::new();
     for def in fs::read_dir(service_definitions)? {
         let def_file = fs::File::open(def.unwrap().path())?;
         let json: serde_json::Value = serde_json::from_reader(def_file)?;
 
         for (name, props) in json.as_object().unwrap().into_iter() {
-            write!(out, "{}", build_json(name, props)?)?;
+	    build_json(name, props, &mut scope)?;
         }
     }
 
-    Ok(())
+    write!(out, "{}", scope.to_string())
 }
 
 fn build_json(
     name: &String,
     props_json: &serde_json::Value,
-) -> Result<String, Error> {
-    let mut scope = codegen::Scope::new();
-
-    let module = scope.new_module(&name.to_case(Case::Snake)).vis("pub");
+    root: &mut codegen::Scope
+) -> Result<(), Error> {
+    let module = root.new_module(&name.to_case(Case::Snake)).vis("pub");
     module
         .new_struct(&name.to_case(Case::Pascal))
         .vis("pub")
@@ -62,7 +63,7 @@ fn build_json(
         ));
     }
 
-    Ok(scope.to_string())
+    Ok(())
 }
 
 #[cfg(test)]
