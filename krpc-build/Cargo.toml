@@ -1,0 +1,9 @@
+[package]
+name = "krpc-build"
+version = "0.4.9"
+edition = "2021"
+
+[dependencies]
+serde = "1.0"
+serde_json = "1.0"
+convert_case = "0.5"
