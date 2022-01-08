@@ -22,25 +22,20 @@ fn build_json(
     name: &String,
     props_json: &serde_json::Value,
 ) -> Result<String, Error> {
-    let mut mod_buffer: Vec<String> = Vec::new();
+    let mut scope = codegen::Scope::new();
 
-    mod_buffer.push(format!("pub mod {} {{", name.to_case(Case::Snake)));
-    mod_buffer.push(format!(
-        "
-pub struct {} {{
-    pub client: ::std::sync::Arc<crate::client::Client>
-}}
-",
-        name.to_case(Case::Pascal)
-    ));
+    let module = scope.new_module(&name.to_case(Case::Snake)).vis("pub");
+    module
+        .new_struct(&name.to_case(Case::Pascal))
+        .vis("pub")
+        .field("pub client", "::std::sync::Arc<crate::client::Client>");
+
     let props = props_json.as_object().unwrap();
 
     let classes = props.get("classes").unwrap().as_object().unwrap();
     for class in classes.keys() {
-        mod_buffer
-            .push(format!("crate::schema::rpc_object!({});", class).into());
+	module.scope().raw(&format!("crate::schema::rpc_object!({});", class));
     }
-    mod_buffer.push("".into());
 
     let enums = props.get("enumerations").unwrap().as_object().unwrap();
     for (name, values_json) in enums.into_iter() {
@@ -60,16 +55,14 @@ pub struct {} {{
             v
         };
 
-        mod_buffer.push(format!(
+        module.scope().raw(&format!(
             "crate::schema::rpc_enum!({}, [{}]);",
             name,
             values.join(", ")
         ));
     }
-    mod_buffer.push("".into());
-    mod_buffer.push("}".into());
 
-    Ok(mod_buffer.join("\n"))
+    Ok(scope.to_string())
 }
 
 #[cfg(test)]
