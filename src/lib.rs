@@ -4,7 +4,7 @@ mod schema {
     use std::{collections::HashMap, hash::Hash};
 
     use prost::Message;
-    use protobuf::types::ProtobufType;
+    use protobuf::{types::ProtobufType, CodedOutputStream};
 
     pub trait ToArgument {
         fn to_argument(&self, pos: u32) -> Argument;
@@ -105,20 +105,20 @@ mod schema {
     }
 
     macro_rules! rpc_enum {
-		($name:ident, [$($value:ident),+$(,)?]) => {
-			#[derive(Debug, ::num_derive::FromPrimitive)]
-			pub enum $name {$(
-				$value,
-			)+}
+	($name:ident, [$($value:ident),+$(,)?]) => {
+	    #[derive(Debug, ::num_derive::FromPrimitive)]
+	    pub enum $name {$(
+		$value,
+	    )+}
 
-			impl From<crate::schema::Response> for $name {
-				fn from(response: crate::schema::Response) -> Self {
-					::num_traits::FromPrimitive::from_u8(u8::from(response))
-					.expect("invalid enum value")
-				}
-			}
+	    impl From<crate::schema::Response> for $name {
+		fn from(response: crate::schema::Response) -> Self {
+		    ::num_traits::FromPrimitive::from_u8(u8::from(response))
+			.expect("invalid enum value")
 		}
+	    }
 	}
+    }
 
     macro_rules! from_response {
         ($to:ty, $proto:ident) => {
@@ -139,6 +139,18 @@ mod schema {
         };
     }
 
+    macro_rules! from_response_message {
+	($($m:ty),+$(,)?) => {
+	    $(
+	    impl From<Response> for $m {
+		fn from(response: Response) -> Self {
+		    Self::decode(&response.results[0].value[..])
+			.expect("unexpected wire type")
+		}
+	    })+
+	};
+    }
+
     impl From<ProcedureCall> for Request {
         fn from(proc_call: ProcedureCall) -> Self {
             Request {
@@ -156,7 +168,6 @@ mod schema {
             let mut map: HashMap<K, V> = HashMap::new();
             let dictionary = Dictionary::from(response);
             dictionary.entries.into_iter().for_each(|entry| {
-                dbg!(&entry);
                 map.insert(
                     K::decode_untagged(&entry.key),
                     V::decode_untagged(&entry.value),
@@ -166,13 +177,26 @@ mod schema {
         }
     }
 
-    impl From<Response> for Dictionary {
+    impl<T> From<Response> for Vec<T>
+    where
+        T: DecodeUntagged,
+    {
         fn from(response: Response) -> Self {
-            Self::decode(&response.results[0].value[..])
-                .expect("unexpected wire type")
+            List::from(response)
+                .items
+                .into_iter()
+                .map(|item| T::decode_untagged(&item))
+                .collect()
         }
     }
 
+    impl From<Response> for () {
+        fn from(_: Response) -> Self {
+            ()
+        }
+    }
+
+    from_response_message!(Dictionary, List);
     from_response!(String, ProtobufTypeString);
     from_response!(i32, ProtobufTypeInt32);
     from_response!(i64, ProtobufTypeInt64);
@@ -180,10 +204,100 @@ mod schema {
     from_response!(u64, ProtobufTypeUint64);
     from_response!(f32, ProtobufTypeFloat);
     from_response!(f64, ProtobufTypeDouble);
+    from_response!(bool, ProtobufTypeBool);
     from_response_numeric!(u8);
 
     to_argument!(String, write_string_no_tag);
+    to_argument_deref!(bool, write_bool_no_tag);
+    to_argument_deref!(i32, write_int32_no_tag);
+    to_argument_deref!(f32, write_float_no_tag);
+    to_argument_deref!(f64, write_double_no_tag);
     to_argument_deref!(u64, write_uint64_no_tag);
+
+    // impl ToArgument for (f64, f64, f64) {
+    // 	fn to_argument(&self, pos: u32) -> Argument {
+    // 	    let mut buf: Vec<u8> = Vec::new();
+    // 	    {
+    // 		let mut outstream =
+    // 		    protobuf::CodedOutputStream::new(&mut buf);
+
+    // 		outstream.write_
+    // 	    }
+
+    // 	    Argument {
+    // 		position: pos,
+    // 		value: buf,
+    // 	    }
+    // 	}
+    // }
+
+    impl From<Response> for (f64, f64, f64) {
+        fn from(response: Response) -> Self {
+            let mut is: ::protobuf::CodedInputStream =
+                ::protobuf::CodedInputStream::from_bytes(
+                    &response.results[0].value[..],
+                );
+
+            (
+                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
+            )
+        }
+    }
+
+    impl From<Response> for (f64, f64, f64, f64) {
+        fn from(response: Response) -> Self {
+            let mut is: ::protobuf::CodedInputStream =
+                ::protobuf::CodedInputStream::from_bytes(
+                    &response.results[0].value[..],
+                );
+
+            (
+                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
+            )
+        }
+    }
+
+    impl ToArgument for (f64, f64, f64) {
+        fn to_argument(&self, pos: u32) -> Argument {
+            let mut buf: Vec<u8> = Vec::new();
+            {
+                let mut outstream = protobuf::CodedOutputStream::vec(&mut buf);
+
+                outstream.write_double_no_tag(self.0).unwrap();
+                outstream.write_double_no_tag(self.1).unwrap();
+                outstream.write_double_no_tag(self.2).unwrap();
+            }
+
+            Argument {
+                position: pos,
+                value: buf,
+            }
+        }
+    }
+
+    impl ToArgument for (f64, f64, f64, f64) {
+        fn to_argument(&self, pos: u32) -> Argument {
+            let mut buf: Vec<u8> = Vec::new();
+            {
+                let mut outstream = protobuf::CodedOutputStream::vec(&mut buf);
+
+                outstream.write_double_no_tag(self.0).unwrap();
+                outstream.write_double_no_tag(self.1).unwrap();
+                outstream.write_double_no_tag(self.2).unwrap();
+                outstream.write_double_no_tag(self.3).unwrap();
+            }
+
+            Argument {
+                position: pos,
+                value: buf,
+            }
+        }
+    }
 
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
@@ -193,94 +307,6 @@ mod client;
 
 mod services {
     include!(concat!(env!("OUT_DIR"), "/services.rs"));
-
-    use crate::schema;
-    use crate::schema::ToArgument;
-    use prost::Message;
-    use std::collections::HashMap;
-    use std::sync::Arc;
-
-    use crate::client::Client;
-
-    impl space_center::SpaceCenter {
-        pub fn new(client: Arc<Client>) -> Self {
-            Self { client }
-        }
-
-        pub fn get_ut(&self) -> f64 {
-            let request = schema::Request::from(Client::proc_call(
-                "SpaceCenter",
-                "get_UT",
-                Vec::new(),
-            ));
-
-            let response = self.client.call(request);
-
-            f64::from(response)
-        }
-
-        pub fn get_game_mode(&self) -> space_center::GameMode {
-            let request = schema::Request::from(Client::proc_call(
-                "SpaceCenter",
-                "get_GameMode",
-                Vec::new(),
-            ));
-
-            let response = self.client.call(request);
-
-            space_center::GameMode::from(response)
-        }
-
-        pub fn save(&self, name: String) {
-            let request = schema::Request::from(Client::proc_call(
-                "SpaceCenter",
-                "Save",
-                vec![name.to_argument(0)],
-            ));
-
-            let response = self.client.call(request);
-
-            dbg!(response);
-        }
-
-        pub fn get_bodies(
-            &self,
-        ) -> HashMap<String, space_center::CelestialBody> {
-            let request = schema::Request::from(Client::proc_call(
-                "SpaceCenter",
-                "get_Bodies",
-                vec![],
-            ));
-
-            let response = self.client.call(request);
-
-            HashMap::from(response)
-        }
-
-        pub fn get_active_vessel(&self) -> space_center::Vessel {
-            let request = schema::Request::from(Client::proc_call(
-                "SpaceCenter",
-                "get_ActiveVessel",
-                vec![],
-            ));
-
-            let response = self.client.call(request);
-
-            space_center::Vessel::from(response)
-        }
-
-        pub fn vessel_get_name(&self, this: &space_center::Vessel) -> String {
-            let request = schema::Request::from(Client::proc_call(
-                "SpaceCenter",
-                "Vessel_get_Name",
-                vec![this.to_argument(0)],
-            ));
-
-            let response = self.client.call(request);
-
-            String::from(response)
-        }
-    }
 }
 
 #[cfg(test)]
@@ -297,9 +323,6 @@ mod test {
 
         let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
-        let ship = sc.get_active_vessel();
-
-        dbg!(&ship);
-        dbg!(sc.vessel_get_name(&ship));
+        dbg!(sc.launchable_vessels("VAB".into()));
     }
 }
