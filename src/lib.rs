@@ -14,7 +14,9 @@ mod schema {
         fn decode_untagged(buf: &Vec<u8>) -> Self;
     }
 
-    // TODO: if String is the only type that doesn't need to be dereferenced, then implement ToArgument for String and get rid of one of these macros.
+    // TODO: if String is the only type that doesn't need to be dereferenced,
+    //       then implement ToArgument for String and get rid of one of these
+    //       macros.
     macro_rules! to_argument_deref {
         ($t:ty, $fname:ident) => {
             impl ToArgument for $t {
