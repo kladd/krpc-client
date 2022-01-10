@@ -149,14 +149,22 @@ fn decode_type(ty: &serde_json::Map<String, serde_json::Value>) -> String {
     match code {
         "STRING" => "String".to_string(),
         "SINT32" => "i32".to_string(),
+        "UINT64" => "u64".into(),
         "BOOL" => "bool".to_string(),
         "FLOAT" => "f32".to_string(),
         "DOUBLE" => "f64".to_string(),
+        // TODO(kladd): maybe not Vec<u8>
+        "BYTES" => "Vec<u8>".to_string(),
         "TUPLE" => decode_tuple(&ty),
         "LIST" => decode_list(&ty),
         "DICTIONARY" => decode_dictionary(&ty),
         "ENUMERATION" => decode_class(&ty),
         "CLASS" => decode_class(&ty),
+        "EVENT" => "crate::schema::Event".into(),
+        "PROCEDURE_CALL" => "crate::schema::ProcedureCall".into(),
+        "STREAM" => "crate::schema::Stream".into(),
+        "SERVICES" => "crate::schema::Services".into(),
+        "STATUS" => "crate::schema::Status".into(),
         _ => "".to_string(),
     }
 }
