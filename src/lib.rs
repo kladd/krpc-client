@@ -214,23 +214,6 @@ mod schema {
     to_argument_deref!(f64, write_double_no_tag);
     to_argument_deref!(u64, write_uint64_no_tag);
 
-    // impl ToArgument for (f64, f64, f64) {
-    // 	fn to_argument(&self, pos: u32) -> Argument {
-    // 	    let mut buf: Vec<u8> = Vec::new();
-    // 	    {
-    // 		let mut outstream =
-    // 		    protobuf::CodedOutputStream::new(&mut buf);
-
-    // 		outstream.write_
-    // 	    }
-
-    // 	    Argument {
-    // 		position: pos,
-    // 		value: buf,
-    // 	    }
-    // 	}
-    // }
-
     impl From<Response> for (f64, f64, f64) {
         fn from(response: Response) -> Self {
             let mut is: ::protobuf::CodedInputStream =
