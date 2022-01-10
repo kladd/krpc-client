@@ -79,7 +79,7 @@ fn build_json(
     let procedures = props.get("procedures").unwrap().as_object().unwrap();
 
     for (proc_name, def) in procedures.into_iter() {
-        if !proc_name.is_case(Case::Pascal) {
+        if !proc_name.is_case(Case::Pascal) && !proc_name.starts_with("get_") {
             continue;
         }
 
@@ -145,15 +145,17 @@ fn decode_type(ty: &serde_json::Map<String, serde_json::Value>) -> String {
     let code = ty.get("code").unwrap().as_str().unwrap();
 
     match code {
-        "STRING" => "String".to_string(),
-        "SINT32" => "i32".to_string(),
-        "BOOL" => "bool".to_string(),
-        "FLOAT" => "f32".to_string(),
-        "DOUBLE" => "f64".to_string(),
-        "TUPLE" => decode_tuple(&ty),
-        "LIST" => decode_list(&ty),
-        "CLASS" => decode_class(&ty),
-        _ => "".to_string(),
+	"STRING" => "String".to_string(),
+	"SINT32" => "i32".to_string(),
+	"BOOL" => "bool".to_string(),
+	"FLOAT" => "f32".to_string(),
+	"DOUBLE" => "f64".to_string(),
+	"TUPLE" => decode_tuple(&ty),
+	"LIST" => decode_list(&ty),
+	"DICTIONARY" => decode_dictionary(&ty),
+	"ENUMERATION" => decode_class(&ty),
+	"CLASS" => decode_class(&ty),
+	_ => "".to_string(),
     }
 }
 
@@ -186,6 +188,15 @@ fn decode_class(ty: &serde_json::Map<String, serde_json::Value>) -> String {
         service.to_case(Case::Snake),
         name
     )
+}
+
+fn decode_dictionary(ty: &serde_json::Map<String, serde_json::Value>) -> String {
+    let types = ty.get("types").unwrap().as_array().unwrap();
+
+    let key_name = decode_type(types.get(0).unwrap().as_object().unwrap());
+    let value_name = decode_type(types.get(1).unwrap().as_object().unwrap());
+
+    format!("std::collections::HashMap<{}, {}>", key_name, value_name)
 }
 
 #[cfg(test)]

@@ -70,6 +70,12 @@ mod schema {
                     )
                 }
             }
+
+            impl DecodeUntagged for $name {
+                fn decode_untagged(b: &Vec<u8>) -> Self {
+                    $name::from_le_bytes(b.to_owned().try_into().unwrap())
+                }
+            }
         };
     }
 
@@ -115,6 +121,12 @@ mod schema {
 		fn from(response: crate::schema::Response) -> Self {
 		    ::num_traits::FromPrimitive::from_u8(u8::from(response))
 			.expect("invalid enum value")
+		}
+	    }
+
+	    impl crate::schema::DecodeUntagged for $name {
+		fn decode_untagged(buf: &Vec<u8>) -> Self {
+		    ::num_traits::FromPrimitive::from_u8(u8::decode_untagged(buf)).unwrap()
 		}
 	    }
 	}
@@ -306,6 +318,11 @@ mod test {
 
         let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
+        dbg!(sc.get_ut());
+        dbg!(sc.get_active_vessel());
+        dbg!(sc.get_game_mode());
         dbg!(sc.launchable_vessels("VAB".into()));
+        dbg!(sc.get_bodies());
+        dbg!(sc.get_warp_mode());
     }
 }

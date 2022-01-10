@@ -66,7 +66,7 @@ impl Client {
         rpc.flush().expect("rpc send flush");
 
         // TODO(kladd): fixed buffer size.
-        let mut response_buf = vec![0u8; 256];
+        let mut response_buf = vec![0u8; 512];
         let n = rpc
             .read(&mut response_buf[..])
             .expect("rpc recieve response");
