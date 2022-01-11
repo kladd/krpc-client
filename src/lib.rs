@@ -1,6 +1,7 @@
 mod schema {
     include!(concat!(env!("OUT_DIR"), "/krpc.schema.rs"));
 
+    use std::collections::HashSet;
     use std::{collections::HashMap, hash::Hash};
 
     use prost::Message;
@@ -183,6 +184,20 @@ mod schema {
         }
     }
 
+    impl<T> From<Response> for HashSet<T>
+    where
+        T: DecodeUntagged + Eq + Hash,
+    {
+        fn from(response: Response) -> Self {
+            let mut set = HashSet::new();
+            let protoset = Set::from(response);
+            protoset.items.into_iter().for_each(|item| {
+                set.insert(T::decode_untagged(&item));
+            });
+            set
+        }
+    }
+
     impl<T> From<Response> for Vec<T>
     where
         T: DecodeUntagged,
@@ -202,7 +217,7 @@ mod schema {
         }
     }
 
-    from_response_message!(Dictionary, List);
+    from_response_message!(Dictionary, List, Set);
     from_response!(String, ProtobufTypeString);
     from_response!(i32, ProtobufTypeSint32);
     from_response!(i64, ProtobufTypeSint64);

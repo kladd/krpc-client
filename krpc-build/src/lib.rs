@@ -80,10 +80,6 @@ fn build_json(
     let procedures = props.get("procedures").unwrap().as_object().unwrap();
 
     for (proc_name, def) in procedures.into_iter() {
-        if !proc_name.is_case(Case::Pascal) && !proc_name.starts_with("get_") {
-            continue;
-        }
-
         let sfn = service_impl
             .new_fn(&proc_name.to_case(Case::Snake))
             .vis("pub")
@@ -159,6 +155,7 @@ fn decode_type(ty: &serde_json::Map<String, serde_json::Value>) -> String {
         "BYTES" => "Vec<u8>".to_string(),
         "TUPLE" => decode_tuple(&ty),
         "LIST" => decode_list(&ty),
+        "SET" => decode_set(&ty),
         "DICTIONARY" => decode_dictionary(&ty),
         "ENUMERATION" => decode_class(&ty),
         "CLASS" => decode_class(&ty),
@@ -211,6 +208,15 @@ fn decode_dictionary(
     let value_name = decode_type(types.get(1).unwrap().as_object().unwrap());
 
     format!("std::collections::HashMap<{}, {}>", key_name, value_name)
+}
+
+fn decode_set(ty: &serde_json::Map<String, serde_json::Value>) -> String {
+    let types = ty.get("types").unwrap().as_array().unwrap();
+
+    format!(
+        "std::collections::HashSet<{}>",
+        decode_type(&types.first().unwrap().as_object().unwrap())
+    )
 }
 
 fn rewrite_keywords(sample: String) -> String {
