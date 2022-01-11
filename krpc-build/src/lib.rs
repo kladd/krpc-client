@@ -1,4 +1,3 @@
-use codegen::Scope;
 use convert_case::{Case, Casing};
 use std::io::Error;
 use std::{fs, path::Path};
@@ -32,7 +31,8 @@ fn build_json(
     module
         .new_struct(&service_name.to_case(Case::Pascal))
         .vis("pub")
-        .field("pub client", "::std::sync::Arc<crate::client::Client>");
+        .field("pub client", "::std::sync::Arc<crate::client::Client>")
+        .allow("dead_code");
 
     let props = props_json.as_object().unwrap();
 
@@ -86,7 +86,8 @@ fn build_json(
         let sfn = service_impl
             .new_fn(&proc_name.to_case(Case::Snake))
             .vis("pub")
-            .arg_ref_self();
+            .arg_ref_self()
+            .allow("dead_code");
 
         let mut proc_args = Vec::new();
         let params = def

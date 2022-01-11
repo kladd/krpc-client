@@ -17,7 +17,7 @@ impl Client {
         name: &str,
         ip_addr: &str,
         rpc_port: u16,
-        stream_port: u16,
+        _stream_port: u16,
     ) -> Self {
         let mut rpc = TcpStream::connect(SocketAddrV4::new(
             ip_addr.parse().unwrap(),
@@ -45,7 +45,7 @@ impl Client {
         let mut res_buf = vec![0u8; 28];
         let n = rpc.read(&mut res_buf[..]).expect("reading response");
 
-        let response =
+        let _response =
             schema::ConnectionResponse::decode_length_delimited(&res_buf[..n])
                 .expect("decode response");
 

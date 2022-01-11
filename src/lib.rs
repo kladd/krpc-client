@@ -4,7 +4,7 @@ mod schema {
     use std::{collections::HashMap, hash::Hash};
 
     use prost::Message;
-    use protobuf::{types::ProtobufType, CodedOutputStream};
+    use protobuf::{types::ProtobufType};
 
     pub trait ToArgument {
         fn to_argument(&self, pos: u32) -> Argument;
