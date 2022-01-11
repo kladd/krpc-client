@@ -27,7 +27,8 @@ fn build_json(
     let module = root
         .new_module(&service_name.to_case(Case::Snake))
         .vis("pub")
-        .import("crate::schema", "ToArgument");
+        .import("crate::schema", "ToArgument")
+        .import("crate::schema", "DecodeUntagged");
     module
         .new_struct(&service_name.to_case(Case::Pascal))
         .vis("pub")

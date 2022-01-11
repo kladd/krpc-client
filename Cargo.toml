@@ -7,8 +7,6 @@ edition = "2021"
 bytes = "1.1"
 prost = "0.9"
 protobuf = "2.25.2"
-num-derive = "0.3"
-num-traits = "0.2"
 
 [build-dependencies]
 prost-build = "0.9"

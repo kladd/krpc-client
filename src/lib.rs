@@ -4,7 +4,7 @@ mod schema {
     use std::{collections::HashMap, hash::Hash};
 
     use prost::Message;
-    use protobuf::{types::ProtobufType};
+    use protobuf::types::ProtobufType;
 
     pub trait ToArgument {
         fn to_argument(&self, pos: u32) -> Argument;
@@ -113,25 +113,39 @@ mod schema {
     }
 
     macro_rules! rpc_enum {
-	($name:ident, [$($value:ident),+$(,)?]) => {
-	    #[derive(Debug, ::num_derive::FromPrimitive)]
-	    pub enum $name {$(
-		$value,
-	    )+}
+        ($name:ident, [$($value:ident),+$(,)?]) => {
+            #[derive(Debug, Copy, Clone)]
+            pub enum $name {$(
+                $value,
+            )+}
 
-	    impl From<crate::schema::Response> for $name {
-		fn from(response: crate::schema::Response) -> Self {
-		    ::num_traits::FromPrimitive::from_u8(u8::from(response))
-			.expect("invalid enum value")
-		}
-	    }
+            impl From<crate::schema::Response> for $name {
+                fn from(response: crate::schema::Response) -> Self {
+                    Self::decode_untagged(&response.results[0].value)
+                }
+            }
 
-	    impl crate::schema::DecodeUntagged for $name {
-		fn decode_untagged(buf: &Vec<u8>) -> Self {
-		    ::num_traits::FromPrimitive::from_u8(u8::decode_untagged(buf)).unwrap()
-		}
-	    }
-	}
+            impl crate::schema::DecodeUntagged for $name {
+                fn decode_untagged(buf: &Vec<u8>) -> Self {
+                    Self::from(i32::decode_untagged(buf))
+                }
+            }
+
+            impl crate::schema::ToArgument for $name {
+                fn to_argument(&self, pos: u32) -> crate::schema::Argument {
+                    (*self as i32).to_argument(pos)
+                }
+            }
+
+            impl From<i32> for $name {
+                fn from(val: i32) -> Self {
+                    match val {
+                        $(i if i == $name::$value as i32 => $name::$value,)+
+                        _ => panic!("enum out of range")
+                    }
+                }
+            }
+        }
     }
 
     macro_rules! from_response {
@@ -154,15 +168,15 @@ mod schema {
     }
 
     macro_rules! from_response_message {
-	($($m:ty),+$(,)?) => {
-	    $(
-	    impl From<Response> for $m {
-		fn from(response: Response) -> Self {
-		    Self::decode(&response.results[0].value[..])
-			.expect("unexpected wire type")
-		}
-	    })+
-	};
+        ($($m:ty),+$(,)?) => {
+            $(
+            impl From<Response> for $m {
+                fn from(response: Response) -> Self {
+                    Self::decode(&response.results[0].value[..])
+                    .expect("unexpected wire type")
+                }
+            })+
+        };
     }
 
     impl From<ProcedureCall> for Request {
@@ -212,8 +226,8 @@ mod schema {
 
     from_response_message!(Dictionary, List);
     from_response!(String, ProtobufTypeString);
-    from_response!(i32, ProtobufTypeInt32);
-    from_response!(i64, ProtobufTypeInt64);
+    from_response!(i32, ProtobufTypeSint32);
+    from_response!(i64, ProtobufTypeSint64);
     from_response!(u32, ProtobufTypeUint32);
     from_response!(u64, ProtobufTypeUint64);
     from_response!(f32, ProtobufTypeFloat);
@@ -321,10 +335,7 @@ mod test {
         let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
         dbg!(sc.get_ut());
-        dbg!(sc.get_active_vessel());
+        // dbg!(sc.get_active_vessel());
         dbg!(sc.get_game_mode());
-        dbg!(sc.launchable_vessels("VAB".into()));
-        dbg!(sc.get_bodies());
-        dbg!(sc.get_warp_mode());
     }
 }
