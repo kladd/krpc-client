@@ -59,28 +59,6 @@ mod schema {
         };
     }
 
-    macro_rules! from_response_numeric {
-        ($name:ident) => {
-            impl From<Response> for $name {
-                fn from(r: Response) -> Self {
-                    $name::from_le_bytes(
-                        r.results[0]
-                            .value
-                            .to_owned()
-                            .try_into()
-                            .expect(concat!("expecting ", stringify!($name))),
-                    )
-                }
-            }
-
-            impl DecodeUntagged for $name {
-                fn decode_untagged(b: &Vec<u8>) -> Self {
-                    $name::from_le_bytes(b.to_owned().try_into().unwrap())
-                }
-            }
-        };
-    }
-
     macro_rules! rpc_object {
         ($name:ident) => {
             #[derive(Debug, Default)]
@@ -233,7 +211,6 @@ mod schema {
     from_response!(f32, ProtobufTypeFloat);
     from_response!(f64, ProtobufTypeDouble);
     from_response!(bool, ProtobufTypeBool);
-    from_response_numeric!(u8);
 
     to_argument!(String, write_string_no_tag);
     to_argument_deref!(bool, write_bool_no_tag);
