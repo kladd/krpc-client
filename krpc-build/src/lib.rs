@@ -147,6 +147,7 @@ fn decode_type(ty: &serde_json::Map<String, serde_json::Value>) -> String {
     match code {
         "STRING" => "String".to_string(),
         "SINT32" => "i32".to_string(),
+        "UINT32" => "u32".into(),
         "UINT64" => "u64".into(),
         "BOOL" => "bool".to_string(),
         "FLOAT" => "f32".to_string(),
