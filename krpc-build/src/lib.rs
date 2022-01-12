@@ -28,7 +28,7 @@ fn build_json(
         .new_module(&service_name.to_case(Case::Snake))
         .vis("pub")
         .import("crate::schema", "ToArgument")
-        .import("crate::schema", "DecodeUntagged");
+        .import("crate::schema", "FromResponse");
     module
         .new_struct(&service_name.to_case(Case::Pascal))
         .vis("pub")
@@ -110,6 +110,14 @@ fn build_json(
             sfn.arg(&name, decode_type(ty));
         }
 
+
+        let mut ret = String::from("()");
+        def.get("return_type").map(|return_value| {
+            let ty = return_value.as_object().unwrap();
+            ret = decode_type(ty);
+            sfn.ret(&ret);
+        });
+
         let body = format!(
             r#"
 let request = crate::schema::Request::from(crate::client::Client::proc_call(
@@ -121,21 +129,16 @@ let request = crate::schema::Request::from(crate::client::Client::proc_call(
 let response = self.client.call(request);
 dbg!(&response);
 
-response.into()
+<{ret}>::from_response(response)
 "#,
             service = service_name,
             procedure = proc_name,
             args = proc_args.join(","),
+            ret = ret
         );
 
         sfn.line(body);
 
-        def.get("return_type").map(|return_value| {
-            let ty = return_value.as_object().unwrap();
-            let return_type = decode_type(ty);
-
-            sfn.ret(&return_type);
-        });
     }
 
     Ok(())

@@ -7,21 +7,44 @@ mod schema {
     use prost::Message;
     use protobuf::types::ProtobufType;
 
-    pub trait ToArgument {
-        fn to_argument(&self, pos: u32) -> Argument;
-    }
-
     pub trait DecodeUntagged {
         fn decode_untagged(buf: &Vec<u8>) -> Self;
     }
 
+    pub trait FromResponse {
+        fn from_response(response: Response) -> Self;
+    }
+
+    impl<T: DecodeUntagged> FromResponse for T {
+        fn from_response(response: Response) -> Self {
+            Self::decode_untagged(&response.results[0].value)
+        }
+    }
+
+    pub trait EncodeUntagged {
+        fn encode_untagged(&self) -> Vec<u8>;
+    }
+
+    pub trait ToArgument {
+        fn to_argument(&self, pos: u32) -> Argument;
+    }
+
+    impl<T: EncodeUntagged> ToArgument for T {
+        fn to_argument(&self, pos: u32) -> Argument {
+            Argument {
+                position: pos,
+                value: self.encode_untagged()
+            }
+        }
+    }
+
     // TODO: if String is the only type that doesn't need to be dereferenced,
-    //       then implement ToArgument for String and get rid of one of these
-    //       macros.
-    macro_rules! to_argument_deref {
+    //       then implement EncodeUntagged for String and get rid of one of
+    //       these macros.
+    macro_rules! encode_untagged_deref {
         ($t:ty, $fname:ident) => {
-            impl ToArgument for $t {
-                fn to_argument(&self, pos: u32) -> Argument {
+            impl EncodeUntagged for $t {
+                fn encode_untagged(&self) -> Vec<u8> {
                     let mut buf: Vec<u8> = Vec::new();
                     {
                         let mut outstream =
@@ -30,19 +53,16 @@ mod schema {
                         outstream.flush().unwrap();
                     }
 
-                    Argument {
-                        position: pos,
-                        value: buf,
-                    }
+                    buf
                 }
             }
         };
     }
 
-    macro_rules! to_argument {
+    macro_rules! encode_untagged {
         ($t:ty, $fname:ident) => {
-            impl ToArgument for $t {
-                fn to_argument(&self, pos: u32) -> Argument {
+            impl EncodeUntagged for $t {
+                fn encode_untagged(&self) -> Vec<u8> {
                     let mut buf: Vec<u8> = Vec::new();
                     {
                         let mut outstream =
@@ -51,10 +71,7 @@ mod schema {
                         outstream.flush().unwrap();
                     }
 
-                    Argument {
-                        position: pos,
-                        value: buf,
-                    }
+                    buf
                 }
             }
         };
@@ -65,14 +82,6 @@ mod schema {
             #[derive(Debug, Default)]
             pub struct $name {
                 pub id: u64,
-            }
-
-            impl From<crate::schema::Response> for $name {
-                fn from(response: crate::schema::Response) -> Self {
-                    $name {
-                        id: u64::from(response),
-                    }
-                }
             }
 
             impl crate::schema::DecodeUntagged for $name {
@@ -98,12 +107,6 @@ mod schema {
                 $value,
             )+}
 
-            impl From<crate::schema::Response> for $name {
-                fn from(response: crate::schema::Response) -> Self {
-                    Self::decode_untagged(&response.results[0].value)
-                }
-            }
-
             impl crate::schema::DecodeUntagged for $name {
                 fn decode_untagged(buf: &Vec<u8>) -> Self {
                     Self::from(i32::decode_untagged(buf))
@@ -127,14 +130,8 @@ mod schema {
         }
     }
 
-    macro_rules! from_response {
+    macro_rules! decode_untagged {
         ($to:ty, $proto:ident) => {
-            impl From<Response> for $to {
-                fn from(response: Response) -> Self {
-                    Self::decode_untagged(&response.results[0].value)
-                }
-            }
-
             impl DecodeUntagged for $to {
                 fn decode_untagged(b: &Vec<u8>) -> Self {
                     ::protobuf::types::$proto::read(
@@ -146,16 +143,30 @@ mod schema {
         };
     }
 
-    macro_rules! from_response_message {
-        ($($m:ty),+$(,)?) => {
-            $(
-            impl From<Response> for $m {
-                fn from(response: Response) -> Self {
-                    Self::decode(&response.results[0].value[..])
-                    .expect("unexpected wire type")
+    macro_rules! decode_untagged_message {
+        ($($m:ty),+$(,)?) => {$(
+            impl DecodeUntagged for $m {
+                fn decode_untagged(b: &Vec<u8>) -> Self {
+                    Self::decode(&b[..]).expect("unexpected wire type")
                 }
             })+
         };
+    }
+
+    // There will be tuples of more than one type. Where will your macro be
+    // then?
+    macro_rules! decode_untagged_tuple {
+        (($($m:ty),+$(,)?), $proto:ident) => {
+            impl DecodeUntagged for ($( $m, )+) {
+                fn decode_untagged(b: &Vec<u8>) -> Self {
+                    let mut is: ::protobuf::CodedInputStream =
+                        ::protobuf::CodedInputStream::from_bytes(&b);
+                    (
+                        $(::protobuf::types::$proto::read(&mut is).unwrap() as $m,)+
+                    )
+                }
+            }
+        }
     }
 
     impl From<ProcedureCall> for Request {
@@ -166,14 +177,14 @@ mod schema {
         }
     }
 
-    impl<K, V> From<Response> for HashMap<K, V>
+    impl<K, V> FromResponse for HashMap<K, V>
     where
         K: DecodeUntagged + Eq + Hash + Default,
         V: DecodeUntagged,
     {
-        fn from(response: Response) -> Self {
+        fn from_response(response: Response) -> Self {
             let mut map: HashMap<K, V> = HashMap::new();
-            let dictionary = Dictionary::from(response);
+            let dictionary = Dictionary::from_response(response);
             dictionary.entries.into_iter().for_each(|entry| {
                 map.insert(
                     K::decode_untagged(&entry.key),
@@ -184,13 +195,13 @@ mod schema {
         }
     }
 
-    impl<T> From<Response> for HashSet<T>
+    impl<T> FromResponse for HashSet<T>
     where
         T: DecodeUntagged + Eq + Hash,
     {
-        fn from(response: Response) -> Self {
+        fn from_response(response: Response) -> Self {
             let mut set = HashSet::new();
-            let protoset = Set::from(response);
+            let protoset = Set::from_response(response);
             protoset.items.into_iter().for_each(|item| {
                 set.insert(T::decode_untagged(&item));
             });
@@ -198,12 +209,12 @@ mod schema {
         }
     }
 
-    impl<T> From<Response> for Vec<T>
+    impl<T> FromResponse for Vec<T>
     where
         T: DecodeUntagged,
     {
-        fn from(response: Response) -> Self {
-            List::from(response)
+        fn from_response(response: Response) -> Self {
+            List::from_response(response)
                 .items
                 .into_iter()
                 .map(|item| T::decode_untagged(&item))
@@ -211,62 +222,36 @@ mod schema {
         }
     }
 
-    impl From<Response> for () {
-        fn from(_: Response) -> Self {
+    impl FromResponse for () {
+        fn from_response(_: Response) -> Self {
             ()
         }
     }
 
-    from_response_message!(Dictionary, List, Set);
-    from_response!(String, ProtobufTypeString);
-    from_response!(i32, ProtobufTypeSint32);
-    from_response!(i64, ProtobufTypeSint64);
-    from_response!(u32, ProtobufTypeUint32);
-    from_response!(u64, ProtobufTypeUint64);
-    from_response!(f32, ProtobufTypeFloat);
-    from_response!(f64, ProtobufTypeDouble);
-    from_response!(bool, ProtobufTypeBool);
+    decode_untagged!(String, ProtobufTypeString);
+    decode_untagged!(bool, ProtobufTypeBool);
+    decode_untagged!(f32, ProtobufTypeFloat);
+    decode_untagged!(f64, ProtobufTypeDouble);
+    decode_untagged!(i32, ProtobufTypeSint32);
+    decode_untagged!(i64, ProtobufTypeSint64);
+    decode_untagged!(u32, ProtobufTypeUint32);
+    decode_untagged!(u64, ProtobufTypeUint64);
 
-    to_argument!(String, write_string_no_tag);
-    to_argument_deref!(bool, write_bool_no_tag);
-    to_argument_deref!(i32, write_int32_no_tag);
-    to_argument_deref!(f32, write_float_no_tag);
-    to_argument_deref!(f64, write_double_no_tag);
-    to_argument_deref!(u64, write_uint64_no_tag);
+    decode_untagged_message!(Dictionary, List, Set);
 
-    impl From<Response> for (f64, f64, f64) {
-        fn from(response: Response) -> Self {
-            let mut is: ::protobuf::CodedInputStream =
-                ::protobuf::CodedInputStream::from_bytes(
-                    &response.results[0].value[..],
-                );
+    decode_untagged_tuple!((f64, f64, f64), ProtobufTypeDouble);
+    decode_untagged_tuple!((f64, f64, f64, f64), ProtobufTypeDouble);
 
-            (
-                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
-            )
-        }
-    }
+    encode_untagged!(String, write_string_no_tag);
+    encode_untagged_deref!(bool, write_bool_no_tag);
+    encode_untagged_deref!(i32, write_int32_no_tag);
+    encode_untagged_deref!(u32, write_uint32_no_tag);
+    encode_untagged_deref!(f32, write_float_no_tag);
+    encode_untagged_deref!(f64, write_double_no_tag);
+    encode_untagged_deref!(u64, write_uint64_no_tag);
 
-    impl From<Response> for (f64, f64, f64, f64) {
-        fn from(response: Response) -> Self {
-            let mut is: ::protobuf::CodedInputStream =
-                ::protobuf::CodedInputStream::from_bytes(
-                    &response.results[0].value[..],
-                );
-
-            (
-                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeDouble::read(&mut is).unwrap(),
-            )
-        }
-    }
-
-    impl ToArgument for (f64, f64, f64) {
-        fn to_argument(&self, pos: u32) -> Argument {
+    impl EncodeUntagged for (f64, f64, f64) {
+        fn encode_untagged(&self) -> Vec<u8> {
             let mut buf: Vec<u8> = Vec::new();
             {
                 let mut outstream = protobuf::CodedOutputStream::vec(&mut buf);
@@ -276,15 +261,12 @@ mod schema {
                 outstream.write_double_no_tag(self.2).unwrap();
             }
 
-            Argument {
-                position: pos,
-                value: buf,
-            }
+            buf
         }
     }
 
-    impl ToArgument for (f64, f64, f64, f64) {
-        fn to_argument(&self, pos: u32) -> Argument {
+    impl EncodeUntagged for (f64, f64, f64, f64) {
+        fn encode_untagged(&self) -> Vec<u8> {
             let mut buf: Vec<u8> = Vec::new();
             {
                 let mut outstream = protobuf::CodedOutputStream::vec(&mut buf);
@@ -295,10 +277,7 @@ mod schema {
                 outstream.write_double_no_tag(self.3).unwrap();
             }
 
-            Argument {
-                position: pos,
-                value: buf,
-            }
+            buf
         }
     }
 
