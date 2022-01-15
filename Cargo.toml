@@ -1,6 +1,6 @@
 [package]
 name = "krpc-client"
-version = "1.0.0"
+version = "0.4.9"
 edition = "2021"
 
 [dependencies]
