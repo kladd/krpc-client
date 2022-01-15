@@ -92,11 +92,11 @@ mod schema {
                 }
             }
 
-            impl crate::schema::ToArgument for $name {
-                fn to_argument(&self, pos: u32) -> crate::schema::Argument {
-                    self.id.to_argument(pos)
-                }
-            }
+	    impl crate::schema::EncodeUntagged for $name {
+		fn encode_untagged(&self) -> Vec<u8> {
+		    self.id.encode_untagged()
+		}
+	    }
         };
     }
 
@@ -149,6 +149,14 @@ mod schema {
                 fn decode_untagged(b: &Vec<u8>) -> Self {
                     Self::decode(&b[..]).expect("unexpected wire type")
                 }
+            }
+
+            impl EncodeUntagged for $m {
+                fn encode_untagged(&self) -> Vec<u8> {
+                    let mut buf = Vec::new();
+                    self.encode_length_delimited(&mut buf).unwrap();
+                    buf
+                }
             })+
         };
     }
@@ -195,6 +203,25 @@ mod schema {
         }
     }
 
+    impl<K, V> EncodeUntagged for HashMap<K, V>
+    where
+        K: EncodeUntagged,
+        V: EncodeUntagged,
+    {
+        fn encode_untagged(&self) -> Vec<u8> {
+            let mut entries = Vec::new();
+
+            for (k, v) in self {
+                entries.push(DictionaryEntry {
+                    key: k.encode_untagged(),
+                    value: v.encode_untagged(),
+                })
+            }
+
+            Dictionary { entries }.encode_untagged()
+        }
+    }
+
     impl<T> FromResponse for HashSet<T>
     where
         T: DecodeUntagged + Eq + Hash,
@@ -209,6 +236,19 @@ mod schema {
         }
     }
 
+    impl<T> EncodeUntagged for HashSet<T>
+    where
+        T: EncodeUntagged,
+    {
+        fn encode_untagged(&self) -> Vec<u8> {
+            let items: Vec<Vec<u8>> = self
+                .into_iter()
+                .map(|item| item.encode_untagged())
+                .collect();
+            Set { items }.encode_untagged()
+        }
+    }
+
     impl<T> DecodeUntagged for Vec<T>
     where
         T: DecodeUntagged,
@@ -219,6 +259,19 @@ mod schema {
                 .into_iter()
                 .map(|item| T::decode_untagged(&item))
                 .collect()
+        }
+    }
+
+    impl<T> EncodeUntagged for Vec<T>
+    where
+        T: EncodeUntagged,
+    {
+        fn encode_untagged(&self) -> Vec<u8> {
+            let items: Vec<Vec<u8>> = self
+                .into_iter()
+                .map(|item| item.encode_untagged())
+                .collect();
+            List { items }.encode_untagged()
         }
     }
 
@@ -243,6 +296,18 @@ mod schema {
         }
     }
 
+    impl DecodeUntagged for (Vec<u8>, String, String) {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
+            let mut is: ::protobuf::CodedInputStream =
+                ::protobuf::CodedInputStream::from_bytes(&buf);
+            (
+                ::protobuf::types::ProtobufTypeBytes::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeString::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeString::read(&mut is).unwrap(),
+            )
+        }
+    }
+
     impl FromResponse for () {
         fn from_response(_: Response) -> Self {
             ()
@@ -257,8 +322,9 @@ mod schema {
     decode_untagged!(i64, ProtobufTypeSint64);
     decode_untagged!(u32, ProtobufTypeUint32);
     decode_untagged!(u64, ProtobufTypeUint64);
+    decode_untagged!(Vec<u8>, ProtobufTypeBytes);
 
-    decode_untagged_message!(Dictionary, List, Set);
+    decode_untagged_message!(Dictionary, List, Set, Status, Stream, Services, ProcedureCall, Event);
 
     decode_untagged_tuple!((f32, f32, f32), ProtobufTypeFloat);
     decode_untagged_tuple!((f64, f64, f64), ProtobufTypeDouble);
