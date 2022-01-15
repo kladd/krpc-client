@@ -15,18 +15,24 @@ mod schema {
         fn from_response(response: Response) -> Self;
     }
 
+    impl FromResponse for () {
+        fn from_response(_: Response) -> Self {
+            ()
+        }
+    }
+
     impl<T: DecodeUntagged> FromResponse for T {
         fn from_response(response: Response) -> Self {
             Self::decode_untagged(&response.results[0].value)
         }
     }
 
-    pub trait EncodeUntagged {
-        fn encode_untagged(&self) -> Vec<u8>;
-    }
-
     pub trait ToArgument {
         fn to_argument(&self, pos: u32) -> Argument;
+    }
+
+    pub trait EncodeUntagged {
+        fn encode_untagged(&self) -> Vec<u8>;
     }
 
     impl<T: EncodeUntagged> ToArgument for T {
@@ -92,11 +98,11 @@ mod schema {
                 }
             }
 
-	    impl crate::schema::EncodeUntagged for $name {
-		fn encode_untagged(&self) -> Vec<u8> {
-		    self.id.encode_untagged()
-		}
-	    }
+            impl crate::schema::EncodeUntagged for $name {
+                fn encode_untagged(&self) -> Vec<u8> {
+                    self.id.encode_untagged()
+                }
+            }
         };
     }
 
@@ -113,11 +119,11 @@ mod schema {
                 }
             }
 
-            impl crate::schema::ToArgument for $name {
-                fn to_argument(&self, pos: u32) -> crate::schema::Argument {
-                    (*self as i32).to_argument(pos)
-                }
-            }
+	    impl crate::schema::EncodeUntagged for $name {
+		fn encode_untagged(&self) -> Vec<u8> {
+		    (*self as i32).encode_untagged()
+		}
+	    }
 
             impl From<i32> for $name {
                 fn from(val: i32) -> Self {
@@ -143,7 +149,7 @@ mod schema {
         };
     }
 
-    macro_rules! decode_untagged_message {
+    macro_rules! encode_decode_message_untagged {
         ($($m:ty),+$(,)?) => {$(
             impl DecodeUntagged for $m {
                 fn decode_untagged(b: &Vec<u8>) -> Self {
@@ -185,14 +191,14 @@ mod schema {
         }
     }
 
-    impl<K, V> FromResponse for HashMap<K, V>
+    impl<K, V> DecodeUntagged for HashMap<K, V>
     where
         K: DecodeUntagged + Eq + Hash + Default,
         V: DecodeUntagged,
     {
-        fn from_response(response: Response) -> Self {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
             let mut map: HashMap<K, V> = HashMap::new();
-            let dictionary = Dictionary::from_response(response);
+            let dictionary = Dictionary::decode_untagged(buf);
             dictionary.entries.into_iter().for_each(|entry| {
                 map.insert(
                     K::decode_untagged(&entry.key),
@@ -222,13 +228,13 @@ mod schema {
         }
     }
 
-    impl<T> FromResponse for HashSet<T>
+    impl<T> DecodeUntagged for HashSet<T>
     where
         T: DecodeUntagged + Eq + Hash,
     {
-        fn from_response(response: Response) -> Self {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
             let mut set = HashSet::new();
-            let protoset = Set::from_response(response);
+            let protoset = Set::decode_untagged(buf);
             protoset.items.into_iter().for_each(|item| {
                 set.insert(T::decode_untagged(&item));
             });
@@ -275,45 +281,6 @@ mod schema {
         }
     }
 
-    impl DecodeUntagged for ((f64, f64, f64), (f64, f64, f64)) {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
-            use protobuf::types::ProtobufTypeDouble;
-
-            let mut is: ::protobuf::CodedInputStream =
-                ::protobuf::CodedInputStream::from_bytes(&buf);
-            (
-                (
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                ),
-                (
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                ),
-            )
-        }
-    }
-
-    impl DecodeUntagged for (Vec<u8>, String, String) {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
-            let mut is: ::protobuf::CodedInputStream =
-                ::protobuf::CodedInputStream::from_bytes(&buf);
-            (
-                ::protobuf::types::ProtobufTypeBytes::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeString::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeString::read(&mut is).unwrap(),
-            )
-        }
-    }
-
-    impl FromResponse for () {
-        fn from_response(_: Response) -> Self {
-            ()
-        }
-    }
-
     decode_untagged!(String, ProtobufTypeString);
     decode_untagged!(bool, ProtobufTypeBool);
     decode_untagged!(f32, ProtobufTypeFloat);
@@ -324,7 +291,16 @@ mod schema {
     decode_untagged!(u64, ProtobufTypeUint64);
     decode_untagged!(Vec<u8>, ProtobufTypeBytes);
 
-    decode_untagged_message!(Dictionary, List, Set, Status, Stream, Services, ProcedureCall, Event);
+    encode_decode_message_untagged!(
+        Dictionary,
+        List,
+        Set,
+        Status,
+        Stream,
+        Services,
+        ProcedureCall,
+        Event
+    );
 
     decode_untagged_tuple!((f32, f32, f32), ProtobufTypeFloat);
     decode_untagged_tuple!((f64, f64, f64), ProtobufTypeDouble);
@@ -381,6 +357,39 @@ mod schema {
             }
 
             buf
+        }
+    }
+
+    impl DecodeUntagged for ((f64, f64, f64), (f64, f64, f64)) {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
+            use protobuf::types::ProtobufTypeDouble;
+
+            let mut is: ::protobuf::CodedInputStream =
+                ::protobuf::CodedInputStream::from_bytes(&buf);
+            (
+                (
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                ),
+                (
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                ),
+            )
+        }
+    }
+
+    impl DecodeUntagged for (Vec<u8>, String, String) {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
+            let mut is: ::protobuf::CodedInputStream =
+                ::protobuf::CodedInputStream::from_bytes(&buf);
+            (
+                ::protobuf::types::ProtobufTypeBytes::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeString::read(&mut is).unwrap(),
+                ::protobuf::types::ProtobufTypeString::read(&mut is).unwrap(),
+            )
         }
     }
 
