@@ -33,7 +33,7 @@ mod schema {
         fn to_argument(&self, pos: u32) -> Argument {
             Argument {
                 position: pos,
-                value: self.encode_untagged()
+                value: self.encode_untagged(),
             }
         }
     }
@@ -162,7 +162,7 @@ mod schema {
                     let mut is: ::protobuf::CodedInputStream =
                         ::protobuf::CodedInputStream::from_bytes(&b);
                     (
-                        $(::protobuf::types::$proto::read(&mut is).unwrap() as $m,)+
+                        $(<$m>::from(::protobuf::types::$proto::read(&mut is).unwrap()),)+
                     )
                 }
             }
@@ -209,16 +209,37 @@ mod schema {
         }
     }
 
-    impl<T> FromResponse for Vec<T>
+    impl<T> DecodeUntagged for Vec<T>
     where
         T: DecodeUntagged,
     {
-        fn from_response(response: Response) -> Self {
-            List::from_response(response)
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
+            List::decode_untagged(buf)
                 .items
                 .into_iter()
                 .map(|item| T::decode_untagged(&item))
                 .collect()
+        }
+    }
+
+    impl DecodeUntagged for ((f64, f64, f64), (f64, f64, f64)) {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
+            use protobuf::types::ProtobufTypeDouble;
+
+            let mut is: ::protobuf::CodedInputStream =
+                ::protobuf::CodedInputStream::from_bytes(&buf);
+            (
+                (
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                ),
+                (
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
+                ),
+            )
         }
     }
 
@@ -239,6 +260,7 @@ mod schema {
 
     decode_untagged_message!(Dictionary, List, Set);
 
+    decode_untagged_tuple!((f32, f32, f32), ProtobufTypeFloat);
     decode_untagged_tuple!((f64, f64, f64), ProtobufTypeDouble);
     decode_untagged_tuple!((f64, f64, f64, f64), ProtobufTypeDouble);
 
@@ -259,6 +281,21 @@ mod schema {
                 outstream.write_double_no_tag(self.0).unwrap();
                 outstream.write_double_no_tag(self.1).unwrap();
                 outstream.write_double_no_tag(self.2).unwrap();
+            }
+
+            buf
+        }
+    }
+
+    impl EncodeUntagged for (f32, f32, f32) {
+        fn encode_untagged(&self) -> Vec<u8> {
+            let mut buf: Vec<u8> = Vec::new();
+            {
+                let mut outstream = protobuf::CodedOutputStream::vec(&mut buf);
+
+                outstream.write_float_no_tag(self.0).unwrap();
+                outstream.write_float_no_tag(self.1).unwrap();
+                outstream.write_float_no_tag(self.2).unwrap();
             }
 
             buf
