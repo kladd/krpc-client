@@ -397,9 +397,9 @@ mod schema {
     pub(crate) use rpc_object;
 }
 
-mod client;
+pub mod client;
 
-mod services {
+pub mod services {
     include!(concat!(env!("OUT_DIR"), "/services.rs"));
 }
 

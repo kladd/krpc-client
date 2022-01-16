@@ -107,14 +107,13 @@ fn build_json(
             let ty = param.get("type").unwrap().as_object().unwrap();
 
             proc_args.push(format!("{}.to_argument({})", &name, pos));
-            sfn.arg(&name, decode_type(ty));
+            sfn.arg(&name, decode_type(ty, true));
         }
-
 
         let mut ret = String::from("()");
         def.get("return_type").map(|return_value| {
             let ty = return_value.as_object().unwrap();
-            ret = decode_type(ty);
+            ret = decode_type(ty, false);
             sfn.ret(&ret);
         });
 
@@ -127,7 +126,6 @@ let request = crate::schema::Request::from(crate::client::Client::proc_call(
 ));
 
 let response = self.client.call(request);
-dbg!(&response);
 
 <{ret}>::from_response(response)
 "#,
@@ -138,16 +136,18 @@ dbg!(&response);
         );
 
         sfn.line(body);
-
     }
 
     Ok(())
 }
 
-fn decode_type(ty: &serde_json::Map<String, serde_json::Value>) -> String {
+fn decode_type(
+    ty: &serde_json::Map<String, serde_json::Value>,
+    borrow: bool,
+) -> String {
     let code = ty.get("code").unwrap().as_str().unwrap();
 
-    match code {
+    let str = match code {
         "STRING" => "String".to_string(),
         "SINT32" => "i32".to_string(),
         "UINT32" => "u32".into(),
@@ -169,7 +169,16 @@ fn decode_type(ty: &serde_json::Map<String, serde_json::Value>) -> String {
         "SERVICES" => "crate::schema::Services".into(),
         "STATUS" => "crate::schema::Status".into(),
         _ => "".to_string(),
+    };
+
+    if borrow {
+        return match code {
+            "CLASS" => format!("&{}", str),
+            _ => str,
+        };
     }
+
+    str
 }
 
 fn decode_tuple(ty: &serde_json::Map<String, serde_json::Value>) -> String {
@@ -177,7 +186,7 @@ fn decode_tuple(ty: &serde_json::Map<String, serde_json::Value>) -> String {
     let types = ty.get("types").unwrap().as_array().unwrap();
 
     for t in types {
-        out.push(decode_type(t.as_object().unwrap()));
+        out.push(decode_type(t.as_object().unwrap(), false));
     }
 
     format!("({})", out.join(", "))
@@ -188,7 +197,7 @@ fn decode_list(ty: &serde_json::Map<String, serde_json::Value>) -> String {
 
     format!(
         "Vec<{}>",
-        decode_type(&types.first().unwrap().as_object().unwrap())
+        decode_type(&types.first().unwrap().as_object().unwrap(), false)
     )
 }
 
@@ -208,8 +217,10 @@ fn decode_dictionary(
 ) -> String {
     let types = ty.get("types").unwrap().as_array().unwrap();
 
-    let key_name = decode_type(types.get(0).unwrap().as_object().unwrap());
-    let value_name = decode_type(types.get(1).unwrap().as_object().unwrap());
+    let key_name =
+        decode_type(types.get(0).unwrap().as_object().unwrap(), false);
+    let value_name =
+        decode_type(types.get(1).unwrap().as_object().unwrap(), false);
 
     format!("std::collections::HashMap<{}, {}>", key_name, value_name)
 }
@@ -219,7 +230,7 @@ fn decode_set(ty: &serde_json::Map<String, serde_json::Value>) -> String {
 
     format!(
         "std::collections::HashSet<{}>",
-        decode_type(&types.first().unwrap().as_object().unwrap())
+        decode_type(&types.first().unwrap().as_object().unwrap(), false)
     )
 }
 
