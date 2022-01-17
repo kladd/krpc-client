@@ -167,27 +167,110 @@ mod schema {
         };
     }
 
-    // There will be tuples of more than one type. Where will your macro be
-    // then?
-    macro_rules! decode_untagged_tuple {
-        (($($m:ty),+$(,)?), $proto:ident) => {
-            impl DecodeUntagged for ($( $m, )+) {
-                fn decode_untagged(b: &Vec<u8>) -> Self {
-                    let mut is: ::protobuf::CodedInputStream =
-                        ::protobuf::CodedInputStream::from_bytes(&b);
-                    (
-                        $(<$m>::from(::protobuf::types::$proto::read(&mut is).unwrap()),)+
-                    )
-                }
-            }
-        }
-    }
-
     impl From<ProcedureCall> for Request {
         fn from(proc_call: ProcedureCall) -> Self {
             Request {
                 calls: vec![proc_call],
             }
+        }
+    }
+
+    impl<T0, T1> DecodeUntagged for (T0, T1)
+    where
+        T0: DecodeUntagged,
+        T1: DecodeUntagged,
+    {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
+            let tuple = Tuple::decode_untagged(buf);
+            (
+                T0::decode_untagged(&tuple.items.get(0).unwrap()),
+                T1::decode_untagged(&tuple.items.get(0).unwrap()),
+            )
+        }
+    }
+
+    impl<T0, T1> EncodeUntagged for (T0, T1)
+    where
+        T0: EncodeUntagged,
+        T1: EncodeUntagged,
+    {
+        fn encode_untagged(&self) -> Vec<u8> {
+            Tuple {
+                items: vec![self.0.encode_untagged(), self.1.encode_untagged()],
+            }
+            .encode_untagged()
+        }
+    }
+
+    impl<T0, T1, T2> DecodeUntagged for (T0, T1, T2)
+    where
+        T0: DecodeUntagged,
+        T1: DecodeUntagged,
+        T2: DecodeUntagged,
+    {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
+            let tuple = Tuple::decode_untagged(buf);
+            (
+                T0::decode_untagged(&tuple.items.get(0).unwrap()),
+                T1::decode_untagged(&tuple.items.get(0).unwrap()),
+                T2::decode_untagged(&tuple.items.get(0).unwrap()),
+            )
+        }
+    }
+
+    impl<T0, T1, T2> EncodeUntagged for (T0, T1, T2)
+    where
+        T0: EncodeUntagged,
+        T1: EncodeUntagged,
+        T2: EncodeUntagged,
+    {
+        fn encode_untagged(&self) -> Vec<u8> {
+            Tuple {
+                items: vec![
+                    self.0.encode_untagged(),
+                    self.1.encode_untagged(),
+                    self.2.encode_untagged(),
+                ],
+            }
+            .encode_untagged()
+        }
+    }
+
+    impl<T0, T1, T2, T3> DecodeUntagged for (T0, T1, T2, T3)
+    where
+        T0: DecodeUntagged,
+        T1: DecodeUntagged,
+        T2: DecodeUntagged,
+        T3: DecodeUntagged,
+    {
+        fn decode_untagged(buf: &Vec<u8>) -> Self {
+            let tuple = Tuple::decode_untagged(buf);
+            (
+                T0::decode_untagged(&tuple.items.get(0).unwrap()),
+                T1::decode_untagged(&tuple.items.get(0).unwrap()),
+                T2::decode_untagged(&tuple.items.get(0).unwrap()),
+                T3::decode_untagged(&tuple.items.get(0).unwrap()),
+            )
+        }
+    }
+
+    impl<T0, T1, T2, T3> EncodeUntagged for (T0, T1, T2, T3)
+    where
+        T0: EncodeUntagged,
+        T1: EncodeUntagged,
+        T2: EncodeUntagged,
+        T3: EncodeUntagged,
+    {
+        fn encode_untagged(&self) -> Vec<u8> {
+            Tuple {
+                items: vec![
+                    self.0.encode_untagged(),
+                    self.1.encode_untagged(),
+                    self.2.encode_untagged(),
+                    self.3.encode_untagged(),
+                ],
+            }
+            .encode_untagged()
         }
     }
 
@@ -299,12 +382,9 @@ mod schema {
         Stream,
         Services,
         ProcedureCall,
-        Event
+        Event,
+        Tuple
     );
-
-    decode_untagged_tuple!((f32, f32, f32), ProtobufTypeFloat);
-    decode_untagged_tuple!((f64, f64, f64), ProtobufTypeDouble);
-    decode_untagged_tuple!((f64, f64, f64, f64), ProtobufTypeDouble);
 
     encode_untagged!(String, write_string_no_tag);
     encode_untagged_deref!(bool, write_bool_no_tag);
@@ -313,85 +393,6 @@ mod schema {
     encode_untagged_deref!(f32, write_float_no_tag);
     encode_untagged_deref!(f64, write_double_no_tag);
     encode_untagged_deref!(u64, write_uint64_no_tag);
-
-    impl EncodeUntagged for (f64, f64, f64) {
-        fn encode_untagged(&self) -> Vec<u8> {
-            let mut buf: Vec<u8> = Vec::new();
-            {
-                let mut outstream = protobuf::CodedOutputStream::vec(&mut buf);
-
-                outstream.write_double_no_tag(self.0).unwrap();
-                outstream.write_double_no_tag(self.1).unwrap();
-                outstream.write_double_no_tag(self.2).unwrap();
-            }
-
-            buf
-        }
-    }
-
-    impl EncodeUntagged for (f32, f32, f32) {
-        fn encode_untagged(&self) -> Vec<u8> {
-            let mut buf: Vec<u8> = Vec::new();
-            {
-                let mut outstream = protobuf::CodedOutputStream::vec(&mut buf);
-
-                outstream.write_float_no_tag(self.0).unwrap();
-                outstream.write_float_no_tag(self.1).unwrap();
-                outstream.write_float_no_tag(self.2).unwrap();
-            }
-
-            buf
-        }
-    }
-
-    impl EncodeUntagged for (f64, f64, f64, f64) {
-        fn encode_untagged(&self) -> Vec<u8> {
-            let mut buf: Vec<u8> = Vec::new();
-            {
-                let mut outstream = protobuf::CodedOutputStream::vec(&mut buf);
-
-                outstream.write_double_no_tag(self.0).unwrap();
-                outstream.write_double_no_tag(self.1).unwrap();
-                outstream.write_double_no_tag(self.2).unwrap();
-                outstream.write_double_no_tag(self.3).unwrap();
-            }
-
-            buf
-        }
-    }
-
-    impl DecodeUntagged for ((f64, f64, f64), (f64, f64, f64)) {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
-            use protobuf::types::ProtobufTypeDouble;
-
-            let mut is: ::protobuf::CodedInputStream =
-                ::protobuf::CodedInputStream::from_bytes(&buf);
-            (
-                (
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                ),
-                (
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                    f64::from(ProtobufTypeDouble::read(&mut is).unwrap()),
-                ),
-            )
-        }
-    }
-
-    impl DecodeUntagged for (Vec<u8>, String, String) {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
-            let mut is: ::protobuf::CodedInputStream =
-                ::protobuf::CodedInputStream::from_bytes(&buf);
-            (
-                ::protobuf::types::ProtobufTypeBytes::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeString::read(&mut is).unwrap(),
-                ::protobuf::types::ProtobufTypeString::read(&mut is).unwrap(),
-            )
-        }
-    }
 
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
@@ -417,8 +418,15 @@ mod test {
 
         let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
-        dbg!(sc.get_ut());
-        // dbg!(sc.get_active_vessel());
-        dbg!(sc.get_game_mode());
+        let ship = sc.get_active_vessel();
+        let svrf = sc.vessel_get_surface_velocity_reference_frame(&ship);
+        let obrf = sc.vessel_get_orbital_reference_frame(&ship);
+        let dir = (0.0, 1.0, 0.0);
+
+        dbg!(&ship);
+        dbg!(&svrf);
+        dbg!(&obrf);
+
+        sc.transform_position(dir, &obrf, &svrf);
     }
 }
