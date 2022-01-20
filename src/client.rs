@@ -1,17 +1,17 @@
-use bytes::BytesMut;
-use prost::Message;
+use bytes::{Buf, BytesMut};
 
 use std::io::{Read, Write};
 use std::net::{SocketAddrV4, TcpStream};
 use std::sync::Mutex;
 
-use crate::schema;
+use crate::schema::{self, ConnectionResponse};
+
+const LENGTH_DELIMITER_SIZE: usize = 10;
 
 pub struct Client {
     rpc: Mutex<TcpStream>,
 }
 
-// TODO(kladd):
 impl Client {
     pub fn new(
         name: &str,
@@ -25,29 +25,13 @@ impl Client {
         ))
         .expect("binding address");
 
-        // TODO(kladd): 512?
-        let mut buf = BytesMut::with_capacity(512);
-
         // Send connection request.
         let mut request = schema::ConnectionRequest::default();
         request.set_type(schema::connection_request::Type::Rpc);
         request.client_name = String::from(name);
 
-        request
-            .encode_length_delimited(&mut buf)
-            .expect("encoding request");
-
-        rpc.write(&buf.split()).expect("sending request");
-        rpc.flush().unwrap();
-
-        // Read response.
-        // TODO(kladd): fixed buffer size.
-        let mut res_buf = vec![0u8; 28];
-        let n = rpc.read(&mut res_buf[..]).expect("reading response");
-
-        let _response =
-            schema::ConnectionResponse::decode_length_delimited(&res_buf[..n])
-                .expect("decode response");
+        send(&mut rpc, request);
+        let _response = recv::<ConnectionResponse>(&mut rpc);
 
         Self {
             rpc: Mutex::new(rpc),
@@ -57,24 +41,8 @@ impl Client {
     pub fn call(&self, request: schema::Request) -> schema::Response {
         let mut rpc = self.rpc.lock().unwrap();
 
-        let mut request_buf = Vec::new();
-        request
-            .encode_length_delimited(&mut request_buf)
-            .expect("encode request");
-
-        rpc.write(&request_buf).expect("rpc send request");
-        rpc.flush().expect("rpc send flush");
-
-        // TODO(kladd): fixed buffer size.
-        let mut response_buf = vec![0u8; 512];
-        let n = rpc
-            .read(&mut response_buf[..])
-            .expect("rpc recieve response");
-
-        drop(rpc);
-
-        schema::Response::decode_length_delimited(&response_buf[..n])
-            .expect("decode response")
+        send(&mut rpc, request);
+        recv(&mut rpc)
     }
 
     pub fn proc_call(
@@ -89,4 +57,35 @@ impl Client {
 
         proc
     }
+}
+
+fn send<T: prost::Message>(rpc: &mut TcpStream, message: T) {
+    let mut buf = BytesMut::with_capacity(message.encoded_len() + 10);
+
+    message
+        .encode_length_delimited(&mut buf)
+        .expect("encoding request");
+
+    rpc.write(&buf).expect("sending request");
+    rpc.flush().unwrap();
+}
+
+fn recv<T: prost::Message + Default>(rpc: &mut TcpStream) -> T {
+    let mut buf = BytesMut::new();
+    buf.resize(LENGTH_DELIMITER_SIZE, 0);
+
+    rpc.read(&mut buf).expect("reading message length");
+
+    let msg_size = prost::decode_length_delimiter(&mut buf)
+        .expect("decoding message length");
+
+    buf.resize(msg_size, 0);
+
+    if msg_size > LENGTH_DELIMITER_SIZE {
+        let offset =
+            LENGTH_DELIMITER_SIZE - prost::length_delimiter_len(msg_size);
+        rpc.read_exact(&mut buf[offset..]).expect("reading message");
+    }
+
+    T::decode(buf).expect("decoding message")
 }

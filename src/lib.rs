@@ -419,14 +419,7 @@ mod test {
         let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
         let ship = sc.get_active_vessel();
-        let svrf = sc.vessel_get_surface_velocity_reference_frame(&ship);
-        let obrf = sc.vessel_get_orbital_reference_frame(&ship);
-        let dir = (0.0, 1.0, 0.0);
 
         dbg!(&ship);
-        dbg!(&svrf);
-        dbg!(&obrf);
-
-        sc.transform_position(dir, &obrf, &svrf);
     }
 }
