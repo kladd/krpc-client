@@ -8,7 +8,7 @@ mod schema {
     use protobuf::types::ProtobufType;
 
     pub trait DecodeUntagged {
-        fn decode_untagged(buf: &Vec<u8>) -> Self;
+        fn decode_untagged(buf: &[u8]) -> Self;
     }
 
     pub trait FromResponse {
@@ -16,9 +16,7 @@ mod schema {
     }
 
     impl FromResponse for () {
-        fn from_response(_: Response) -> Self {
-            ()
-        }
+        fn from_response(_: Response) -> Self {}
     }
 
     impl<T: DecodeUntagged> FromResponse for T {
@@ -91,7 +89,7 @@ mod schema {
             }
 
             impl crate::schema::DecodeUntagged for $name {
-                fn decode_untagged(buf: &Vec<u8>) -> Self {
+                fn decode_untagged(buf: &[u8]) -> Self {
                     $name {
                         id: u64::decode_untagged(buf),
                     }
@@ -114,7 +112,7 @@ mod schema {
             )+}
 
             impl crate::schema::DecodeUntagged for $name {
-                fn decode_untagged(buf: &Vec<u8>) -> Self {
+                fn decode_untagged(buf: &[u8]) -> Self {
                     Self::from(i32::decode_untagged(buf))
                 }
             }
@@ -139,7 +137,7 @@ mod schema {
     macro_rules! decode_untagged {
         ($to:ty, $proto:ident) => {
             impl DecodeUntagged for $to {
-                fn decode_untagged(b: &Vec<u8>) -> Self {
+                fn decode_untagged(b: &[u8]) -> Self {
                     ::protobuf::types::$proto::read(
                         &mut ::protobuf::CodedInputStream::from_bytes(b),
                     )
@@ -152,7 +150,7 @@ mod schema {
     macro_rules! encode_decode_message_untagged {
         ($($m:ty),+$(,)?) => {$(
             impl DecodeUntagged for $m {
-                fn decode_untagged(b: &Vec<u8>) -> Self {
+                fn decode_untagged(b: &[u8]) -> Self {
                     Self::decode(&b[..]).expect("unexpected wire type")
                 }
             }
@@ -180,11 +178,11 @@ mod schema {
         T0: DecodeUntagged,
         T1: DecodeUntagged,
     {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
+        fn decode_untagged(buf: &[u8]) -> Self {
             let tuple = Tuple::decode_untagged(buf);
             (
-                T0::decode_untagged(&tuple.items.get(0).unwrap()),
-                T1::decode_untagged(&tuple.items.get(0).unwrap()),
+                T0::decode_untagged(tuple.items.get(0).unwrap()),
+                T1::decode_untagged(tuple.items.get(0).unwrap()),
             )
         }
     }
@@ -208,12 +206,12 @@ mod schema {
         T1: DecodeUntagged,
         T2: DecodeUntagged,
     {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
+        fn decode_untagged(buf: &[u8]) -> Self {
             let tuple = Tuple::decode_untagged(buf);
             (
-                T0::decode_untagged(&tuple.items.get(0).unwrap()),
-                T1::decode_untagged(&tuple.items.get(0).unwrap()),
-                T2::decode_untagged(&tuple.items.get(0).unwrap()),
+                T0::decode_untagged(tuple.items.get(0).unwrap()),
+                T1::decode_untagged(tuple.items.get(0).unwrap()),
+                T2::decode_untagged(tuple.items.get(0).unwrap()),
             )
         }
     }
@@ -243,13 +241,13 @@ mod schema {
         T2: DecodeUntagged,
         T3: DecodeUntagged,
     {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
+        fn decode_untagged(buf: &[u8]) -> Self {
             let tuple = Tuple::decode_untagged(buf);
             (
-                T0::decode_untagged(&tuple.items.get(0).unwrap()),
-                T1::decode_untagged(&tuple.items.get(0).unwrap()),
-                T2::decode_untagged(&tuple.items.get(0).unwrap()),
-                T3::decode_untagged(&tuple.items.get(0).unwrap()),
+                T0::decode_untagged(tuple.items.get(0).unwrap()),
+                T1::decode_untagged(tuple.items.get(0).unwrap()),
+                T2::decode_untagged(tuple.items.get(0).unwrap()),
+                T3::decode_untagged(tuple.items.get(0).unwrap()),
             )
         }
     }
@@ -279,7 +277,7 @@ mod schema {
         K: DecodeUntagged + Eq + Hash + Default,
         V: DecodeUntagged,
     {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
+        fn decode_untagged(buf: &[u8]) -> Self {
             let mut map: HashMap<K, V> = HashMap::new();
             let dictionary = Dictionary::decode_untagged(buf);
             dictionary.entries.into_iter().for_each(|entry| {
@@ -315,7 +313,7 @@ mod schema {
     where
         T: DecodeUntagged + Eq + Hash,
     {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
+        fn decode_untagged(buf: &[u8]) -> Self {
             let mut set = HashSet::new();
             let protoset = Set::decode_untagged(buf);
             protoset.items.into_iter().for_each(|item| {
@@ -330,10 +328,8 @@ mod schema {
         T: EncodeUntagged,
     {
         fn encode_untagged(&self) -> Vec<u8> {
-            let items: Vec<Vec<u8>> = self
-                .into_iter()
-                .map(|item| item.encode_untagged())
-                .collect();
+            let items: Vec<Vec<u8>> =
+                self.iter().map(|item| item.encode_untagged()).collect();
             Set { items }.encode_untagged()
         }
     }
@@ -342,7 +338,7 @@ mod schema {
     where
         T: DecodeUntagged,
     {
-        fn decode_untagged(buf: &Vec<u8>) -> Self {
+        fn decode_untagged(buf: &[u8]) -> Self {
             List::decode_untagged(buf)
                 .items
                 .into_iter()
@@ -356,10 +352,8 @@ mod schema {
         T: EncodeUntagged,
     {
         fn encode_untagged(&self) -> Vec<u8> {
-            let items: Vec<Vec<u8>> = self
-                .into_iter()
-                .map(|item| item.encode_untagged())
-                .collect();
+            let items: Vec<Vec<u8>> =
+                self.iter().map(|item| item.encode_untagged()).collect();
             List { items }.encode_untagged()
         }
     }

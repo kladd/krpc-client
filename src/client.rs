@@ -1,4 +1,4 @@
-use bytes::{Buf, BytesMut};
+use bytes::BytesMut;
 
 use std::io::{Read, Write};
 use std::net::{SocketAddrV4, TcpStream};
@@ -50,23 +50,26 @@ impl Client {
         procedure: &str,
         args: Vec<schema::Argument>,
     ) -> schema::ProcedureCall {
-        let mut proc = schema::ProcedureCall::default();
-        proc.service = String::from(service);
-        proc.procedure = String::from(procedure);
-        proc.arguments = args;
-
-        proc
+        schema::ProcedureCall {
+            service: service.into(),
+            procedure: procedure.into(),
+            arguments: args,
+            ..Default::default()
+        }
     }
 }
 
 fn send<T: prost::Message>(rpc: &mut TcpStream, message: T) {
-    let mut buf = BytesMut::with_capacity(message.encoded_len() + 10);
+    let mut buf = {
+        let len = message.encoded_len();
+        BytesMut::with_capacity(len + prost::length_delimiter_len(len))
+    };
 
     message
         .encode_length_delimited(&mut buf)
         .expect("encoding request");
 
-    rpc.write(&buf).expect("sending request");
+    rpc.write_all(&buf).expect("sending request");
     rpc.flush().unwrap();
 }
 
@@ -74,7 +77,8 @@ fn recv<T: prost::Message + Default>(rpc: &mut TcpStream) -> T {
     let mut buf = BytesMut::new();
     buf.resize(LENGTH_DELIMITER_SIZE, 0);
 
-    rpc.read(&mut buf).expect("reading message length");
+    let n = rpc.read(&mut buf).expect("reading message length");
+    buf.truncate(n);
 
     let msg_size = prost::decode_length_delimiter(&mut buf)
         .expect("decoding message length");
