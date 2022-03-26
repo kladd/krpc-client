@@ -1,11 +1,12 @@
 mod schema {
-    include!(concat!(env!("OUT_DIR"), "/krpc.schema.rs"));
+    include!(concat!(env!("OUT_DIR"), "/krpc.rs"));
+    use std::{
+        collections::{HashMap, HashSet},
+        hash::Hash,
+    };
 
-    use std::collections::HashSet;
-    use std::{collections::HashMap, hash::Hash};
-
-    use prost::Message;
-    use protobuf::types::ProtobufType;
+    pub use krpc::*;
+    use protobuf::{reflect::types::ProtobufType, Message};
 
     pub trait DecodeUntagged {
         fn decode_untagged(buf: &[u8]) -> Self;
@@ -38,6 +39,7 @@ mod schema {
             Argument {
                 position: pos,
                 value: self.encode_untagged(),
+                ..Default::default()
             }
         }
     }
@@ -117,11 +119,11 @@ mod schema {
                 }
             }
 
-	    impl crate::schema::EncodeUntagged for $name {
-		fn encode_untagged(&self) -> Vec<u8> {
-		    (*self as i32).encode_untagged()
-		}
-	    }
+            impl crate::schema::EncodeUntagged for $name {
+                fn encode_untagged(&self) -> Vec<u8> {
+                    (*self as i32).encode_untagged()
+                }
+            }
 
             impl From<i32> for $name {
                 fn from(val: i32) -> Self {
@@ -138,7 +140,7 @@ mod schema {
         ($to:ty, $proto:ident) => {
             impl DecodeUntagged for $to {
                 fn decode_untagged(b: &[u8]) -> Self {
-                    ::protobuf::types::$proto::read(
+                    ::protobuf::reflect::types::$proto::read(
                         &mut ::protobuf::CodedInputStream::from_bytes(b),
                     )
                     .unwrap()
@@ -151,15 +153,15 @@ mod schema {
         ($($m:ty),+$(,)?) => {$(
             impl DecodeUntagged for $m {
                 fn decode_untagged(b: &[u8]) -> Self {
-                    Self::decode(&b[..]).expect("unexpected wire type")
+                    Self::parse_from_bytes(&b[..]).expect("parse_from_bytes: unexpected wire type")
                 }
             }
 
             impl EncodeUntagged for $m {
                 fn encode_untagged(&self) -> Vec<u8> {
-                    let mut buf = Vec::new();
-                    self.encode(&mut buf).unwrap();
-                    buf
+                    let mut v = Vec::new();
+		            self.write_to_vec(&mut v).expect("encode_untagged");
+                    v
                 }
             })+
         };
@@ -169,6 +171,7 @@ mod schema {
         fn from(proc_call: ProcedureCall) -> Self {
             Request {
                 calls: vec![proc_call],
+                ..Default::default()
             }
         }
     }
@@ -182,7 +185,7 @@ mod schema {
             let tuple = Tuple::decode_untagged(buf);
             (
                 T0::decode_untagged(tuple.items.get(0).unwrap()),
-                T1::decode_untagged(tuple.items.get(0).unwrap()),
+                T1::decode_untagged(tuple.items.get(1).unwrap()),
             )
         }
     }
@@ -195,6 +198,7 @@ mod schema {
         fn encode_untagged(&self) -> Vec<u8> {
             Tuple {
                 items: vec![self.0.encode_untagged(), self.1.encode_untagged()],
+                ..Default::default()
             }
             .encode_untagged()
         }
@@ -210,8 +214,8 @@ mod schema {
             let tuple = Tuple::decode_untagged(buf);
             (
                 T0::decode_untagged(tuple.items.get(0).unwrap()),
-                T1::decode_untagged(tuple.items.get(0).unwrap()),
-                T2::decode_untagged(tuple.items.get(0).unwrap()),
+                T1::decode_untagged(tuple.items.get(1).unwrap()),
+                T2::decode_untagged(tuple.items.get(2).unwrap()),
             )
         }
     }
@@ -229,6 +233,7 @@ mod schema {
                     self.1.encode_untagged(),
                     self.2.encode_untagged(),
                 ],
+                ..Default::default()
             }
             .encode_untagged()
         }
@@ -245,9 +250,9 @@ mod schema {
             let tuple = Tuple::decode_untagged(buf);
             (
                 T0::decode_untagged(tuple.items.get(0).unwrap()),
-                T1::decode_untagged(tuple.items.get(0).unwrap()),
-                T2::decode_untagged(tuple.items.get(0).unwrap()),
-                T3::decode_untagged(tuple.items.get(0).unwrap()),
+                T1::decode_untagged(tuple.items.get(1).unwrap()),
+                T2::decode_untagged(tuple.items.get(2).unwrap()),
+                T3::decode_untagged(tuple.items.get(3).unwrap()),
             )
         }
     }
@@ -267,6 +272,7 @@ mod schema {
                     self.2.encode_untagged(),
                     self.3.encode_untagged(),
                 ],
+                ..Default::default()
             }
             .encode_untagged()
         }
@@ -302,10 +308,15 @@ mod schema {
                 entries.push(DictionaryEntry {
                     key: k.encode_untagged(),
                     value: v.encode_untagged(),
+                    ..Default::default()
                 })
             }
 
-            Dictionary { entries }.encode_untagged()
+            Dictionary {
+                entries,
+                ..Default::default()
+            }
+            .encode_untagged()
         }
     }
 
@@ -330,7 +341,11 @@ mod schema {
         fn encode_untagged(&self) -> Vec<u8> {
             let items: Vec<Vec<u8>> =
                 self.iter().map(|item| item.encode_untagged()).collect();
-            Set { items }.encode_untagged()
+            Set {
+                items,
+                ..Default::default()
+            }
+            .encode_untagged()
         }
     }
 
@@ -354,7 +369,11 @@ mod schema {
         fn encode_untagged(&self) -> Vec<u8> {
             let items: Vec<Vec<u8>> =
                 self.iter().map(|item| item.encode_untagged()).collect();
-            List { items }.encode_untagged()
+            List {
+                items,
+                ..Default::default()
+            }
+            .encode_untagged()
         }
     }
 
@@ -402,22 +421,30 @@ pub mod services {
 mod test {
     use std::sync::Arc;
 
-    use crate::client::Client;
-    use crate::services;
+    use crate::{client::Client, services};
 
     #[test]
     fn call() {
+        eprintln!("connecting");
+
         let client =
             Arc::new(Client::new("rpc test", "127.0.0.1", 50000, 50001));
+
+        eprintln!("connected");
 
         let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
         let ship = sc.get_active_vessel();
         let ap = sc.vessel_get_auto_pilot(&ship);
 
-        let svrf = sc.vessel_get_surface_reference_frame(&ship);
+        let svrf = sc.vessel_get_orbital_reference_frame(&ship);
         let aprf = sc.auto_pilot_get_reference_frame(&ap);
 
-        dbg!(sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf));
+        let x = sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf);
+
+        sc.auto_pilot_set_target_direction(&ap, x);
+        sc.auto_pilot_engage(&ap);
+        sc.auto_pilot_wait(&ap);
+        sc.auto_pilot_disengage(&ap);
     }
 }

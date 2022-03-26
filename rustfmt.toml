@@ -1,4 +1,7 @@
+edition = "2021"
 max_width = 80
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"
 # hard_tabs = true
-# wrap_comments = true
-# normalize_comments = true
+wrap_comments = true
+normalize_comments = true

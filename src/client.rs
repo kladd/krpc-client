@@ -1,12 +1,11 @@
-use bytes::BytesMut;
+use std::{
+    net::{SocketAddrV4, TcpStream},
+    sync::Mutex,
+};
 
-use std::io::{Read, Write};
-use std::net::{SocketAddrV4, TcpStream};
-use std::sync::Mutex;
+use protobuf::CodedInputStream;
 
 use crate::schema::{self, ConnectionResponse};
-
-const LENGTH_DELIMITER_SIZE: usize = 10;
 
 pub struct Client {
     rpc: Mutex<TcpStream>,
@@ -27,7 +26,8 @@ impl Client {
 
         // Send connection request.
         let mut request = schema::ConnectionRequest::default();
-        request.set_type(schema::connection_request::Type::Rpc);
+        request.field_type =
+            protobuf::EnumOrUnknown::new(schema::connection_request::Type::RPC);
         request.client_name = String::from(name);
 
         send(&mut rpc, request);
@@ -59,37 +59,14 @@ impl Client {
     }
 }
 
-fn send<T: prost::Message>(rpc: &mut TcpStream, message: T) {
-    let mut buf = {
-        let len = message.encoded_len();
-        BytesMut::with_capacity(len + prost::length_delimiter_len(len))
-    };
-
+fn send<T: protobuf::Message>(rpc: &mut TcpStream, message: T) {
     message
-        .encode_length_delimited(&mut buf)
-        .expect("encoding request");
-
-    rpc.write_all(&buf).expect("sending request");
-    rpc.flush().unwrap();
+        .write_length_delimited_to_writer(rpc)
+        .expect("client::send")
 }
 
-fn recv<T: prost::Message + Default>(rpc: &mut TcpStream) -> T {
-    let mut buf = BytesMut::new();
-    buf.resize(LENGTH_DELIMITER_SIZE, 0);
-
-    let n = rpc.read(&mut buf).expect("reading message length");
-    buf.truncate(n);
-
-    let msg_size = prost::decode_length_delimiter(&mut buf)
-        .expect("decoding message length");
-
-    buf.resize(msg_size, 0);
-
-    if msg_size > LENGTH_DELIMITER_SIZE {
-        let offset =
-            LENGTH_DELIMITER_SIZE - prost::length_delimiter_len(msg_size);
-        rpc.read_exact(&mut buf[offset..]).expect("reading message");
-    }
-
-    T::decode(buf).expect("decoding message")
+fn recv<T: protobuf::Message + Default>(rpc: &mut TcpStream) -> T {
+    CodedInputStream::new(rpc)
+        .read_message()
+        .expect("client::recv")
 }
