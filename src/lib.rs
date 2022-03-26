@@ -158,7 +158,7 @@ mod schema {
             impl EncodeUntagged for $m {
                 fn encode_untagged(&self) -> Vec<u8> {
                     let mut buf = Vec::new();
-                    self.encode_length_delimited(&mut buf).unwrap();
+                    self.encode(&mut buf).unwrap();
                     buf
                 }
             })+
@@ -415,9 +415,9 @@ mod test {
         let ship = sc.get_active_vessel();
         let ap = sc.vessel_get_auto_pilot(&ship);
 
-        let svrf = sc.vessel_get_surface_velocity_reference_frame(&ship);
+        let svrf = sc.vessel_get_surface_reference_frame(&ship);
         let aprf = sc.auto_pilot_get_reference_frame(&ap);
 
-        sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf);
+        dbg!(sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf));
     }
 }
