@@ -413,7 +413,11 @@ mod test {
         let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
         let ship = sc.get_active_vessel();
+        let ap = sc.vessel_get_auto_pilot(&ship);
 
-        dbg!(&ship);
+        let svrf = sc.vessel_get_surface_velocity_reference_frame(&ship);
+        let aprf = sc.auto_pilot_get_reference_frame(&ap);
+
+        sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf);
     }
 }
