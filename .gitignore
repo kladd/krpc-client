@@ -1,4 +1,4 @@
 /target
 /krpc-build/target
-service_definitions/
+# service_definitions/
 .idea

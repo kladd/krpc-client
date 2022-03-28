@@ -1,0 +1,493 @@
+{
+  "RemoteTech": {
+    "id": 6,
+    "documentation": "<doc>\n<summary>\nThis service provides functionality to interact with\n<a href=\"https://forum.kerbalspaceprogram.com/index.php?/topic/139167-13-remotetech-v188-2017-09-03/\">RemoteTech</a>.\n</summary>\n</doc>",
+    "procedures": {
+      "Comms": {
+        "id": 1,
+        "parameters": [
+          {
+            "name": "vessel",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "RemoteTech",
+          "name": "Comms"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet a communications object, representing the communication capability of a particular vessel.\n</summary>\n</doc>"
+      },
+      "Antenna": {
+        "id": 2,
+        "parameters": [
+          {
+            "name": "part",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Part"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "RemoteTech",
+          "name": "Antenna"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet the antenna object for a particular part.\n</summary>\n</doc>"
+      },
+      "get_Available": {
+        "id": 3,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nWhether RemoteTech is installed.\n</summary>\n</doc>"
+      },
+      "get_GroundStations": {
+        "id": 4,
+        "parameters": [],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "STRING"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe names of the ground stations.\n</summary>\n</doc>"
+      },
+      "Antenna_get_Part": {
+        "id": 5,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "Part"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet the part containing this antenna.\n</summary>\n</doc>"
+      },
+      "Antenna_get_HasConnection": {
+        "id": 6,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nWhether the antenna has a connection.\n</summary>\n</doc>"
+      },
+      "Antenna_get_Target": {
+        "id": 7,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "RemoteTech",
+          "name": "Target"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe object that the antenna is targetting.\nThis property can be used to set the target to <see cref=\"M:RemoteTech.Target.None\" /> or <see cref=\"M:RemoteTech.Target.ActiveVessel\" />.\nTo set the target to a celestial body, ground station or vessel see <see cref=\"M:RemoteTech.Antenna.TargetBody\" />,\n<see cref=\"M:RemoteTech.Antenna.TargetGroundStation\" /> and <see cref=\"M:RemoteTech.Antenna.TargetVessel\" />.\n</summary>\n</doc>"
+      },
+      "Antenna_set_Target": {
+        "id": 8,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "RemoteTech",
+              "name": "Target"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe object that the antenna is targetting.\nThis property can be used to set the target to <see cref=\"M:RemoteTech.Target.None\" /> or <see cref=\"M:RemoteTech.Target.ActiveVessel\" />.\nTo set the target to a celestial body, ground station or vessel see <see cref=\"M:RemoteTech.Antenna.TargetBody\" />,\n<see cref=\"M:RemoteTech.Antenna.TargetGroundStation\" /> and <see cref=\"M:RemoteTech.Antenna.TargetVessel\" />.\n</summary>\n</doc>"
+      },
+      "Antenna_get_TargetBody": {
+        "id": 9,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "CelestialBody"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe celestial body the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_set_TargetBody": {
+        "id": 10,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "CelestialBody"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe celestial body the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_get_TargetGroundStation": {
+        "id": 11,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe ground station the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_set_TargetGroundStation": {
+        "id": 12,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe ground station the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_get_TargetVessel": {
+        "id": 13,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "Vessel"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe vessel the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_set_TargetVessel": {
+        "id": 14,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe vessel the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Comms_SignalDelayToVessel": {
+        "id": 15,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          },
+          {
+            "name": "other",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe signal delay between the this vessel and another vessel, in seconds.\n</summary>\n<param name=\"other\"></param>\n</doc>"
+      },
+      "Comms_get_Vessel": {
+        "id": 16,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "Vessel"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet the vessel.\n</summary>\n</doc>"
+      },
+      "Comms_get_HasLocalControl": {
+        "id": 17,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nWhether the vessel can be controlled locally.\n</summary>\n</doc>"
+      },
+      "Comms_get_HasFlightComputer": {
+        "id": 18,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nWhether the vessel has a flight computer on board.\n</summary>\n</doc>"
+      },
+      "Comms_get_HasConnection": {
+        "id": 19,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nWhether the vessel has any connection.\n</summary>\n</doc>"
+      },
+      "Comms_get_HasConnectionToGroundStation": {
+        "id": 20,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nWhether the vessel has a connection to a ground station.\n</summary>\n</doc>"
+      },
+      "Comms_get_SignalDelay": {
+        "id": 21,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe shortest signal delay to the vessel, in seconds.\n</summary>\n</doc>"
+      },
+      "Comms_get_SignalDelayToGroundStation": {
+        "id": 22,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe signal delay between the vessel and the closest ground station, in seconds.\n</summary>\n</doc>"
+      },
+      "Comms_get_Antennas": {
+        "id": 23,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Comms"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "CLASS",
+              "service": "RemoteTech",
+              "name": "Antenna"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nThe antennas for this vessel.\n</summary>\n</doc>"
+      }
+    },
+    "classes": {
+      "Antenna": {
+        "documentation": "<doc>\n<summary>\nA RemoteTech antenna. Obtained by calling <see cref=\"M:RemoteTech.Comms.Antennas\" /> or <see cref=\"M:RemoteTech.Antenna\" />.\n</summary>\n</doc>"
+      },
+      "Comms": {
+        "documentation": "<doc>\n<summary>\nCommunications for a vessel.\n</summary>\n</doc>"
+      }
+    },
+    "enumerations": {
+      "Target": {
+        "documentation": "<doc>\n<summary>\nThe type of object an antenna is targetting.\nSee <see cref=\"M:RemoteTech.Antenna.Target\" />.\n</summary>\n</doc>",
+        "values": [
+          {
+            "name": "ActiveVessel",
+            "value": 0,
+            "documentation": "<doc>\n<summary>\nThe active vessel.\n</summary>\n</doc>"
+          },
+          {
+            "name": "CelestialBody",
+            "value": 1,
+            "documentation": "<doc>\n<summary>\nA celestial body.\n</summary>\n</doc>"
+          },
+          {
+            "name": "GroundStation",
+            "value": 2,
+            "documentation": "<doc>\n<summary>\nA ground station.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Vessel",
+            "value": 3,
+            "documentation": "<doc>\n<summary>\nA specific vessel.\n</summary>\n</doc>"
+          },
+          {
+            "name": "None",
+            "value": 4,
+            "documentation": "<doc>\n<summary>\nNo target.\n</summary>\n</doc>"
+          }
+        ]
+      }
+    },
+    "exceptions": {}
+  }
+}

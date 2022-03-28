@@ -1,0 +1,1806 @@
+{
+  "Drawing": {
+    "id": 3,
+    "documentation": "<doc>\n<summary>\nProvides functionality for drawing objects in the flight scene.\n</summary>\n<remarks>\nFor drawing and interacting with the user interface, see the UI service.\n</remarks>\n</doc>",
+    "procedures": {
+      "AddLine": {
+        "id": 1,
+        "parameters": [
+          {
+            "name": "start",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "end",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "Drawing",
+          "name": "Line"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nDraw a line in the scene.\n</summary>\n<param name=\"start\">Position of the start of the line.</param>\n<param name=\"end\">Position of the end of the line.</param>\n<param name=\"referenceFrame\">Reference frame that the positions are in.</param>\n<param name=\"visible\">Whether the line is visible.</param>\n</doc>"
+      },
+      "AddDirection": {
+        "id": 2,
+        "parameters": [
+          {
+            "name": "direction",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          },
+          {
+            "name": "length",
+            "type": {
+              "code": "FLOAT"
+            },
+            "default_value": "AAAgQQ=="
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "Drawing",
+          "name": "Line"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nDraw a direction vector in the scene, starting from the origin of the given reference frame.\n</summary>\n<param name=\"direction\">Direction to draw the line in.</param>\n<param name=\"referenceFrame\">Reference frame that the direction is in and defines the start position.</param>\n<param name=\"length\">The length of the line.</param>\n<param name=\"visible\">Whether the line is visible.</param>\n</doc>"
+      },
+      "AddDirectionFromCom": {
+        "id": 3,
+        "parameters": [
+          {
+            "name": "direction",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          },
+          {
+            "name": "length",
+            "type": {
+              "code": "FLOAT"
+            },
+            "default_value": "AAAgQQ=="
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "Drawing",
+          "name": "Line"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nDraw a direction vector in the scene, from the center of mass of the active vessel.\n</summary>\n<param name=\"direction\">Direction to draw the line in.</param>\n<param name=\"referenceFrame\">Reference frame that the direction is in.</param>\n<param name=\"length\">The length of the line.</param>\n<param name=\"visible\">Whether the line is visible.</param>\n</doc>"
+      },
+      "AddPolygon": {
+        "id": 4,
+        "parameters": [
+          {
+            "name": "vertices",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "TUPLE",
+                  "types": [
+                    {
+                      "code": "DOUBLE"
+                    },
+                    {
+                      "code": "DOUBLE"
+                    },
+                    {
+                      "code": "DOUBLE"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "Drawing",
+          "name": "Polygon"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nDraw a polygon in the scene, defined by a list of vertices.\n</summary>\n<param name=\"vertices\">Vertices of the polygon.</param>\n<param name=\"referenceFrame\">Reference frame that the vertices are in.</param>\n<param name=\"visible\">Whether the polygon is visible.</param>\n</doc>"
+      },
+      "AddText": {
+        "id": 5,
+        "parameters": [
+          {
+            "name": "text",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          },
+          {
+            "name": "position",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "rotation",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "Drawing",
+          "name": "Text"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nDraw text in the scene.\n</summary>\n<param name=\"text\">The string to draw.</param>\n<param name=\"referenceFrame\">Reference frame that the text position is in.</param>\n<param name=\"position\">Position of the text.</param>\n<param name=\"rotation\">Rotation of the text, as a quaternion.</param>\n<param name=\"visible\">Whether the text is visible.</param>\n</doc>"
+      },
+      "Clear": {
+        "id": 6,
+        "parameters": [
+          {
+            "name": "clientOnly",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AA=="
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nRemove all objects being drawn.\n</summary>\n<param name=\"clientOnly\">If true, only remove objects created by the calling client.</param>\n</doc>"
+      },
+      "Line_Remove": {
+        "id": 7,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the object.\n</summary>\n</doc>"
+      },
+      "Line_get_Start": {
+        "id": 8,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nStart position of the line.\n</summary>\n</doc>"
+      },
+      "Line_set_Start": {
+        "id": 9,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nStart position of the line.\n</summary>\n</doc>"
+      },
+      "Line_get_End": {
+        "id": 10,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nEnd position of the line.\n</summary>\n</doc>"
+      },
+      "Line_set_End": {
+        "id": 11,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nEnd position of the line.\n</summary>\n</doc>"
+      },
+      "Line_get_Color": {
+        "id": 12,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the color\n</summary>\n</doc>"
+      },
+      "Line_set_Color": {
+        "id": 13,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the color\n</summary>\n</doc>"
+      },
+      "Line_get_Thickness": {
+        "id": 14,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the thickness\n</summary>\n</doc>"
+      },
+      "Line_set_Thickness": {
+        "id": 15,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the thickness\n</summary>\n</doc>"
+      },
+      "Line_get_ReferenceFrame": {
+        "id": 16,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "ReferenceFrame"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nReference frame for the positions of the object.\n</summary>\n</doc>"
+      },
+      "Line_set_ReferenceFrame": {
+        "id": 17,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nReference frame for the positions of the object.\n</summary>\n</doc>"
+      },
+      "Line_get_Visible": {
+        "id": 18,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the object is visible.\n</summary>\n</doc>"
+      },
+      "Line_set_Visible": {
+        "id": 19,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the object is visible.\n</summary>\n</doc>"
+      },
+      "Line_get_Material": {
+        "id": 20,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMaterial used to render the object.\nCreates the material from a shader with the given name.\n</summary>\n</doc>"
+      },
+      "Line_set_Material": {
+        "id": 21,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Line"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMaterial used to render the object.\nCreates the material from a shader with the given name.\n</summary>\n</doc>"
+      },
+      "Polygon_Remove": {
+        "id": 22,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the object.\n</summary>\n</doc>"
+      },
+      "Polygon_get_Vertices": {
+        "id": 23,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nVertices for the polygon.\n</summary>\n</doc>"
+      },
+      "Polygon_set_Vertices": {
+        "id": 24,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "TUPLE",
+                  "types": [
+                    {
+                      "code": "DOUBLE"
+                    },
+                    {
+                      "code": "DOUBLE"
+                    },
+                    {
+                      "code": "DOUBLE"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nVertices for the polygon.\n</summary>\n</doc>"
+      },
+      "Polygon_get_Color": {
+        "id": 25,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the color\n</summary>\n</doc>"
+      },
+      "Polygon_set_Color": {
+        "id": 26,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the color\n</summary>\n</doc>"
+      },
+      "Polygon_get_Thickness": {
+        "id": 27,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the thickness\n</summary>\n</doc>"
+      },
+      "Polygon_set_Thickness": {
+        "id": 28,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the thickness\n</summary>\n</doc>"
+      },
+      "Polygon_get_ReferenceFrame": {
+        "id": 29,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "ReferenceFrame"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nReference frame for the positions of the object.\n</summary>\n</doc>"
+      },
+      "Polygon_set_ReferenceFrame": {
+        "id": 30,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nReference frame for the positions of the object.\n</summary>\n</doc>"
+      },
+      "Polygon_get_Visible": {
+        "id": 31,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the object is visible.\n</summary>\n</doc>"
+      },
+      "Polygon_set_Visible": {
+        "id": 32,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the object is visible.\n</summary>\n</doc>"
+      },
+      "Polygon_get_Material": {
+        "id": 33,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMaterial used to render the object.\nCreates the material from a shader with the given name.\n</summary>\n</doc>"
+      },
+      "Polygon_set_Material": {
+        "id": 34,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Polygon"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMaterial used to render the object.\nCreates the material from a shader with the given name.\n</summary>\n</doc>"
+      },
+      "Text_static_AvailableFonts": {
+        "id": 35,
+        "parameters": [],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "STRING"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nA list of all available fonts.\n</summary>\n</doc>"
+      },
+      "Text_Remove": {
+        "id": 36,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the object.\n</summary>\n</doc>"
+      },
+      "Text_get_Position": {
+        "id": 37,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nPosition of the text.\n</summary>\n</doc>"
+      },
+      "Text_set_Position": {
+        "id": 38,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nPosition of the text.\n</summary>\n</doc>"
+      },
+      "Text_get_Rotation": {
+        "id": 39,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nRotation of the text as a quaternion.\n</summary>\n</doc>"
+      },
+      "Text_set_Rotation": {
+        "id": 40,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nRotation of the text as a quaternion.\n</summary>\n</doc>"
+      },
+      "Text_get_Content": {
+        "id": 41,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe text string\n</summary>\n</doc>"
+      },
+      "Text_set_Content": {
+        "id": 42,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe text string\n</summary>\n</doc>"
+      },
+      "Text_get_Font": {
+        "id": 43,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nName of the font\n</summary>\n</doc>"
+      },
+      "Text_set_Font": {
+        "id": 44,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nName of the font\n</summary>\n</doc>"
+      },
+      "Text_get_Size": {
+        "id": 45,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "SINT32"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nFont size.\n</summary>\n</doc>"
+      },
+      "Text_set_Size": {
+        "id": 46,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "SINT32"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nFont size.\n</summary>\n</doc>"
+      },
+      "Text_get_CharacterSize": {
+        "id": 47,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nCharacter size.\n</summary>\n</doc>"
+      },
+      "Text_set_CharacterSize": {
+        "id": 48,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nCharacter size.\n</summary>\n</doc>"
+      },
+      "Text_get_Style": {
+        "id": 49,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "UI",
+          "name": "FontStyle"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nFont style.\n</summary>\n</doc>"
+      },
+      "Text_set_Style": {
+        "id": 50,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "FontStyle"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nFont style.\n</summary>\n</doc>"
+      },
+      "Text_get_Alignment": {
+        "id": 51,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "UI",
+          "name": "TextAlignment"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nAlignment.\n</summary>\n</doc>"
+      },
+      "Text_set_Alignment": {
+        "id": 52,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "TextAlignment"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nAlignment.\n</summary>\n</doc>"
+      },
+      "Text_get_LineSpacing": {
+        "id": 53,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nLine spacing.\n</summary>\n</doc>"
+      },
+      "Text_set_LineSpacing": {
+        "id": 54,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nLine spacing.\n</summary>\n</doc>"
+      },
+      "Text_get_Anchor": {
+        "id": 55,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "UI",
+          "name": "TextAnchor"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nAnchor.\n</summary>\n</doc>"
+      },
+      "Text_set_Anchor": {
+        "id": 56,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "TextAnchor"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nAnchor.\n</summary>\n</doc>"
+      },
+      "Text_get_Color": {
+        "id": 57,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the color\n</summary>\n</doc>"
+      },
+      "Text_set_Color": {
+        "id": 58,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the color\n</summary>\n</doc>"
+      },
+      "Text_get_ReferenceFrame": {
+        "id": 59,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "ReferenceFrame"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nReference frame for the positions of the object.\n</summary>\n</doc>"
+      },
+      "Text_set_ReferenceFrame": {
+        "id": 60,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nReference frame for the positions of the object.\n</summary>\n</doc>"
+      },
+      "Text_get_Visible": {
+        "id": 61,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the object is visible.\n</summary>\n</doc>"
+      },
+      "Text_set_Visible": {
+        "id": 62,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the object is visible.\n</summary>\n</doc>"
+      },
+      "Text_get_Material": {
+        "id": 63,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "return_is_nullable": false,
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMaterial used to render the object.\nCreates the material from a shader with the given name.\n</summary>\n</doc>"
+      },
+      "Text_set_Material": {
+        "id": 64,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "Drawing",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMaterial used to render the object.\nCreates the material from a shader with the given name.\n</summary>\n</doc>"
+      }
+    },
+    "classes": {
+      "Line": {
+        "documentation": "<doc>\n<summary>\nA line. Created using <see cref=\"M:Drawing.AddLine\" />.\n</summary>\n</doc>"
+      },
+      "Polygon": {
+        "documentation": "<doc>\n<summary>\nA polygon. Created using <see cref=\"M:Drawing.AddPolygon\" />.\n</summary>\n</doc>"
+      },
+      "Text": {
+        "documentation": "<doc>\n<summary>\nText. Created using <see cref=\"M:Drawing.AddText\" />.\n</summary>\n</doc>"
+      }
+    },
+    "enumerations": {},
+    "exceptions": {}
+  }
+}
