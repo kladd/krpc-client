@@ -1,3 +1,9 @@
+pub mod client;
+pub mod error;
+pub mod services {
+    include!(concat!(env!("OUT_DIR"), "/services.rs"));
+}
+
 mod schema {
     include!(concat!(env!("OUT_DIR"), "/krpc.rs"));
     use std::{
@@ -8,76 +14,59 @@ mod schema {
     pub use krpc::*;
     use protobuf::{reflect::types::ProtobufType, Message};
 
-    pub trait DecodeUntagged {
-        fn decode_untagged(buf: &[u8]) -> Self;
+    pub trait DecodeUntagged: Sized {
+        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError>;
     }
 
-    pub trait FromResponse {
-        fn from_response(response: Response) -> Self;
+    pub trait FromResponse: Sized {
+        fn from_response(response: Response) -> Result<Self, RpcError>;
     }
 
     impl FromResponse for () {
-        fn from_response(_: Response) -> Self {}
+        fn from_response(_: Response) -> Result<Self, RpcError> {
+            Ok(())
+        }
     }
 
     impl<T: DecodeUntagged> FromResponse for T {
-        fn from_response(response: Response) -> Self {
+        fn from_response(response: Response) -> Result<T, RpcError> {
             Self::decode_untagged(&response.results[0].value)
         }
     }
 
     pub trait ToArgument {
-        fn to_argument(&self, pos: u32) -> Argument;
+        fn to_argument(&self, pos: u32) -> Result<Argument, RpcError>;
     }
 
     pub trait EncodeUntagged {
-        fn encode_untagged(&self) -> Vec<u8>;
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError>;
     }
 
     impl<T: EncodeUntagged> ToArgument for T {
-        fn to_argument(&self, pos: u32) -> Argument {
-            Argument {
+        fn to_argument(&self, pos: u32) -> Result<Argument, RpcError> {
+            Ok(Argument {
                 position: pos,
-                value: self.encode_untagged(),
+                value: self.encode_untagged()?,
                 ..Default::default()
-            }
+            })
         }
-    }
-
-    // TODO: if String is the only type that doesn't need to be dereferenced,
-    //       then implement EncodeUntagged for String and get rid of one of
-    //       these macros.
-    macro_rules! encode_untagged_deref {
-        ($t:ty, $fname:ident) => {
-            impl EncodeUntagged for $t {
-                fn encode_untagged(&self) -> Vec<u8> {
-                    let mut buf: Vec<u8> = Vec::new();
-                    {
-                        let mut outstream =
-                            protobuf::CodedOutputStream::new(&mut buf);
-                        outstream.$fname(*self).unwrap();
-                        outstream.flush().unwrap();
-                    }
-
-                    buf
-                }
-            }
-        };
     }
 
     macro_rules! encode_untagged {
         ($t:ty, $fname:ident) => {
             impl EncodeUntagged for $t {
-                fn encode_untagged(&self) -> Vec<u8> {
+                fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
                     let mut buf: Vec<u8> = Vec::new();
                     {
                         let mut outstream =
                             protobuf::CodedOutputStream::new(&mut buf);
-                        outstream.$fname(self).unwrap();
-                        outstream.flush().unwrap();
+                        outstream
+                            .$fname(*self)
+                            .map_err(|e| RpcError::from(e))?;
+                        outstream.flush().map_err(|e| RpcError::from(e))?;
                     }
 
-                    buf
+                    Ok(buf)
                 }
             }
         };
@@ -91,15 +80,15 @@ mod schema {
             }
 
             impl crate::schema::DecodeUntagged for $name {
-                fn decode_untagged(buf: &[u8]) -> Self {
-                    $name {
-                        id: u64::decode_untagged(buf),
-                    }
+                fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+                    Ok($name {
+                        id: u64::decode_untagged(buf)?,
+                    })
                 }
             }
 
             impl crate::schema::EncodeUntagged for $name {
-                fn encode_untagged(&self) -> Vec<u8> {
+                fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
                     self.id.encode_untagged()
                 }
             }
@@ -114,23 +103,17 @@ mod schema {
             )+}
 
             impl crate::schema::DecodeUntagged for $name {
-                fn decode_untagged(buf: &[u8]) -> Self {
-                    Self::from(i32::decode_untagged(buf))
+                fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+                    match i32::decode_untagged(buf)? {
+                        $(i if i == $name::$value as i32 => Ok($name::$value),)+
+                        _ => Err(RpcError::Encoding("invalid enum variant".into()))
+                    }
                 }
             }
 
             impl crate::schema::EncodeUntagged for $name {
-                fn encode_untagged(&self) -> Vec<u8> {
+                fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
                     (*self as i32).encode_untagged()
-                }
-            }
-
-            impl From<i32> for $name {
-                fn from(val: i32) -> Self {
-                    match val {
-                        $(i if i == $name::$value as i32 => $name::$value,)+
-                        _ => panic!("enum out of range")
-                    }
                 }
             }
         }
@@ -139,11 +122,11 @@ mod schema {
     macro_rules! decode_untagged {
         ($to:ty, $proto:ident) => {
             impl DecodeUntagged for $to {
-                fn decode_untagged(b: &[u8]) -> Self {
+                fn decode_untagged(b: &[u8]) -> Result<Self, RpcError> {
                     ::protobuf::reflect::types::$proto::read(
                         &mut ::protobuf::CodedInputStream::from_bytes(b),
                     )
-                    .unwrap()
+                    .map_err(|e| e.into())
                 }
             }
         };
@@ -152,16 +135,16 @@ mod schema {
     macro_rules! encode_decode_message_untagged {
         ($($m:ty),+$(,)?) => {$(
             impl DecodeUntagged for $m {
-                fn decode_untagged(b: &[u8]) -> Self {
-                    Self::parse_from_bytes(&b[..]).expect("parse_from_bytes: unexpected wire type")
+                fn decode_untagged(b: &[u8]) -> Result<Self, RpcError> {
+                    Self::parse_from_bytes(&b[..]).map_err(|e| RpcError::from(e))
                 }
             }
 
             impl EncodeUntagged for $m {
-                fn encode_untagged(&self) -> Vec<u8> {
+                fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
                     let mut v = Vec::new();
-		            self.write_to_vec(&mut v).expect("encode_untagged");
-                    v
+		            self.write_to_vec(&mut v)?;
+                    Ok(v)
                 }
             })+
         };
@@ -181,12 +164,16 @@ mod schema {
         T0: DecodeUntagged,
         T1: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Self {
-            let tuple = Tuple::decode_untagged(buf);
-            (
-                T0::decode_untagged(tuple.items.get(0).unwrap()),
-                T1::decode_untagged(tuple.items.get(1).unwrap()),
-            )
+        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+            let tuple = Tuple::decode_untagged(buf)?;
+            Ok((
+                T0::decode_untagged(tuple.items.get(0).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+                T1::decode_untagged(tuple.items.get(1).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+            ))
         }
     }
 
@@ -195,9 +182,12 @@ mod schema {
         T0: EncodeUntagged,
         T1: EncodeUntagged,
     {
-        fn encode_untagged(&self) -> Vec<u8> {
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
             Tuple {
-                items: vec![self.0.encode_untagged(), self.1.encode_untagged()],
+                items: vec![
+                    self.0.encode_untagged()?,
+                    self.1.encode_untagged()?,
+                ],
                 ..Default::default()
             }
             .encode_untagged()
@@ -210,13 +200,19 @@ mod schema {
         T1: DecodeUntagged,
         T2: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Self {
-            let tuple = Tuple::decode_untagged(buf);
-            (
-                T0::decode_untagged(tuple.items.get(0).unwrap()),
-                T1::decode_untagged(tuple.items.get(1).unwrap()),
-                T2::decode_untagged(tuple.items.get(2).unwrap()),
-            )
+        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+            let tuple = Tuple::decode_untagged(buf)?;
+            Ok((
+                T0::decode_untagged(tuple.items.get(0).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+                T1::decode_untagged(tuple.items.get(1).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+                T2::decode_untagged(tuple.items.get(2).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+            ))
         }
     }
 
@@ -226,12 +222,12 @@ mod schema {
         T1: EncodeUntagged,
         T2: EncodeUntagged,
     {
-        fn encode_untagged(&self) -> Vec<u8> {
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
             Tuple {
                 items: vec![
-                    self.0.encode_untagged(),
-                    self.1.encode_untagged(),
-                    self.2.encode_untagged(),
+                    self.0.encode_untagged()?,
+                    self.1.encode_untagged()?,
+                    self.2.encode_untagged()?,
                 ],
                 ..Default::default()
             }
@@ -246,14 +242,22 @@ mod schema {
         T2: DecodeUntagged,
         T3: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Self {
-            let tuple = Tuple::decode_untagged(buf);
-            (
-                T0::decode_untagged(tuple.items.get(0).unwrap()),
-                T1::decode_untagged(tuple.items.get(1).unwrap()),
-                T2::decode_untagged(tuple.items.get(2).unwrap()),
-                T3::decode_untagged(tuple.items.get(3).unwrap()),
-            )
+        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+            let tuple = Tuple::decode_untagged(buf)?;
+            Ok((
+                T0::decode_untagged(tuple.items.get(0).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+                T1::decode_untagged(tuple.items.get(1).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+                T2::decode_untagged(tuple.items.get(2).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+                T3::decode_untagged(tuple.items.get(3).ok_or(
+                    RpcError::Encoding("tuple element out of range".into()),
+                )?)?,
+            ))
         }
     }
 
@@ -264,13 +268,13 @@ mod schema {
         T2: EncodeUntagged,
         T3: EncodeUntagged,
     {
-        fn encode_untagged(&self) -> Vec<u8> {
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
             Tuple {
                 items: vec![
-                    self.0.encode_untagged(),
-                    self.1.encode_untagged(),
-                    self.2.encode_untagged(),
-                    self.3.encode_untagged(),
+                    self.0.encode_untagged()?,
+                    self.1.encode_untagged()?,
+                    self.2.encode_untagged()?,
+                    self.3.encode_untagged()?,
                 ],
                 ..Default::default()
             }
@@ -283,16 +287,16 @@ mod schema {
         K: DecodeUntagged + Eq + Hash + Default,
         V: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Self {
+        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
             let mut map: HashMap<K, V> = HashMap::new();
-            let dictionary = Dictionary::decode_untagged(buf);
-            dictionary.entries.into_iter().for_each(|entry| {
+            let dictionary = Dictionary::decode_untagged(buf)?;
+            for entry in dictionary.entries.into_iter() {
                 map.insert(
-                    K::decode_untagged(&entry.key),
-                    V::decode_untagged(&entry.value),
+                    K::decode_untagged(&entry.key)?,
+                    V::decode_untagged(&entry.value)?,
                 );
-            });
-            map
+            }
+            Ok(map)
         }
     }
 
@@ -301,13 +305,13 @@ mod schema {
         K: EncodeUntagged,
         V: EncodeUntagged,
     {
-        fn encode_untagged(&self) -> Vec<u8> {
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
             let mut entries = Vec::new();
 
             for (k, v) in self {
                 entries.push(DictionaryEntry {
-                    key: k.encode_untagged(),
-                    value: v.encode_untagged(),
+                    key: k.encode_untagged()?,
+                    value: v.encode_untagged()?,
                     ..Default::default()
                 })
             }
@@ -324,13 +328,15 @@ mod schema {
     where
         T: DecodeUntagged + Eq + Hash,
     {
-        fn decode_untagged(buf: &[u8]) -> Self {
+        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+            let protoset = Set::decode_untagged(buf)?;
             let mut set = HashSet::new();
-            let protoset = Set::decode_untagged(buf);
-            protoset.items.into_iter().for_each(|item| {
-                set.insert(T::decode_untagged(&item));
-            });
-            set
+
+            for item in protoset.items.into_iter() {
+                set.insert(T::decode_untagged(&item)?);
+            }
+
+            Ok(set)
         }
     }
 
@@ -338,9 +344,12 @@ mod schema {
     where
         T: EncodeUntagged,
     {
-        fn encode_untagged(&self) -> Vec<u8> {
-            let items: Vec<Vec<u8>> =
-                self.iter().map(|item| item.encode_untagged()).collect();
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
+            let mut items = Vec::new();
+            for item in self.into_iter() {
+                items.push(item.encode_untagged()?);
+            }
+
             Set {
                 items,
                 ..Default::default()
@@ -353,12 +362,13 @@ mod schema {
     where
         T: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Self {
-            List::decode_untagged(buf)
-                .items
-                .into_iter()
-                .map(|item| T::decode_untagged(&item))
-                .collect()
+        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+            let mut v = Vec::new();
+            for item in List::decode_untagged(buf)?.items.into_iter() {
+                v.push(T::decode_untagged(&item)?);
+            }
+
+            Ok(v)
         }
     }
 
@@ -366,14 +376,31 @@ mod schema {
     where
         T: EncodeUntagged,
     {
-        fn encode_untagged(&self) -> Vec<u8> {
-            let items: Vec<Vec<u8>> =
-                self.iter().map(|item| item.encode_untagged()).collect();
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
+            let mut items = Vec::new();
+            for item in self.into_iter() {
+                items.push(item.encode_untagged()?);
+            }
+
             List {
                 items,
                 ..Default::default()
             }
             .encode_untagged()
+        }
+    }
+
+    impl EncodeUntagged for String {
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
+            let mut buf: Vec<u8> = Vec::new();
+            {
+                let mut os = protobuf::CodedOutputStream::new(&mut buf);
+                os.write_string_no_tag(self)
+                    .map_err(|e| RpcError::from(e))?;
+                os.flush().map_err(|e| RpcError::from(e))?;
+            }
+
+            Ok(buf)
         }
     }
 
@@ -399,52 +426,50 @@ mod schema {
         Tuple
     );
 
-    encode_untagged!(String, write_string_no_tag);
-    encode_untagged_deref!(bool, write_bool_no_tag);
-    encode_untagged_deref!(i32, write_int32_no_tag);
-    encode_untagged_deref!(u32, write_uint32_no_tag);
-    encode_untagged_deref!(f32, write_float_no_tag);
-    encode_untagged_deref!(f64, write_double_no_tag);
-    encode_untagged_deref!(u64, write_uint64_no_tag);
+    encode_untagged!(bool, write_bool_no_tag);
+    encode_untagged!(i32, write_int32_no_tag);
+    encode_untagged!(u32, write_uint32_no_tag);
+    encode_untagged!(f32, write_float_no_tag);
+    encode_untagged!(f64, write_double_no_tag);
+    encode_untagged!(u64, write_uint64_no_tag);
 
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
-}
 
-pub mod client;
-
-pub mod services {
-    include!(concat!(env!("OUT_DIR"), "/services.rs"));
+    use crate::error::RpcError;
 }
 
 #[cfg(test)]
 mod test {
     use std::sync::Arc;
 
-    use crate::{client::Client, services};
+    use crate::{client::Client, error::RpcError, services};
 
     #[test]
-    fn call() {
+    fn call() -> Result<(), RpcError> {
         eprintln!("connecting");
 
-        let client =
-            Arc::new(Client::new("rpc test", "127.0.0.1", 50000, 50001));
+        let client = Arc::new(
+            Client::new("rpc test", "127.0.0.1", 50000, 50001).unwrap(),
+        );
 
         eprintln!("connected");
 
         let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
 
-        let ship = sc.get_active_vessel();
-        let ap = sc.vessel_get_auto_pilot(&ship);
+        let ship = sc.get_active_vessel()?;
+        let ap = sc.vessel_get_auto_pilot(&ship)?;
 
-        let svrf = sc.vessel_get_orbital_reference_frame(&ship);
-        let aprf = sc.auto_pilot_get_reference_frame(&ap);
+        let svrf = sc.vessel_get_orbital_reference_frame(&ship)?;
+        let aprf = sc.auto_pilot_get_reference_frame(&ap)?;
 
-        let x = sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf);
+        let x = sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf)?;
 
-        sc.auto_pilot_set_target_direction(&ap, x);
-        sc.auto_pilot_engage(&ap);
-        sc.auto_pilot_wait(&ap);
-        sc.auto_pilot_disengage(&ap);
+        sc.auto_pilot_set_target_direction(&ap, x)?;
+        sc.auto_pilot_engage(&ap)?;
+        sc.auto_pilot_wait(&ap)?;
+        sc.auto_pilot_disengage(&ap)?;
+
+        Ok(())
     }
 }

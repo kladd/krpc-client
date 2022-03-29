@@ -1,6 +1,6 @@
+use std::{fs, io::Error, path::Path};
+
 use convert_case::{Case, Casing};
-use std::io::Error;
-use std::{fs, path::Path};
 
 pub fn build<O: std::io::Write>(
     service_definitions: impl AsRef<Path>,
@@ -28,7 +28,8 @@ fn build_json(
         .new_module(&service_name.to_case(Case::Snake))
         .vis("pub")
         .import("crate::schema", "ToArgument")
-        .import("crate::schema", "FromResponse");
+        .import("crate::schema", "FromResponse")
+        .import("crate::error", "RpcError");
     module
         .new_struct(&service_name.to_case(Case::Pascal))
         .vis("pub")
@@ -106,7 +107,7 @@ fn build_json(
             );
             let ty = param.get("type").unwrap().as_object().unwrap();
 
-            proc_args.push(format!("{}.to_argument({})", &name, pos));
+            proc_args.push(format!("{}.to_argument({})?", &name, pos));
             sfn.arg(&name, decode_type(ty, true));
         }
 
@@ -114,8 +115,8 @@ fn build_json(
         def.get("return_type").map(|return_value| {
             let ty = return_value.as_object().unwrap();
             ret = decode_type(ty, false);
-            sfn.ret(&ret);
         });
+        sfn.ret(format!("Result<{}, RpcError>", ret));
 
         let body = format!(
             r#"
@@ -125,7 +126,7 @@ let request = crate::schema::Request::from(crate::client::Client::proc_call(
     vec![{args}],
 ));
 
-let response = self.client.call(request);
+let response = self.client.call(request)?;
 
 <{ret}>::from_response(response)
 "#,

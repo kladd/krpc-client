@@ -104,6 +104,7 @@ dependencies = [
  "krpc-build",
  "protobuf",
  "protobuf-codegen",
+ "thiserror",
 ]
 
 [[package]]
