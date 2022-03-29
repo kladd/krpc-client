@@ -1,3 +1,0 @@
-#+TITLE: kRPC Client
-
-Rust client for kRPC.
