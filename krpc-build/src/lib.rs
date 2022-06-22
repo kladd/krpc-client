@@ -31,7 +31,7 @@ fn build_json(
         .import("crate::schema", "FromResponse")
         .import("crate::error", "RpcError");
     module
-        .new_struct(&service_name.to_case(Case::Pascal))
+        .new_struct(&service_name)
         .vis("pub")
         .field("pub client", "::std::sync::Arc<crate::client::Client>")
         .allow("dead_code");
@@ -70,7 +70,7 @@ fn build_json(
         ));
     }
 
-    let service_impl = module.new_impl(&service_name.to_case(Case::Pascal));
+    let service_impl = module.new_impl(&service_name);
     service_impl
         .new_fn("new")
         .vis("pub")
@@ -80,15 +80,22 @@ fn build_json(
 
     let procedures = props.get("procedures").unwrap().as_object().unwrap();
 
-    for (proc_name, def) in procedures.into_iter() {
-        let sfn = service_impl
-            .new_fn(&proc_name.to_case(Case::Snake))
+    for (procedure, procedure_definition) in procedures.into_iter() {
+        let procedure_name_tokens = procedure.split("_").collect::<Vec<&str>>();
+
+        let impl_struct_name =
+            get_struct(&procedure_name_tokens).unwrap_or(service_name.clone());
+        let struct_impl = module.new_impl(&impl_struct_name);
+
+        let procedure_fn_name = get_fn_name(&procedure_name_tokens);
+        let procedure_fn = struct_impl
+            .new_fn(&procedure_fn_name)
             .vis("pub")
             .arg_ref_self()
             .allow("dead_code");
 
-        let mut proc_args = Vec::new();
-        let params = def
+        let mut procedure_args = Vec::new();
+        let params = procedure_definition
             .as_object()
             .unwrap()
             .get("parameters")
@@ -105,38 +112,43 @@ fn build_json(
                     .unwrap()
                     .to_case(Case::Snake),
             );
-            let ty = param.get("type").unwrap().as_object().unwrap();
 
-            proc_args.push(format!("{}.to_argument({})?", &name, pos));
-            sfn.arg(&name, decode_type(ty, true));
+            if name.eq_ignore_ascii_case("this") {
+                procedure_args.push(format!("self.to_argument({})?", pos));
+            } else {
+                let ty = param.get("type").unwrap().as_object().unwrap();
+                procedure_args.push(format!("{}.to_argument({})?", &name, pos));
+                procedure_fn.arg(&name, decode_type(ty, true));
+            }
         }
 
         let mut ret = String::from("()");
-        def.get("return_type").map(|return_value| {
+        procedure_definition.get("return_type").map(|return_value| {
             let ty = return_value.as_object().unwrap();
             ret = decode_type(ty, false);
         });
-        sfn.ret(format!("Result<{}, RpcError>", ret));
+        procedure_fn.ret(format!("Result<{}, RpcError>", ret));
 
         let body = format!(
             r#"
-let request = crate::schema::Request::from(crate::client::Client::proc_call(
-    "{service}",
-    "{procedure}",
-    vec![{args}],
-));
+        let request =
+        crate::schema::Request::from(crate::client::Client::proc_call(
+            "{service}",
+            "{procedure}",
+            vec![{args}],
+        ));
 
-let response = self.client.call(request)?;
+        let response = self.client.call(request)?;
 
-<{ret}>::from_response(response)
-"#,
+        <{ret}>::from_response(response, self.client.clone())
+        "#,
             service = service_name,
-            procedure = proc_name,
-            args = proc_args.join(","),
+            procedure = procedure,
+            args = procedure_args.join(","),
             ret = ret
         );
 
-        sfn.line(body);
+        procedure_fn.line(body);
     }
 
     Ok(())
@@ -242,8 +254,36 @@ fn rewrite_keywords(sample: String) -> String {
     }
 }
 
+fn get_struct(proc_tokens: &Vec<&str>) -> Option<String> {
+    proc_tokens
+        .first()
+        .filter(|segment| {
+            proc_tokens.len() > 1 && !segment.is_case(Case::Lower)
+        })
+        .map(|segment| String::from(*segment))
+}
+
+fn get_fn_name(proc_tokens: &Vec<&str>) -> String {
+    match get_struct(proc_tokens) {
+        Some(_) => &proc_tokens[1..],
+        None => &proc_tokens[..],
+    }
+    .join("_")
+    .to_case(Case::Snake)
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::get_fn_name;
+
+    #[test]
+    fn test_get_fn_name() {
+        assert_eq!(
+            get_fn_name(&"SpaceCenter_get_ActiveVessel".split("_").collect()),
+            String::from("get_active_vessel")
+        );
+    }
+
     #[test]
     fn test_build() {
         crate::build("../service_definitions/", &mut std::io::stdout());

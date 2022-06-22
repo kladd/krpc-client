@@ -5,32 +5,47 @@ pub mod services {
 }
 
 mod schema {
-    include!(concat!(env!("OUT_DIR"), "/krpc.rs"));
     use std::{
         collections::{HashMap, HashSet},
         hash::Hash,
+        sync::Arc,
     };
 
     pub use krpc::*;
     use protobuf::{reflect::types::ProtobufType, Message};
 
+    use crate::{client::Client, error::RpcError};
+
+    include!(concat!(env!("OUT_DIR"), "/krpc.rs"));
     pub trait DecodeUntagged: Sized {
-        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError>;
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError>;
     }
 
     pub trait FromResponse: Sized {
-        fn from_response(response: Response) -> Result<Self, RpcError>;
+        fn from_response(
+            response: Response,
+            client: Arc<Client>,
+        ) -> Result<Self, RpcError>;
     }
 
     impl FromResponse for () {
-        fn from_response(_: Response) -> Result<Self, RpcError> {
+        fn from_response(
+            _: Response,
+            _: Arc<Client>,
+        ) -> Result<Self, RpcError> {
             Ok(())
         }
     }
 
     impl<T: DecodeUntagged> FromResponse for T {
-        fn from_response(response: Response) -> Result<T, RpcError> {
-            Self::decode_untagged(&response.results[0].value)
+        fn from_response(
+            response: Response,
+            client: Arc<Client>,
+        ) -> Result<T, RpcError> {
+            Self::decode_untagged(client, &response.results[0].value)
         }
     }
 
@@ -74,15 +89,19 @@ mod schema {
 
     macro_rules! rpc_object {
         ($name:ident) => {
-            #[derive(Debug, Default)]
             pub struct $name {
                 pub id: u64,
+                pub client: ::std::sync::Arc<crate::client::Client>,
             }
 
             impl crate::schema::DecodeUntagged for $name {
-                fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+                fn decode_untagged(
+                    client: ::std::sync::Arc<crate::client::Client>,
+                    buf: &[u8],
+                ) -> Result<Self, RpcError> {
                     Ok($name {
-                        id: u64::decode_untagged(buf)?,
+                        id: u64::decode_untagged(client.clone(), buf)?,
+                        client,
                     })
                 }
             }
@@ -103,8 +122,11 @@ mod schema {
             )+}
 
             impl crate::schema::DecodeUntagged for $name {
-                fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
-                    match i32::decode_untagged(buf)? {
+                fn decode_untagged(
+                    client: ::std::sync::Arc<crate::client::Client>,
+                    buf: &[u8]
+                ) -> Result<Self, RpcError> {
+                    match i32::decode_untagged(client, buf)? {
                         $(i if i == $name::$value as i32 => Ok($name::$value),)+
                         _ => Err(RpcError::Encoding("invalid enum variant".into()))
                     }
@@ -122,7 +144,10 @@ mod schema {
     macro_rules! decode_untagged {
         ($to:ty, $proto:ident) => {
             impl DecodeUntagged for $to {
-                fn decode_untagged(b: &[u8]) -> Result<Self, RpcError> {
+                fn decode_untagged(
+                    _: ::std::sync::Arc<crate::client::Client>,
+                    b: &[u8],
+                ) -> Result<Self, RpcError> {
                     ::protobuf::reflect::types::$proto::read(
                         &mut ::protobuf::CodedInputStream::from_bytes(b),
                     )
@@ -135,7 +160,10 @@ mod schema {
     macro_rules! encode_decode_message_untagged {
         ($($m:ty),+$(,)?) => {$(
             impl DecodeUntagged for $m {
-                fn decode_untagged(b: &[u8]) -> Result<Self, RpcError> {
+                fn decode_untagged(
+                    _: ::std::sync::Arc<crate::client::Client>,
+                    b: &[u8]
+                ) -> Result<Self, RpcError> {
                     Self::parse_from_bytes(&b[..]).map_err(|e| RpcError::from(e))
                 }
             }
@@ -164,15 +192,24 @@ mod schema {
         T0: DecodeUntagged,
         T1: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
-            let tuple = Tuple::decode_untagged(buf)?;
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError> {
+            let tuple = Tuple::decode_untagged(client.clone(), buf)?;
             Ok((
-                T0::decode_untagged(tuple.items.get(0).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
-                T1::decode_untagged(tuple.items.get(1).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
+                T0::decode_untagged(
+                    client.clone(),
+                    tuple.items.get(0).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
+                T1::decode_untagged(
+                    client,
+                    tuple.items.get(1).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
             ))
         }
     }
@@ -200,18 +237,30 @@ mod schema {
         T1: DecodeUntagged,
         T2: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
-            let tuple = Tuple::decode_untagged(buf)?;
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError> {
+            let tuple = Tuple::decode_untagged(client.clone(), buf)?;
             Ok((
-                T0::decode_untagged(tuple.items.get(0).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
-                T1::decode_untagged(tuple.items.get(1).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
-                T2::decode_untagged(tuple.items.get(2).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
+                T0::decode_untagged(
+                    client.clone(),
+                    tuple.items.get(0).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
+                T1::decode_untagged(
+                    client.clone(),
+                    tuple.items.get(1).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
+                T2::decode_untagged(
+                    client,
+                    tuple.items.get(2).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
             ))
         }
     }
@@ -242,21 +291,36 @@ mod schema {
         T2: DecodeUntagged,
         T3: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
-            let tuple = Tuple::decode_untagged(buf)?;
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError> {
+            let tuple = Tuple::decode_untagged(client.clone(), buf)?;
             Ok((
-                T0::decode_untagged(tuple.items.get(0).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
-                T1::decode_untagged(tuple.items.get(1).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
-                T2::decode_untagged(tuple.items.get(2).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
-                T3::decode_untagged(tuple.items.get(3).ok_or(
-                    RpcError::Encoding("tuple element out of range".into()),
-                )?)?,
+                T0::decode_untagged(
+                    client.clone(),
+                    tuple.items.get(0).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
+                T1::decode_untagged(
+                    client.clone(),
+                    tuple.items.get(1).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
+                T2::decode_untagged(
+                    client.clone(),
+                    tuple.items.get(2).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
+                T3::decode_untagged(
+                    client,
+                    tuple.items.get(3).ok_or(RpcError::Encoding(
+                        "tuple element out of range".into(),
+                    ))?,
+                )?,
             ))
         }
     }
@@ -287,13 +351,16 @@ mod schema {
         K: DecodeUntagged + Eq + Hash + Default,
         V: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError> {
             let mut map: HashMap<K, V> = HashMap::new();
-            let dictionary = Dictionary::decode_untagged(buf)?;
+            let dictionary = Dictionary::decode_untagged(client.clone(), buf)?;
             for entry in dictionary.entries.into_iter() {
                 map.insert(
-                    K::decode_untagged(&entry.key)?,
-                    V::decode_untagged(&entry.value)?,
+                    K::decode_untagged(client.clone(), &entry.key)?,
+                    V::decode_untagged(client.clone(), &entry.value)?,
                 );
             }
             Ok(map)
@@ -328,12 +395,15 @@ mod schema {
     where
         T: DecodeUntagged + Eq + Hash,
     {
-        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
-            let protoset = Set::decode_untagged(buf)?;
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError> {
+            let protoset = Set::decode_untagged(client.clone(), buf)?;
             let mut set = HashSet::new();
 
             for item in protoset.items.into_iter() {
-                set.insert(T::decode_untagged(&item)?);
+                set.insert(T::decode_untagged(client.clone(), &item)?);
             }
 
             Ok(set)
@@ -362,10 +432,16 @@ mod schema {
     where
         T: DecodeUntagged,
     {
-        fn decode_untagged(buf: &[u8]) -> Result<Self, RpcError> {
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError> {
             let mut v = Vec::new();
-            for item in List::decode_untagged(buf)?.items.into_iter() {
-                v.push(T::decode_untagged(&item)?);
+            for item in List::decode_untagged(client.clone(), buf)?
+                .items
+                .into_iter()
+            {
+                v.push(T::decode_untagged(client.clone(), &item)?);
             }
 
             Ok(v)
@@ -435,13 +511,13 @@ mod schema {
 
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
-
-    use crate::error::RpcError;
 }
 
 #[cfg(test)]
 mod test {
     use std::sync::Arc;
+
+    use services::space_center::SpaceCenter;
 
     use crate::{client::Client, error::RpcError, services};
 
@@ -455,20 +531,21 @@ mod test {
 
         eprintln!("connected");
 
-        let sc = services::space_center::SpaceCenter::new(Arc::clone(&client));
+        let sc = SpaceCenter::new(Arc::clone(&client));
 
         let ship = sc.get_active_vessel()?;
-        let ap = sc.vessel_get_auto_pilot(&ship)?;
+        let ap = ship.get_auto_pilot()?;
 
-        let svrf = sc.vessel_get_orbital_reference_frame(&ship)?;
-        let aprf = sc.auto_pilot_get_reference_frame(&ap)?;
+        let svrf = ship.get_orbital_reference_frame()?;
+        let aprf = ap.get_reference_frame()?;
 
-        let x = sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf)?;
+        let direction =
+            sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf)?;
 
-        sc.auto_pilot_set_target_direction(&ap, x)?;
-        sc.auto_pilot_engage(&ap)?;
-        sc.auto_pilot_wait(&ap)?;
-        sc.auto_pilot_disengage(&ap)?;
+        ap.set_target_direction(direction)?;
+        ap.engage()?;
+        ap.wait()?;
+        ap.disengage()?;
 
         Ok(())
     }
