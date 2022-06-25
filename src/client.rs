@@ -28,7 +28,7 @@ impl Client {
         .map_err(|e| RpcError::Connection(e))?;
 
         let mut request = schema::ConnectionRequest::default();
-        request.field_type =
+        request.type_ =
             protobuf::EnumOrUnknown::new(schema::connection_request::Type::RPC);
         request.client_name = String::from(name);
 

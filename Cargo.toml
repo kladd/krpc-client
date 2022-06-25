@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 thiserror = "1.0"
-protobuf = { version = "3.0.0-alpha.8", features = ["bytes"] }
+protobuf = { version = "3.1.0", features = ["bytes"] }
 bytes = "1.1"
 
 [build-dependencies]
 krpc-build = { path = "./krpc-build" }
-protobuf-codegen = "3.0.0-alpha.8"
+protobuf-codegen = "3.1.0"

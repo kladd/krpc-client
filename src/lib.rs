@@ -12,7 +12,7 @@ mod schema {
     };
 
     pub use krpc::*;
-    use protobuf::{reflect::types::ProtobufType, Message};
+    use protobuf::Message;
 
     use crate::{client::Client, error::RpcError};
 
@@ -148,10 +148,9 @@ mod schema {
                     _: ::std::sync::Arc<crate::client::Client>,
                     b: &[u8],
                 ) -> Result<Self, RpcError> {
-                    ::protobuf::reflect::types::$proto::read(
-                        &mut ::protobuf::CodedInputStream::from_bytes(b),
-                    )
-                    .map_err(|e| e.into())
+                    ::protobuf::CodedInputStream::from_bytes(b)
+                        .$proto()
+                        .map_err(|e| e.into())
                 }
             }
         };
@@ -480,15 +479,15 @@ mod schema {
         }
     }
 
-    decode_untagged!(String, ProtobufTypeString);
-    decode_untagged!(bool, ProtobufTypeBool);
-    decode_untagged!(f32, ProtobufTypeFloat);
-    decode_untagged!(f64, ProtobufTypeDouble);
-    decode_untagged!(i32, ProtobufTypeSint32);
-    decode_untagged!(i64, ProtobufTypeSint64);
-    decode_untagged!(u32, ProtobufTypeUint32);
-    decode_untagged!(u64, ProtobufTypeUint64);
-    decode_untagged!(Vec<u8>, ProtobufTypeBytes);
+    decode_untagged!(String, read_string);
+    decode_untagged!(bool, read_bool);
+    decode_untagged!(f32, read_float);
+    decode_untagged!(f64, read_double);
+    decode_untagged!(i32, read_sint32);
+    decode_untagged!(i64, read_sint64);
+    decode_untagged!(u32, read_uint32);
+    decode_untagged!(u64, read_uint64);
+    decode_untagged!(Vec<u8>, read_bytes);
 
     encode_decode_message_untagged!(
         Dictionary,
