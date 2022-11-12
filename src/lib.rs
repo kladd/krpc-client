@@ -484,7 +484,6 @@ mod schema {
     decode_untagged!(f32, read_float);
     decode_untagged!(f64, read_double);
     decode_untagged!(i32, read_sint32);
-    decode_untagged!(i64, read_sint64);
     decode_untagged!(u32, read_uint32);
     decode_untagged!(u64, read_uint64);
     decode_untagged!(Vec<u8>, read_bytes);
@@ -502,7 +501,7 @@ mod schema {
     );
 
     encode_untagged!(bool, write_bool_no_tag);
-    encode_untagged!(i32, write_int32_no_tag);
+    encode_untagged!(i32, write_sint32_no_tag);
     encode_untagged!(u32, write_uint32_no_tag);
     encode_untagged!(f32, write_float_no_tag);
     encode_untagged!(f64, write_double_no_tag);
