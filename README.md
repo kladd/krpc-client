@@ -1,6 +1,6 @@
 # kRPC Client
 
-Rust client for [kRPC](https://github.com/krpc/krpc) (Remote Procedure Calls for Kerbal Space Program); specifically [nullprofile's](https://github.com/nullprofile) fork: [v0.4.9-1.12.1](https://github.com/nullprofile/krpc/releases/tag/0.4.9-1.12.1).
+Rust client for [kRPC](https://github.com/krpc/krpc) (Remote Procedure Calls for Kerbal Space Program).
 
 ### Disclaimer
 

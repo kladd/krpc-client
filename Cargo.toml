@@ -1,13 +1,13 @@
 [package]
 name = "krpc-client"
-version = "0.2.0-0.4.9-1.12.1+nullprofile"
+version = "0.3.0-0.5.1-1.12.5"
 edition = "2021"
 
 [dependencies]
 thiserror = "1.0"
-protobuf = { version = "3.1.0", features = ["bytes"] }
-bytes = "1.1"
+protobuf = { version = "3.2.0", features = ["bytes"] }
+bytes = "1.4"
 
 [build-dependencies]
 krpc-build = { path = "./krpc-build" }
-protobuf-codegen = "3.1.0"
+protobuf-codegen = "3.2.0"

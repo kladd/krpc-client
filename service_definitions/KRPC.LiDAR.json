@@ -1,0 +1,87 @@
+{
+  "LiDAR": {
+    "id": 10,
+    "documentation": "<doc>\n<summary>\nLaserDist Service\n</summary>\n</doc>",
+    "procedures": {
+      "Laser": {
+        "id": 1,
+        "parameters": [
+          {
+            "name": "part",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Part"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "LiDAR",
+          "name": "Laser"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet a LaserDist part\n</summary>\n</doc>"
+      },
+      "get_Available": {
+        "id": 2,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nCheck if the LaserDist API is avaiable\n</summary>\n</doc>"
+      },
+      "Laser_get_Part": {
+        "id": 3,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "LiDAR",
+              "name": "Laser"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "Part"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet the part containing this LiDAR.\n</summary>\n</doc>"
+      },
+      "Laser_get_Cloud": {
+        "id": 4,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "LiDAR",
+              "name": "Laser"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet the point cloud from the LiDAR.\nReturns an empty list on failure.\n</summary>\n</doc>"
+      }
+    },
+    "classes": {
+      "Laser": {
+        "documentation": "<doc>\n<summary>\nA LaserDist laser.\n</summary>\n</doc>"
+      }
+    },
+    "enumerations": {},
+    "exceptions": {}
+  }
+}

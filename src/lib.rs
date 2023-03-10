@@ -529,21 +529,10 @@ mod test {
 
         eprintln!("connected");
 
-        let sc = SpaceCenter::new(Arc::clone(&client));
-
+        let sc = SpaceCenter::new(client);
         let ship = sc.get_active_vessel()?;
-        let ap = ship.get_auto_pilot()?;
 
-        let svrf = ship.get_orbital_reference_frame()?;
-        let aprf = ap.get_reference_frame()?;
-
-        let direction =
-            sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf)?;
-
-        ap.set_target_direction(direction)?;
-        ap.engage()?;
-        ap.wait()?;
-        ap.disengage()?;
+        eprintln!("{}", ship.get_name()?);
 
         Ok(())
     }

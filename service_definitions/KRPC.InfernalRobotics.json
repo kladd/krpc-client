@@ -1,7 +1,7 @@
 {
   "InfernalRobotics": {
     "id": 4,
-    "documentation": "<doc>\n<summary>\nThis service provides functionality to interact with\n<a href=\"https://forum.kerbalspaceprogram.com/index.php?/topic/104535-112-magic-smoke-industries-infernal-robotics-202/\">Infernal Robotics</a>.\n</summary>\n</doc>",
+    "documentation": "<doc>\n<summary>\nThis service provides functionality to interact with\n<a href=\"https://forum.kerbalspaceprogram.com/index.php?/topic/184787-infernal-robotics-next/\">Infernal Robotics</a>.\n</summary>\n</doc>",
     "procedures": {
       "ServoGroups": {
         "id": 1,
@@ -164,42 +164,8 @@
         ],
         "documentation": "<doc>\n<summary>\nMoves the servo to the center.\n</summary>\n</doc>"
       },
-      "Servo_MoveNextPreset": {
-        "id": 9,
-        "parameters": [
-          {
-            "name": "this",
-            "type": {
-              "code": "CLASS",
-              "service": "InfernalRobotics",
-              "name": "Servo"
-            }
-          }
-        ],
-        "game_scenes": [
-          "FLIGHT"
-        ],
-        "documentation": "<doc>\n<summary>\nMoves the servo to the next preset.\n</summary>\n</doc>"
-      },
-      "Servo_MovePrevPreset": {
-        "id": 10,
-        "parameters": [
-          {
-            "name": "this",
-            "type": {
-              "code": "CLASS",
-              "service": "InfernalRobotics",
-              "name": "Servo"
-            }
-          }
-        ],
-        "game_scenes": [
-          "FLIGHT"
-        ],
-        "documentation": "<doc>\n<summary>\nMoves the servo to the previous preset.\n</summary>\n</doc>"
-      },
       "Servo_MoveTo": {
-        "id": 11,
+        "id": 9,
         "parameters": [
           {
             "name": "this",
@@ -228,7 +194,7 @@
         "documentation": "<doc>\n<summary>\nMoves the servo to <paramref name=\"position\" /> and sets the\nspeed multiplier to <paramref name=\"speed\" />.\n</summary>\n<param name=\"position\">The position to move the servo to.</param>\n<param name=\"speed\">Speed multiplier for the movement.</param>\n</doc>"
       },
       "Servo_Stop": {
-        "id": 12,
+        "id": 10,
         "parameters": [
           {
             "name": "this",
@@ -245,7 +211,7 @@
         "documentation": "<doc>\n<summary>\nStops the servo.\n</summary>\n</doc>"
       },
       "Servo_get_Name": {
-        "id": 13,
+        "id": 11,
         "parameters": [
           {
             "name": "this",
@@ -266,7 +232,7 @@
         "documentation": "<doc>\n<summary>\nThe name of the servo.\n</summary>\n</doc>"
       },
       "Servo_set_Name": {
-        "id": 14,
+        "id": 12,
         "parameters": [
           {
             "name": "this",
@@ -289,7 +255,7 @@
         "documentation": "<doc>\n<summary>\nThe name of the servo.\n</summary>\n</doc>"
       },
       "Servo_get_Part": {
-        "id": 15,
+        "id": 13,
         "parameters": [
           {
             "name": "this",
@@ -312,7 +278,7 @@
         "documentation": "<doc>\n<summary>\nThe part containing the servo.\n</summary>\n</doc>"
       },
       "Servo_set_Highlight": {
-        "id": 16,
+        "id": 14,
         "parameters": [
           {
             "name": "this",
@@ -335,7 +301,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servo should be highlighted in-game.\n</summary>\n</doc>"
       },
       "Servo_get_Position": {
-        "id": 17,
+        "id": 15,
         "parameters": [
           {
             "name": "this",
@@ -356,7 +322,7 @@
         "documentation": "<doc>\n<summary>\nThe position of the servo.\n</summary>\n</doc>"
       },
       "Servo_get_MinConfigPosition": {
-        "id": 18,
+        "id": 16,
         "parameters": [
           {
             "name": "this",
@@ -377,7 +343,7 @@
         "documentation": "<doc>\n<summary>\nThe minimum position of the servo, specified by the part configuration.\n</summary>\n</doc>"
       },
       "Servo_get_MaxConfigPosition": {
-        "id": 19,
+        "id": 17,
         "parameters": [
           {
             "name": "this",
@@ -398,7 +364,7 @@
         "documentation": "<doc>\n<summary>\nThe maximum position of the servo, specified by the part configuration.\n</summary>\n</doc>"
       },
       "Servo_get_MinPosition": {
-        "id": 20,
+        "id": 18,
         "parameters": [
           {
             "name": "this",
@@ -419,7 +385,7 @@
         "documentation": "<doc>\n<summary>\nThe minimum position of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_set_MinPosition": {
-        "id": 21,
+        "id": 19,
         "parameters": [
           {
             "name": "this",
@@ -442,7 +408,7 @@
         "documentation": "<doc>\n<summary>\nThe minimum position of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_get_MaxPosition": {
-        "id": 22,
+        "id": 20,
         "parameters": [
           {
             "name": "this",
@@ -463,7 +429,7 @@
         "documentation": "<doc>\n<summary>\nThe maximum position of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_set_MaxPosition": {
-        "id": 23,
+        "id": 21,
         "parameters": [
           {
             "name": "this",
@@ -486,7 +452,7 @@
         "documentation": "<doc>\n<summary>\nThe maximum position of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_get_ConfigSpeed": {
-        "id": 24,
+        "id": 22,
         "parameters": [
           {
             "name": "this",
@@ -507,7 +473,7 @@
         "documentation": "<doc>\n<summary>\nThe speed multiplier of the servo, specified by the part configuration.\n</summary>\n</doc>"
       },
       "Servo_get_Speed": {
-        "id": 25,
+        "id": 23,
         "parameters": [
           {
             "name": "this",
@@ -528,7 +494,7 @@
         "documentation": "<doc>\n<summary>\nThe speed multiplier of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_set_Speed": {
-        "id": 26,
+        "id": 24,
         "parameters": [
           {
             "name": "this",
@@ -551,7 +517,7 @@
         "documentation": "<doc>\n<summary>\nThe speed multiplier of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_get_CurrentSpeed": {
-        "id": 27,
+        "id": 25,
         "parameters": [
           {
             "name": "this",
@@ -571,31 +537,8 @@
         ],
         "documentation": "<doc>\n<summary>\nThe current speed at which the servo is moving.\n</summary>\n</doc>"
       },
-      "Servo_set_CurrentSpeed": {
-        "id": 28,
-        "parameters": [
-          {
-            "name": "this",
-            "type": {
-              "code": "CLASS",
-              "service": "InfernalRobotics",
-              "name": "Servo"
-            }
-          },
-          {
-            "name": "value",
-            "type": {
-              "code": "FLOAT"
-            }
-          }
-        ],
-        "game_scenes": [
-          "FLIGHT"
-        ],
-        "documentation": "<doc>\n<summary>\nThe current speed at which the servo is moving.\n</summary>\n</doc>"
-      },
       "Servo_get_Acceleration": {
-        "id": 29,
+        "id": 26,
         "parameters": [
           {
             "name": "this",
@@ -616,7 +559,7 @@
         "documentation": "<doc>\n<summary>\nThe current speed multiplier set in the UI.\n</summary>\n</doc>"
       },
       "Servo_set_Acceleration": {
-        "id": 30,
+        "id": 27,
         "parameters": [
           {
             "name": "this",
@@ -639,7 +582,7 @@
         "documentation": "<doc>\n<summary>\nThe current speed multiplier set in the UI.\n</summary>\n</doc>"
       },
       "Servo_get_IsMoving": {
-        "id": 31,
+        "id": 28,
         "parameters": [
           {
             "name": "this",
@@ -660,7 +603,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servo is moving.\n</summary>\n</doc>"
       },
       "Servo_get_IsFreeMoving": {
-        "id": 32,
+        "id": 29,
         "parameters": [
           {
             "name": "this",
@@ -681,7 +624,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servo is freely moving.\n</summary>\n</doc>"
       },
       "Servo_get_IsLocked": {
-        "id": 33,
+        "id": 30,
         "parameters": [
           {
             "name": "this",
@@ -702,7 +645,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servo is locked.\n</summary>\n</doc>"
       },
       "Servo_set_IsLocked": {
-        "id": 34,
+        "id": 31,
         "parameters": [
           {
             "name": "this",
@@ -725,7 +668,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servo is locked.\n</summary>\n</doc>"
       },
       "Servo_get_IsAxisInverted": {
-        "id": 35,
+        "id": 32,
         "parameters": [
           {
             "name": "this",
@@ -746,7 +689,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servos axis is inverted.\n</summary>\n</doc>"
       },
       "Servo_set_IsAxisInverted": {
-        "id": 36,
+        "id": 33,
         "parameters": [
           {
             "name": "this",
@@ -769,7 +712,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servos axis is inverted.\n</summary>\n</doc>"
       },
       "ServoGroup_ServoWithName": {
-        "id": 37,
+        "id": 34,
         "parameters": [
           {
             "name": "this",
@@ -798,7 +741,7 @@
         "documentation": "<doc>\n<summary>\nReturns the servo with the given <paramref name=\"name\" /> from this group,\nor <c>null</c> if none exists.\n</summary>\n<param name=\"name\">Name of servo to find.</param>\n</doc>"
       },
       "ServoGroup_MoveRight": {
-        "id": 38,
+        "id": 35,
         "parameters": [
           {
             "name": "this",
@@ -815,7 +758,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the right.\n</summary>\n</doc>"
       },
       "ServoGroup_MoveLeft": {
-        "id": 39,
+        "id": 36,
         "parameters": [
           {
             "name": "this",
@@ -832,7 +775,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the left.\n</summary>\n</doc>"
       },
       "ServoGroup_MoveCenter": {
-        "id": 40,
+        "id": 37,
         "parameters": [
           {
             "name": "this",
@@ -849,7 +792,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the center.\n</summary>\n</doc>"
       },
       "ServoGroup_MoveNextPreset": {
-        "id": 41,
+        "id": 38,
         "parameters": [
           {
             "name": "this",
@@ -866,7 +809,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the next preset.\n</summary>\n</doc>"
       },
       "ServoGroup_MovePrevPreset": {
-        "id": 42,
+        "id": 39,
         "parameters": [
           {
             "name": "this",
@@ -883,7 +826,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the previous preset.\n</summary>\n</doc>"
       },
       "ServoGroup_Stop": {
-        "id": 43,
+        "id": 40,
         "parameters": [
           {
             "name": "this",
@@ -900,7 +843,7 @@
         "documentation": "<doc>\n<summary>\nStops the servos in the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Name": {
-        "id": 44,
+        "id": 41,
         "parameters": [
           {
             "name": "this",
@@ -921,7 +864,7 @@
         "documentation": "<doc>\n<summary>\nThe name of the group.\n</summary>\n</doc>"
       },
       "ServoGroup_set_Name": {
-        "id": 45,
+        "id": 42,
         "parameters": [
           {
             "name": "this",
@@ -944,7 +887,7 @@
         "documentation": "<doc>\n<summary>\nThe name of the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_ForwardKey": {
-        "id": 46,
+        "id": 43,
         "parameters": [
           {
             "name": "this",
@@ -965,7 +908,7 @@
         "documentation": "<doc>\n<summary>\nThe key assigned to be the \"forward\" key for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_set_ForwardKey": {
-        "id": 47,
+        "id": 44,
         "parameters": [
           {
             "name": "this",
@@ -988,7 +931,7 @@
         "documentation": "<doc>\n<summary>\nThe key assigned to be the \"forward\" key for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_ReverseKey": {
-        "id": 48,
+        "id": 45,
         "parameters": [
           {
             "name": "this",
@@ -1009,7 +952,7 @@
         "documentation": "<doc>\n<summary>\nThe key assigned to be the \"reverse\" key for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_set_ReverseKey": {
-        "id": 49,
+        "id": 46,
         "parameters": [
           {
             "name": "this",
@@ -1032,7 +975,7 @@
         "documentation": "<doc>\n<summary>\nThe key assigned to be the \"reverse\" key for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Speed": {
-        "id": 50,
+        "id": 47,
         "parameters": [
           {
             "name": "this",
@@ -1053,7 +996,7 @@
         "documentation": "<doc>\n<summary>\nThe speed multiplier for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_set_Speed": {
-        "id": 51,
+        "id": 48,
         "parameters": [
           {
             "name": "this",
@@ -1076,7 +1019,7 @@
         "documentation": "<doc>\n<summary>\nThe speed multiplier for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Expanded": {
-        "id": 52,
+        "id": 49,
         "parameters": [
           {
             "name": "this",
@@ -1097,7 +1040,7 @@
         "documentation": "<doc>\n<summary>\nWhether the group is expanded in the InfernalRobotics UI.\n</summary>\n</doc>"
       },
       "ServoGroup_set_Expanded": {
-        "id": 53,
+        "id": 50,
         "parameters": [
           {
             "name": "this",
@@ -1120,7 +1063,7 @@
         "documentation": "<doc>\n<summary>\nWhether the group is expanded in the InfernalRobotics UI.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Servos": {
-        "id": 54,
+        "id": 51,
         "parameters": [
           {
             "name": "this",
@@ -1148,7 +1091,7 @@
         "documentation": "<doc>\n<summary>\nThe servos that are in the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Parts": {
-        "id": 55,
+        "id": 52,
         "parameters": [
           {
             "name": "this",

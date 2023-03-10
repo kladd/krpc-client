@@ -1,0 +1,82 @@
+{
+  "DockingCamera": {
+    "id": 11,
+    "documentation": "<doc>\n<summary>\nCamera Service\n</summary>\n</doc>",
+    "procedures": {
+      "Camera": {
+        "id": 1,
+        "parameters": [
+          {
+            "name": "part",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Part"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "DockingCamera",
+          "name": "Camera"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet a Camera part\n</summary>\n</doc>"
+      },
+      "get_Available": {
+        "id": 2,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nCheck if the Camera API is avaiable\n</summary>\n</doc>"
+      },
+      "Camera_get_Part": {
+        "id": 3,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "DockingCamera",
+              "name": "Camera"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "Part"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet the part containing this camera.\n</summary>\n</doc>"
+      },
+      "Camera_get_Image": {
+        "id": 4,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "DockingCamera",
+              "name": "Camera"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BYTES"
+        },
+        "return_is_nullable": false,
+        "documentation": "<doc>\n<summary>\nGet an image.\nReturns an empty byte array on failure.\n</summary>\n</doc>"
+      }
+    },
+    "classes": {
+      "Camera": {
+        "documentation": "<doc>\n<summary>\nA Docking Camera.\n</summary>\n</doc>"
+      }
+    },
+    "enumerations": {},
+    "exceptions": {}
+  }
+}
