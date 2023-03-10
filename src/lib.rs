@@ -1,5 +1,6 @@
 pub mod client;
 pub mod error;
+
 pub mod services {
     include!(concat!(env!("OUT_DIR"), "/services.rs"));
 }
@@ -415,7 +416,7 @@ mod schema {
     {
         fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
             let mut items = Vec::new();
-            for item in self.into_iter() {
+            for item in self.iter() {
                 items.push(item.encode_untagged()?);
             }
 
@@ -453,7 +454,7 @@ mod schema {
     {
         fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
             let mut items = Vec::new();
-            for item in self.into_iter() {
+            for item in self.iter() {
                 items.push(item.encode_untagged()?);
             }
 
@@ -470,9 +471,8 @@ mod schema {
             let mut buf: Vec<u8> = Vec::new();
             {
                 let mut os = protobuf::CodedOutputStream::new(&mut buf);
-                os.write_string_no_tag(self)
-                    .map_err(|e| RpcError::from(e))?;
-                os.flush().map_err(|e| RpcError::from(e))?;
+                os.write_string_no_tag(self).map_err(RpcError::from)?;
+                os.flush().map_err(RpcError::from)?;
             }
 
             Ok(buf)

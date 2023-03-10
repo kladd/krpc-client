@@ -16,7 +16,7 @@ fn main() {
         .pure()
         // LSP handles this fine, but IntelliJ Rust can't figure it out.
         .customize(Customize::default().gen_mod_rs(false))
-        .includes(&["proto"])
+        .includes(["proto"])
         .input("proto/krpc.proto")
         .out_dir(&out_dir)
         .run_from_script();
@@ -24,13 +24,13 @@ fn main() {
     let proto_path = Path::new(&out_dir);
 
     let mut contents = String::new();
-    File::open(&proto_path.join("krpc.rs"))
+    File::open(proto_path.join("krpc.rs"))
         .unwrap()
         .read_to_string(&mut contents)
         .unwrap();
 
     let new_contents = format!("pub mod krpc {{\n{}\n}}", contents);
-    File::create(&proto_path.join("krpc.rs"))
+    File::create(proto_path.join("krpc.rs"))
         .unwrap()
         .write_all(new_contents.as_bytes())
         .unwrap();

@@ -25,12 +25,15 @@ impl Client {
             ip_addr.parse().unwrap(),
             rpc_port,
         ))
-        .map_err(|e| RpcError::Connection(e))?;
+        .map_err(RpcError::Connection)?;
 
-        let mut request = schema::ConnectionRequest::default();
-        request.type_ =
-            protobuf::EnumOrUnknown::new(schema::connection_request::Type::RPC);
-        request.client_name = String::from(name);
+        let request = schema::ConnectionRequest {
+            type_: protobuf::EnumOrUnknown::new(
+                schema::connection_request::Type::RPC,
+            ),
+            client_name: String::from(name),
+            ..Default::default()
+        };
 
         send(&mut rpc, request)?;
         let _response = recv::<ConnectionResponse>(&mut rpc)?;

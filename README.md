@@ -17,13 +17,13 @@ let client = Arc::new(
 );
 
 // Initialize the SpaceCenter service.
-let sc = SpaceCenter::new(Arc::clone(&client));
+let sc = SpaceCenter::new(client);
 
 // Call procedures.
 let ship = sc.get_active_vessel()?;
 let ap = ship.get_auto_pilot()?;
 
-let svrf = ship.get_orbital_reference_frame()?;
+let sorf = ship.get_orbital_reference_frame()?;
 let aprf = ap.get_reference_frame()?;
 
 let direction =
