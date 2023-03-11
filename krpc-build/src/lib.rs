@@ -1,7 +1,48 @@
 use std::{fs, io::Error, path::Path};
 
 use convert_case::{Case, Casing};
+use serde_json::{Map, Value};
 
+/// Generate source code from JSON service definitions.
+///
+/// Creates a module for each RPC service that contains all
+/// type and function definitions for that service.
+///
+/// # Examples
+/// ```
+/// {
+///   "SpaceCenter": {
+///     "procedures": {
+///       "get_ActiveVessel": {
+///         "paramters": [],
+///         "return_type": {
+///           "code": "CLASS",
+///           "service": "SpaceCenter",
+///           "name": "Vessel"
+///         }
+///       }
+///     }
+///   }
+/// }
+/// ```
+/// becomes
+/// ```
+/// use std::sync::Arc;
+///
+/// use crate::{client::Client, error::RpcError, schema::rpc_object};
+///
+/// pub mod space_center {
+///     rpc_object!(Vessel);
+///
+///     pub struct SpaceCenter {
+///         pub client: Arc<Client>,
+///     }
+///
+///     impl SpaceCenter {
+///         pub fn get_active_vessel() -> Result<Vessel, RpcError> { ... }
+///     }
+/// }
+/// ```
 pub fn build<O: std::io::Write>(
     service_definitions: impl AsRef<Path>,
     out: &mut O,
@@ -11,123 +52,137 @@ pub fn build<O: std::io::Write>(
         let def_file = fs::File::open(def.unwrap().path())?;
         let json: serde_json::Value = serde_json::from_reader(def_file)?;
 
-        for (name, props) in json.as_object().unwrap().into_iter() {
-            build_json(name, props, &mut scope)?;
+        for (name, props_json) in json.as_object().unwrap().into_iter() {
+            let mut service = RpcService::new(&mut scope, name);
+
+            let props = props_json.as_object().unwrap();
+
+            let classes = props.get("classes").unwrap().as_object().unwrap();
+            for class in classes.keys() {
+                service.define_class(class)
+            }
+
+            let enums = props.get("enumerations").unwrap().as_object().unwrap();
+            for (enum_name, values_json) in enums.into_iter() {
+                service.define_enum(enum_name, values_json);
+            }
+
+            let procedures =
+                props.get("procedures").unwrap().as_object().unwrap();
+            for (procedure_name, definition) in procedures.into_iter() {
+                service.define_procedure(procedure_name, definition);
+            }
         }
     }
 
     write!(out, "{}", scope.to_string())
 }
 
-fn build_json(
-    service_name: &String,
-    props_json: &serde_json::Value,
-    root: &mut codegen::Scope,
-) -> Result<(), Error> {
-    let module = root
-        .new_module(&service_name.to_case(Case::Snake))
-        .vis("pub")
-        .import("crate::schema", "ToArgument")
-        .import("crate::schema", "FromResponse")
-        .import("crate::error", "RpcError");
-    module
-        .new_struct(&service_name)
-        .vis("pub")
-        .field("pub client", "::std::sync::Arc<crate::client::Client>")
-        .allow("dead_code");
+struct RpcService<'a> {
+    name: String,
+    module: &'a mut codegen::Module,
+}
 
-    let props = props_json.as_object().unwrap();
+impl<'a> RpcService<'a> {
+    const IMPORTS: &[(&'static str, &'static str)] = &[
+        ("crate::schema", "ToArgument"),
+        ("crate::schema", "FromResponse"),
+        ("crate::error", "RpcError"),
+    ];
 
-    let classes = props.get("classes").unwrap().as_object().unwrap();
-    for class in classes.keys() {
+    fn new(scope: &'a mut codegen::Scope, service_name: &str) -> Self {
+        let module = scope
+            .new_module(&service_name.to_case(Case::Snake))
+            .vis("pub");
+
+        for (path, type_name) in Self::IMPORTS {
+            module.import(path, type_name);
+        }
+
         module
-            .scope()
-            .raw(&format!("crate::schema::rpc_object!({});", class));
+            .new_struct(service_name)
+            .vis("pub")
+            .field("pub client", "::std::sync::Arc<crate::client::Client>")
+            .allow("dead_code");
+
+        // TODO: Remove new? Or derive it.
+        module
+            .new_impl(service_name)
+            .new_fn("new")
+            .vis("pub")
+            .arg("client", "::std::sync::Arc<crate::client::Client>")
+            .ret("Self")
+            .line("Self { client }");
+
+        Self {
+            name: service_name.to_string(),
+            module,
+        }
     }
 
-    let enums = props.get("enumerations").unwrap().as_object().unwrap();
-    for (enum_name, values_json) in enums.into_iter() {
+    fn define_class(&mut self, name: &str) {
+        self.module
+            .scope()
+            .raw(&format!("crate::schema::rpc_object!({});", name));
+    }
+
+    fn define_enum(&mut self, name: &str, values: &Value) {
         let values = {
             let mut v = Vec::new();
-            for d in values_json
+            for d in values
                 .as_object()
                 .unwrap()
                 .get("values")
                 .unwrap()
                 .as_array()
                 .unwrap()
-                .into_iter()
+                .iter()
             {
                 v.push(d.get("name").unwrap().as_str().unwrap())
             }
             v
         };
 
-        module.scope().raw(&format!(
+        self.module.scope().raw(&format!(
             "crate::schema::rpc_enum!({}, [{}]);",
-            enum_name,
+            name,
             values.join(", ")
         ));
     }
 
-    let service_impl = module.new_impl(&service_name);
-    service_impl
-        .new_fn("new")
-        .vis("pub")
-        .arg("client", "::std::sync::Arc<crate::client::Client>")
-        .ret("Self")
-        .line("Self { client }");
+    fn define_procedure(&mut self, name: &str, definition: &Value) {
+        let name_tokens = name.split('_').collect::<Vec<&str>>();
+        let class_name = get_struct(&name_tokens).unwrap_or(self.name.clone());
+        let class = self.module.new_impl(&class_name);
 
-    let procedures = props.get("procedures").unwrap().as_object().unwrap();
-
-    for (procedure, procedure_definition) in procedures.into_iter() {
-        let procedure_name_tokens = procedure.split("_").collect::<Vec<&str>>();
-
-        let impl_struct_name =
-            get_struct(&procedure_name_tokens).unwrap_or(service_name.clone());
-        let struct_impl = module.new_impl(&impl_struct_name);
-
-        let procedure_fn_name = get_fn_name(&procedure_name_tokens);
-        let procedure_fn = struct_impl
-            .new_fn(&procedure_fn_name)
+        let fn_name = get_fn_name(&name_tokens);
+        let fn_block = class
+            .new_fn(&fn_name)
             .vis("pub")
             .arg_ref_self()
             .allow("dead_code");
 
-        let mut procedure_args = Vec::new();
-        let params = procedure_definition
-            .as_object()
-            .unwrap()
-            .get("parameters")
-            .unwrap()
-            .as_array()
-            .unwrap();
-        for (pos, p) in params.iter().enumerate() {
-            let param = p.as_object().unwrap();
-            let name = rewrite_keywords(
-                param
-                    .get("name")
-                    .unwrap()
-                    .as_str()
-                    .unwrap()
-                    .to_case(Case::Snake),
-            );
+        let mut fn_args = Vec::new();
+        let params = get_params(definition);
+        for (pos, param_json) in params.iter().enumerate() {
+            let param = param_json.as_object().unwrap();
+            let name = get_param_name(param);
 
             if name.eq_ignore_ascii_case("this") {
-                procedure_args.push(format!("self.to_argument({})?", pos));
+                fn_args.push(format!("self.to_argument({})?", pos));
             } else {
                 let ty = param.get("type").unwrap().as_object().unwrap();
-                procedure_args.push(format!("{}.to_argument({})?", &name, pos));
-                procedure_fn.arg(&name, decode_type(ty, true));
+                fn_args.push(format!("{}.to_argument({})?", &name, pos));
+                fn_block.arg(&name, decode_type(ty, true));
             }
         }
 
         let mut ret = String::from("()");
-        procedure_definition.get("return_type").map(|return_value| {
+        if let Some(return_value) = definition.get("return_type") {
             let ty = return_value.as_object().unwrap();
             ret = decode_type(ty, false);
-        });
-        procedure_fn.ret(format!("Result<{}, RpcError>", ret));
+        }
+        fn_block.ret(format!("Result<{}, RpcError>", ret));
 
         let body = format!(
             r#"
@@ -142,16 +197,51 @@ fn build_json(
 
         <{ret}>::from_response(response, self.client.clone())
         "#,
-            service = service_name,
-            procedure = procedure,
-            args = procedure_args.join(","),
+            service = self.name,
+            procedure = name,
+            args = fn_args.join(","),
             ret = ret
         );
 
-        procedure_fn.line(body);
+        fn_block.line(body);
     }
+}
 
-    Ok(())
+fn get_params(json: &Value) -> &Vec<Value> {
+    json.as_object()
+        .unwrap()
+        .get("parameters")
+        .unwrap()
+        .as_array()
+        .unwrap()
+}
+
+fn get_param_name(json: &Map<String, Value>) -> String {
+    rewrite_keywords(
+        json.get("name")
+            .unwrap()
+            .as_str()
+            .unwrap()
+            .to_case(Case::Snake),
+    )
+}
+
+fn get_struct(proc_tokens: &Vec<&str>) -> Option<String> {
+    proc_tokens
+        .first()
+        .filter(|segment| {
+            proc_tokens.len() > 1 && !segment.is_case(Case::Lower)
+        })
+        .map(|segment| String::from(*segment))
+}
+
+fn get_fn_name(proc_tokens: &Vec<&str>) -> String {
+    match get_struct(proc_tokens) {
+        Some(_) => &proc_tokens[1..],
+        None => &proc_tokens[..],
+    }
+    .join("_")
+    .to_case(Case::Snake)
 }
 
 fn decode_type(
@@ -170,12 +260,12 @@ fn decode_type(
         "DOUBLE" => "f64".to_string(),
         // TODO(kladd): maybe not Vec<u8>
         "BYTES" => "Vec<u8>".to_string(),
-        "TUPLE" => decode_tuple(&ty),
-        "LIST" => decode_list(&ty),
-        "SET" => decode_set(&ty),
-        "DICTIONARY" => decode_dictionary(&ty),
-        "ENUMERATION" => decode_class(&ty),
-        "CLASS" => decode_class(&ty),
+        "TUPLE" => decode_tuple(ty),
+        "LIST" => decode_list(ty),
+        "SET" => decode_set(ty),
+        "DICTIONARY" => decode_dictionary(ty),
+        "ENUMERATION" => decode_class(ty),
+        "CLASS" => decode_class(ty),
         "EVENT" => "crate::schema::Event".into(),
         "PROCEDURE_CALL" => "crate::schema::ProcedureCall".into(),
         "STREAM" => "crate::schema::Stream".into(),
@@ -210,7 +300,7 @@ fn decode_list(ty: &serde_json::Map<String, serde_json::Value>) -> String {
 
     format!(
         "Vec<{}>",
-        decode_type(&types.first().unwrap().as_object().unwrap(), false)
+        decode_type(types.first().unwrap().as_object().unwrap(), false)
     )
 }
 
@@ -243,7 +333,7 @@ fn decode_set(ty: &serde_json::Map<String, serde_json::Value>) -> String {
 
     format!(
         "std::collections::HashSet<{}>",
-        decode_type(&types.first().unwrap().as_object().unwrap(), false)
+        decode_type(types.first().unwrap().as_object().unwrap(), false)
     )
 }
 
@@ -252,24 +342,6 @@ fn rewrite_keywords(sample: String) -> String {
         "type" => "r#type".into(),
         _ => sample,
     }
-}
-
-fn get_struct(proc_tokens: &Vec<&str>) -> Option<String> {
-    proc_tokens
-        .first()
-        .filter(|segment| {
-            proc_tokens.len() > 1 && !segment.is_case(Case::Lower)
-        })
-        .map(|segment| String::from(*segment))
-}
-
-fn get_fn_name(proc_tokens: &Vec<&str>) -> String {
-    match get_struct(proc_tokens) {
-        Some(_) => &proc_tokens[1..],
-        None => &proc_tokens[..],
-    }
-    .join("_")
-    .to_case(Case::Snake)
 }
 
 #[cfg(test)]
