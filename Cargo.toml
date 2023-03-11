@@ -1,6 +1,10 @@
+[workspace]
+members = ["krpc-build"]
+
 [package]
 name = "krpc-client"
 version = "0.3.0-0.5.1-1.12.5"
+authors = ["Kyle Ladd <kyle@ladd.io>"]
 edition = "2021"
 
 [dependencies]
