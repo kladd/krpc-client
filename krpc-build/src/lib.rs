@@ -104,6 +104,7 @@ impl<'a> RpcService<'a> {
     fn new(scope: &'a mut codegen::Scope, service_name: &str) -> Self {
         let module = scope
             .new_module(&service_name.to_case(Case::Snake))
+            .attr("allow(clippy::type_complexity)")
             .vis("pub");
 
         for (path, type_name) in Self::IMPORTS {
