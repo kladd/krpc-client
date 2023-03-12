@@ -1,7 +1,7 @@
 use std::{
-    collections::HashMap,
     net::TcpStream,
-    sync::{Arc, Mutex, RwLock},
+    sync::{Arc, Mutex},
+    thread,
 };
 
 use protobuf::CodedInputStream;
@@ -10,15 +10,15 @@ use crate::{
     error::RpcError,
     schema::{
         self, connection_request, connection_response::Status,
-        ConnectionRequest, ConnectionResponse, DecodeUntagged, ProcedureResult,
-        StreamUpdate,
+        ConnectionRequest, ConnectionResponse, DecodeUntagged, StreamUpdate,
     },
+    stream::StreamWrangler,
 };
 
 pub struct Client {
     rpc: Mutex<TcpStream>,
     stream: Mutex<TcpStream>,
-    streams: RwLock<HashMap<u64, ProcedureResult>>,
+    streams: StreamWrangler,
 }
 
 impl Client {
@@ -27,7 +27,7 @@ impl Client {
         ip_addr: &str,
         rpc_port: u16,
         stream_port: u16,
-    ) -> Result<Self, RpcError> {
+    ) -> Result<Arc<Self>, RpcError> {
         let rpc_request = schema::ConnectionRequest {
             type_: protobuf::EnumOrUnknown::new(connection_request::Type::RPC),
             client_name: String::from(name),
@@ -45,11 +45,19 @@ impl Client {
         };
         let (stream_stream, _) = connect(ip_addr, stream_port, stream_request)?;
 
-        Ok(Self {
+        let client = Arc::new(Self {
             rpc: Mutex::new(rpc_stream),
             stream: Mutex::new(stream_stream),
-            streams: RwLock::new(HashMap::new()),
-        })
+            streams: StreamWrangler::default(),
+        });
+
+        // Spawn a thread to receive stream updates.
+        let bg_client = client.clone();
+        thread::spawn(move || loop {
+            bg_client.update_streams().ok();
+        });
+
+        Ok(client)
     }
 
     pub fn call(
@@ -75,34 +83,32 @@ impl Client {
         }
     }
 
-    pub fn stream_update(self: &Arc<Self>) -> Result<(), RpcError> {
+    pub fn update_streams(self: &Arc<Self>) -> Result<(), RpcError> {
         let mut stream = self.stream.lock()?;
         let update = recv::<StreamUpdate>(&mut stream)?;
         for result in update.results {
-            let mut streams = self.streams.write()?;
-            streams.insert(
+            self.streams.insert(
                 result.id,
                 result.result.into_option().ok_or(RpcError::Client)?,
-            );
+            )?;
         }
         Ok(())
     }
 
-    pub fn stream_read<T: DecodeUntagged>(
+    pub fn read_stream<T: DecodeUntagged>(
         self: &Arc<Self>,
         id: u64,
     ) -> Result<T, RpcError> {
-        let streams = self.streams.read()?;
-        T::decode_untagged(
-            self.clone(),
-            &streams.get(&id).ok_or(RpcError::Client)?.value,
-        )
+        self.streams.get(self.clone(), id)
     }
 
     pub fn remove_stream(self: &Arc<Self>, id: u64) -> Result<(), RpcError> {
-        let mut streams = self.streams.write()?;
-        streams.remove(&id);
+        self.streams.remove(id);
         Ok(())
+    }
+
+    pub fn await_stream(&self, id: u64) {
+        self.streams.wait(id)
     }
 }
 

@@ -163,7 +163,8 @@ impl<'a> RpcService<'a> {
 
     fn define_procedure(&mut self, name: &str, definition: &Value) {
         let name_tokens = name.split('_').collect::<Vec<&str>>();
-        let class_name = get_struct(&name_tokens).unwrap_or(self.name.clone());
+        let class_name =
+            get_struct(&name_tokens).unwrap_or_else(|| self.name.clone());
         let class = self.module.new_impl(&class_name);
 
         let fn_name = get_fn_name(&name_tokens);
@@ -196,7 +197,8 @@ impl<'a> RpcService<'a> {
 
     fn define_call_procedure(&mut self, proc_name: &str, definition: &Value) {
         let name_tokens = proc_name.split('_').collect::<Vec<&str>>();
-        let class_name = get_struct(&name_tokens).unwrap_or(self.name.clone());
+        let class_name =
+            get_struct(&name_tokens).unwrap_or_else(|| self.name.clone());
         let class = self.module.new_impl(&class_name);
 
         let fn_name =
@@ -227,14 +229,15 @@ impl<'a> RpcService<'a> {
 
     fn define_stream_procedure(&mut self, proc_name: &str, definition: &Value) {
         let name_tokens = proc_name.split('_').collect::<Vec<&str>>();
-        let class_name = get_struct(&name_tokens).unwrap_or(self.name.clone());
+        let class_name =
+            get_struct(&name_tokens).unwrap_or_else(|| self.name.clone());
         let class = self.module.new_impl(&class_name);
 
         let fn_base_name = get_fn_name(&proc_name.split('_').collect());
         let fn_name = format!("{}_stream", fn_base_name);
         let fn_block = class
             .new_fn(&fn_name)
-            .vis("pub(crate)")
+            .vis("pub")
             .arg_ref_self()
             .allow("dead_code");
         let RpcArgs {

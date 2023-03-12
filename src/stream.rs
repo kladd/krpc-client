@@ -1,9 +1,13 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::{
+    collections::HashMap,
+    marker::PhantomData,
+    sync::{Arc, Condvar, Mutex},
+};
 
 use crate::{
     client::Client,
     error::RpcError,
-    schema::{DecodeUntagged, ProcedureCall},
+    schema::{DecodeUntagged, ProcedureCall, ProcedureResult},
     services::krpc::KRPC,
 };
 
@@ -14,6 +18,55 @@ pub struct Stream<T: DecodeUntagged> {
     phantom: PhantomData<T>,
 }
 
+type StreamEntry = Arc<(Mutex<ProcedureResult>, Condvar)>;
+#[derive(Default)]
+pub(crate) struct StreamWrangler {
+    streams: Mutex<HashMap<u64, StreamEntry>>,
+}
+
+impl StreamWrangler {
+    pub fn insert(
+        &self,
+        id: u64,
+        procedure_result: ProcedureResult,
+    ) -> Result<(), RpcError> {
+        let mut map = self.streams.lock().unwrap();
+        let (lock, cvar) =
+            { &*map.entry(id).or_insert_with(Default::default).clone() };
+
+        *lock.lock().unwrap() = procedure_result;
+        cvar.notify_one();
+
+        Ok(())
+    }
+
+    pub fn wait(&self, id: u64) {
+        let (lock, cvar) = {
+            let mut map = self.streams.lock().unwrap();
+            &*map.entry(id).or_insert_with(Default::default).clone()
+        };
+        let result = lock.lock().unwrap();
+        let _result = cvar.wait(result).unwrap();
+    }
+
+    pub fn remove(&self, id: u64) {
+        let mut map = self.streams.lock().unwrap();
+        map.remove(&id);
+    }
+
+    pub fn get<T: DecodeUntagged>(
+        &self,
+        client: Arc<Client>,
+        id: u64,
+    ) -> Result<T, RpcError> {
+        let mut map = self.streams.lock().unwrap();
+        let (lock, _) =
+            { &*map.entry(id).or_insert_with(Default::default).clone() };
+        let result = lock.lock().unwrap();
+        T::decode_untagged(client, &result.value)
+    }
+}
+
 impl<T: DecodeUntagged> Stream<T> {
     pub(crate) fn new(
         client: Arc<Client>,
@@ -21,6 +74,7 @@ impl<T: DecodeUntagged> Stream<T> {
     ) -> Result<Self, RpcError> {
         let krpc = KRPC::new(client.clone());
         let stream = krpc.add_stream(call, true)?;
+        client.await_stream(stream.id);
 
         Ok(Self {
             id: stream.id,
@@ -40,6 +94,10 @@ impl<T: DecodeUntagged> Stream<T> {
     }
 
     pub fn get(&self) -> Result<T, RpcError> {
-        self.client.stream_read(self.id)
+        self.client.read_stream(self.id)
+    }
+
+    pub fn wait(&self) {
+        self.client.await_stream(self.id);
     }
 }
