@@ -1,5 +1,6 @@
 pub mod client;
 pub mod error;
+pub mod stream;
 
 pub mod services {
     include!(concat!(env!("OUT_DIR"), "/services.rs"));
@@ -32,10 +33,10 @@ mod schema {
         ) -> Result<Self, RpcError>;
     }
 
-    impl FromResponse for () {
-        fn from_response(
-            _: Response,
-            _: Arc<Client>,
+    impl DecodeUntagged for () {
+        fn decode_untagged(
+            _client: Arc<Client>,
+            _buf: &[u8],
         ) -> Result<Self, RpcError> {
             Ok(())
         }
@@ -496,6 +497,7 @@ mod schema {
         Stream,
         Services,
         ProcedureCall,
+        ProcedureResult,
         Event,
         Tuple
     );
@@ -509,31 +511,4 @@ mod schema {
 
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
-}
-
-#[cfg(test)]
-mod test {
-    use std::sync::Arc;
-
-    use services::space_center::SpaceCenter;
-
-    use crate::{client::Client, error::RpcError, services};
-
-    #[test]
-    fn call() -> Result<(), RpcError> {
-        eprintln!("connecting");
-
-        let client = Arc::new(
-            Client::new("rpc test", "127.0.0.1", 50000, 50001).unwrap(),
-        );
-
-        eprintln!("connected");
-
-        let sc = SpaceCenter::new(client);
-        let ship = sc.get_active_vessel()?;
-
-        eprintln!("{}", ship.get_name()?);
-
-        Ok(())
-    }
 }

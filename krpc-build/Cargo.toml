@@ -1,6 +1,6 @@
 [package]
 name = "krpc-build"
-version = "0.3.0-0.5.1-1.12.5"
+version = "0.4.0-0.5.1-1.12.5"
 edition = "2021"
 
 [dependencies]

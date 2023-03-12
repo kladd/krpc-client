@@ -1,5 +1,6 @@
 use std::{fs, io::Error, path::Path};
 
+use codegen::Function;
 use convert_case::{Case, Casing};
 use serde_json::{Map, Value};
 
@@ -70,6 +71,8 @@ pub fn build<O: std::io::Write>(
             let procedures =
                 props.get("procedures").unwrap().as_object().unwrap();
             for (procedure_name, definition) in procedures.into_iter() {
+                service.define_call_procedure(procedure_name, definition);
+                service.define_stream_procedure(procedure_name, definition);
                 service.define_procedure(procedure_name, definition);
             }
         }
@@ -83,6 +86,14 @@ struct RpcService<'a> {
     module: &'a mut codegen::Module,
 }
 
+struct RpcArgs {
+    // Args formatted to pass directly to a function.
+    call_local: String,
+
+    // Args formatted to pass directly to a ProcedureCall.
+    call_remote: String,
+}
+
 impl<'a> RpcService<'a> {
     const IMPORTS: &[(&'static str, &'static str)] = &[
         ("crate::schema", "ToArgument"),
@@ -93,6 +104,7 @@ impl<'a> RpcService<'a> {
     fn new(scope: &'a mut codegen::Scope, service_name: &str) -> Self {
         let module = scope
             .new_module(&service_name.to_case(Case::Snake))
+            .attr("allow(clippy::type_complexity)")
             .vis("pub");
 
         for (path, type_name) in Self::IMPORTS {
@@ -152,7 +164,8 @@ impl<'a> RpcService<'a> {
 
     fn define_procedure(&mut self, name: &str, definition: &Value) {
         let name_tokens = name.split('_').collect::<Vec<&str>>();
-        let class_name = get_struct(&name_tokens).unwrap_or(self.name.clone());
+        let class_name =
+            get_struct(&name_tokens).unwrap_or_else(|| self.name.clone());
         let class = self.module.new_impl(&class_name);
 
         let fn_name = get_fn_name(&name_tokens);
@@ -162,49 +175,123 @@ impl<'a> RpcService<'a> {
             .arg_ref_self()
             .allow("dead_code");
 
-        let mut fn_args = Vec::new();
-        let params = get_params(definition);
-        for (pos, param_json) in params.iter().enumerate() {
-            let param = param_json.as_object().unwrap();
-            let name = get_param_name(param);
+        let RpcArgs {
+            call_local,
+            call_remote: _,
+        } = fn_set_args(fn_block, definition);
 
-            if name.eq_ignore_ascii_case("this") {
-                fn_args.push(format!("self.to_argument({})?", pos));
-            } else {
-                let ty = param.get("type").unwrap().as_object().unwrap();
-                fn_args.push(format!("{}.to_argument({})?", &name, pos));
-                fn_block.arg(&name, decode_type(ty, true));
-            }
-        }
-
-        let mut ret = String::from("()");
-        if let Some(return_value) = definition.get("return_type") {
-            let ty = return_value.as_object().unwrap();
-            ret = decode_type(ty, false);
-        }
+        let ret = get_return_type(definition);
         fn_block.ret(format!("Result<{}, RpcError>", ret));
 
         let body = format!(
             r#"
         let request =
-        crate::schema::Request::from(crate::client::Client::proc_call(
-            "{service}",
-            "{procedure}",
-            vec![{args}],
-        ));
+        crate::schema::Request::from(self.{fn_name}_call({call_local})?);
 
         let response = self.client.call(request)?;
 
-        <{ret}>::from_response(response, self.client.clone())
-        "#,
-            service = self.name,
-            procedure = name,
-            args = fn_args.join(","),
-            ret = ret
+        <{ret}>::from_response(response, self.client.clone())"#
         );
 
         fn_block.line(body);
     }
+
+    fn define_call_procedure(&mut self, proc_name: &str, definition: &Value) {
+        let name_tokens = proc_name.split('_').collect::<Vec<&str>>();
+        let class_name =
+            get_struct(&name_tokens).unwrap_or_else(|| self.name.clone());
+        let class = self.module.new_impl(&class_name);
+
+        let fn_name =
+            format!("{}_call", get_fn_name(&proc_name.split('_').collect()));
+        let fn_block = class
+            .new_fn(&fn_name)
+            .vis("pub(crate)")
+            .arg_ref_self()
+            .allow("dead_code");
+        let RpcArgs {
+            call_local: _,
+            call_remote,
+        } = fn_set_args(fn_block, definition);
+        fn_block.ret("Result<crate::schema::ProcedureCall, RpcError>");
+
+        let body = format!(
+            r#"
+        Ok(crate::client::Client::proc_call(
+            "{service}",
+            "{proc_name}",
+            vec![{call_remote}]
+        ))"#,
+            service = self.name,
+        );
+
+        fn_block.line(body);
+    }
+
+    fn define_stream_procedure(&mut self, proc_name: &str, definition: &Value) {
+        let name_tokens = proc_name.split('_').collect::<Vec<&str>>();
+        let class_name =
+            get_struct(&name_tokens).unwrap_or_else(|| self.name.clone());
+        let class = self.module.new_impl(&class_name);
+
+        let fn_base_name = get_fn_name(&proc_name.split('_').collect());
+        let fn_name = format!("{}_stream", fn_base_name);
+        let fn_block = class
+            .new_fn(&fn_name)
+            .vis("pub")
+            .arg_ref_self()
+            .allow("dead_code");
+        let RpcArgs {
+            call_local,
+            call_remote: _,
+        } = fn_set_args(fn_block, definition);
+        let ret = get_return_type(definition);
+        fn_block
+            .ret(format!("Result<crate::stream::Stream<{}>, RpcError>", ret));
+
+        let body = format!(
+            r#"crate::stream::Stream::new(self.client.clone(), self.{fn_base_name}_call({call_local})?)"#,
+        );
+
+        fn_block.line(body);
+    }
+}
+
+fn fn_set_args(fn_block: &mut Function, definition: &Value) -> RpcArgs {
+    let mut arg_names = Vec::new();
+    let mut arg_values = Vec::new();
+
+    let params = get_params(definition);
+    for (pos, param_json) in params.iter().enumerate() {
+        let param = param_json.as_object().unwrap();
+        let name = get_param_name(param);
+
+        if name.eq_ignore_ascii_case("this") {
+            arg_values.push(format!("self.to_argument({})?", pos));
+        } else {
+            let ty = decode_type(
+                param.get("type").unwrap().as_object().unwrap(),
+                true,
+            );
+            arg_names.push(name.clone());
+            arg_values.push(format!("{}.to_argument({})?", &name, pos));
+            fn_block.arg(&name, ty);
+        }
+    }
+
+    RpcArgs {
+        call_local: arg_names.join(","),
+        call_remote: arg_values.join(","),
+    }
+}
+
+fn get_return_type(definition: &Value) -> String {
+    let mut ret = String::from("()");
+    if let Some(return_value) = definition.get("return_type") {
+        let ty = return_value.as_object().unwrap();
+        ret = decode_type(ty, false);
+    }
+    ret
 }
 
 fn get_params(json: &Value) -> &Vec<Value> {
@@ -354,10 +441,5 @@ mod tests {
             get_fn_name(&"SpaceCenter_get_ActiveVessel".split("_").collect()),
             String::from("get_active_vessel")
         );
-    }
-
-    #[test]
-    fn test_build() {
-        crate::build("../service_definitions/", &mut std::io::stdout());
     }
 }
