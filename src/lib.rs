@@ -512,33 +512,3 @@ mod schema {
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
 }
-
-#[cfg(test)]
-mod test {
-    use std::sync::Arc;
-
-    use services::{krpc::KRPC, space_center::SpaceCenter};
-
-    use crate::{client::Client, error::RpcError, services};
-
-    #[test]
-    fn call() -> Result<(), RpcError> {
-        eprintln!("connecting");
-
-        let client = Arc::new(
-            Client::new("rpc test", "127.0.0.1", 50000, 50001).unwrap(),
-        );
-
-        eprintln!("connected");
-
-        let sc = SpaceCenter::new(client.clone());
-        let ship = sc.get_active_vessel()?;
-
-        let ut_stream = sc.get_ut_stream()?;
-        dbg!(ut_stream.get());
-
-        eprintln!("{}", ship.get_name()?);
-
-        Ok(())
-    }
-}

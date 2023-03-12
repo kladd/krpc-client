@@ -145,27 +145,3 @@ fn recv<T: protobuf::Message + Default>(
         .read_message()
         .map_err(Into::into)
 }
-
-#[cfg(test)]
-mod tests {
-    use std::sync::Arc;
-
-    use super::*;
-    use crate::services::space_center::SpaceCenter;
-
-    #[test]
-    fn streams() {
-        let client = Arc::new(
-            Client::new("RPC TEST", "127.0.0.1", 50000, 50001).unwrap(),
-        );
-
-        let space_center = SpaceCenter::new(client.clone());
-        let ut_stream = space_center.get_ut_stream().unwrap();
-        ut_stream.set_rate(1f32).unwrap();
-
-        for _ in 0..10 {
-            client.stream_update();
-            dbg!(ut_stream.get());
-        }
-    }
-}

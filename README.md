@@ -2,42 +2,52 @@
 
 Rust client for [kRPC](https://github.com/krpc/krpc) (Remote Procedure Calls for Kerbal Space Program).
 
-### Disclaimer
+### Status
 
-Work in progress, some procedures may not work. Bug-reports and contributions welcome.
+Work in progress. Bug-reports and contributions welcome. All procedures seem to work, but more testing is needed. Streams work, but Events are still on the way.
 
-### Example
+### Examples
 
-Orient a craft along its prograde vector:
+Greet the crew with standard procedure calls.
 
 ```rust
-// Create a new kRPC client.
-let client = Arc::new(
-    Client::new("rpc test", "127.0.0.1", 50000, 50001).unwrap(),
-);
+let client = Client::new("kRPC TEST", "127.0.0.1", 50000, 50001).unwrap();
 
-// Initialize the SpaceCenter service.
-let sc = SpaceCenter::new(client);
+let sc = SpaceCenter::new(client.clone());
 
-// Call procedures.
+// Check out our vessel.
 let ship = sc.get_active_vessel()?;
-let ap = ship.get_auto_pilot()?;
 
-let sorf = ship.get_orbital_reference_frame()?;
-let aprf = ap.get_reference_frame()?;
-
-let direction =
-    sc.transform_direction((0.0, 1.0, 0.0), &svrf, &aprf)?;
-
-ap.set_target_direction(direction)?;
-ap.engage()?;
-ap.wait()?;
-ap.disengage()?;
+// Greet the crew.
+match ship.get_crew()?.first() {
+    Some(kerbal) => println!(
+        "Hello, {}. Welcome to {}",
+        kerbal.get_name()?,
+        ship.get_name()?
+    ),
+    None => println!("{} is unkerbaled!", ship.get_name()?),
+};
 ```
 
-### Streams
+### Using Streams
 
-Not yet.
+Keep track of time with streams.
+
+```rust
+let client = Client::new("kRPC TEST", "127.0.0.1", 50000, 50001)?;
+
+let space_center = SpaceCenter::new(client.clone());
+
+// Set up a stream.
+let ut_stream = space_center.get_ut_stream()?;
+ut_stream.set_rate(1f32)?;
+
+// Wait for updates, and print the current value.
+for _ in 0..10 {
+    ut_stream.wait();
+    println!("It's {} o'clock", ut_stream.get()?);
+}
+```
 
 ### Hacking
 
