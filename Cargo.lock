@@ -144,7 +144,7 @@ checksum = "453ad9f582a441959e5f0d088b02ce04cfe8d51a8eaf077f12ac6d3e94164ca6"
 
 [[package]]
 name = "krpc-build"
-version = "0.4.1-0.5.1-1.12.5"
+version = "0.4.1-0.5.1"
 dependencies = [
  "codegen",
  "convert_case",
@@ -155,7 +155,7 @@ dependencies = [
 
 [[package]]
 name = "krpc-client"
-version = "0.4.1-0.5.1-1.12.5"
+version = "0.4.1-0.5.1"
 dependencies = [
  "bytes",
  "krpc-build",
