@@ -1,3 +1,6 @@
+#[cfg(feature = "docs")]
+mod doc;
+
 use std::{fs, io::Error, path::Path};
 
 use codegen::Function;
@@ -10,12 +13,12 @@ use serde_json::{Map, Value};
 /// type and function definitions for that service.
 ///
 /// # Examples
-/// ```
+/// ```json
 /// {
 ///   "SpaceCenter": {
 ///     "procedures": {
 ///       "get_ActiveVessel": {
-///         "paramters": [],
+///         "parameters": [],
 ///         "return_type": {
 ///           "code": "CLASS",
 ///           "service": "SpaceCenter",
@@ -27,7 +30,7 @@ use serde_json::{Map, Value};
 /// }
 /// ```
 /// becomes
-/// ```
+/// ```rust
 /// use std::sync::Arc;
 ///
 /// use crate::{client::Client, error::RpcError, schema::rpc_object};
@@ -54,7 +57,7 @@ pub fn build<O: std::io::Write>(
         let json: serde_json::Value = serde_json::from_reader(def_file)?;
 
         for (name, props_json) in json.as_object().unwrap().into_iter() {
-            let mut service = RpcService::new(&mut scope, name);
+            let mut service = RpcService::new(&mut scope, name, props_json);
 
             let props = props_json.as_object().unwrap();
 
@@ -101,7 +104,11 @@ impl<'a> RpcService<'a> {
         ("crate::error", "RpcError"),
     ];
 
-    fn new(scope: &'a mut codegen::Scope, service_name: &str) -> Self {
+    fn new(
+        scope: &'a mut codegen::Scope,
+        service_name: &str,
+        _props_json: &Value,
+    ) -> Self {
         let module = scope
             .new_module(&service_name.to_case(Case::Snake))
             .attr("allow(clippy::type_complexity)")
@@ -111,11 +118,16 @@ impl<'a> RpcService<'a> {
             module.import(path, type_name);
         }
 
-        module
+        let _struct_def = module
             .new_struct(service_name)
             .vis("pub")
             .field("pub client", "::std::sync::Arc<crate::client::Client>")
             .allow("dead_code");
+
+        #[cfg(feature = "docs")]
+        if let Some(xml) = get_documentation(_props_json) {
+            _struct_def.doc(&doc::parse_doc(&xml));
+        }
 
         // TODO: Remove new? Or derive it.
         module
@@ -283,6 +295,16 @@ fn fn_set_args(fn_block: &mut Function, definition: &Value) -> RpcArgs {
         call_local: arg_names.join(","),
         call_remote: arg_values.join(","),
     }
+}
+
+#[cfg(feature = "docs")]
+fn get_documentation(definition: &Value) -> Option<String> {
+    definition
+        .as_object()
+        .unwrap()
+        .get("documentation")
+        .and_then(Value::as_str)
+        .map(String::from)
 }
 
 fn get_return_type(definition: &Value) -> String {
