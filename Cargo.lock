@@ -144,17 +144,18 @@ checksum = "453ad9f582a441959e5f0d088b02ce04cfe8d51a8eaf077f12ac6d3e94164ca6"
 
 [[package]]
 name = "krpc-build"
-version = "0.4.0-0.5.1-1.12.5"
+version = "0.4.1-0.5.1-1.12.5"
 dependencies = [
  "codegen",
  "convert_case",
  "serde",
  "serde_json",
+ "xml-rs",
 ]
 
 [[package]]
 name = "krpc-client"
-version = "0.4.0-0.5.1-1.12.5"
+version = "0.4.1-0.5.1-1.12.5"
 dependencies = [
  "bytes",
  "krpc-build",
@@ -498,3 +499,9 @@ name = "windows_x86_64_msvc"
 version = "0.42.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "447660ad36a13288b1db4d4248e857b510e8c3a225c822ba4fb748c0aafecffd"
+
+[[package]]
+name = "xml-rs"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"

@@ -6,6 +6,10 @@ Rust client for [kRPC](https://github.com/krpc/krpc) (Remote Procedure Calls for
 
 Work in progress. Bug-reports and contributions welcome. All procedures seem to work, but more testing is needed. Streams work, but Events are still on the way.
 
+```toml
+krpc-client = { git = "https://github.com/kladd/krpc-client" }
+```
+
 ### Examples
 
 Greet the crew with standard procedure calls.
@@ -48,6 +52,9 @@ for _ in 0..10 {
     println!("It's {} o'clock", ut_stream.get()?);
 }
 ```
+
+### Features
+* `docs`: Include documentation with generated RPC types/procedures. Only services are documented right now.
 
 ### Hacking
 
