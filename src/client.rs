@@ -15,6 +15,33 @@ use crate::{
     stream::StreamWrangler,
 };
 
+/// The base kRPC client type.
+///
+/// ## Connecting to the kRPC server
+///
+/// Call [`new`][new] to establish a connection with the
+/// kRPC server.
+///
+/// ```
+/// use krpc_client::Client;
+/// let client = Client::new("Test KRPC", "127.0.0.1", 50000, 50001);
+/// ```
+///
+/// ## Using RPC services
+///
+/// Pass or clone the client instance returned by
+/// [`Client::new`][new] to any RPC service in
+/// [`krpc_client::services::*`][services].
+///
+/// ```
+/// use krpc_client::{services::space_center::SpaceCenter, Client};
+/// let space_center = SpaceCenter::new(client);
+/// // Then call procedures with the created service.
+/// println!("Hello, {}!", space_center.get_active_vessel()?.get_name()?);
+/// ```
+///
+/// [new]: Client::new
+/// [services]: crate::services
 pub struct Client {
     rpc: Mutex<TcpStream>,
     stream: Mutex<TcpStream>,
@@ -22,6 +49,14 @@ pub struct Client {
 }
 
 impl Client {
+    /// Constructs a new `Client`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use krpc_client::Client;
+    /// let client = Client::new("Test KRPC", "127.0.0.1", 50000, 50001);
+    /// ```
     pub fn new(
         name: &str,
         ip_addr: &str,
@@ -60,7 +95,7 @@ impl Client {
         Ok(client)
     }
 
-    pub fn call(
+    pub(crate) fn call(
         &self,
         request: schema::Request,
     ) -> Result<schema::Response, RpcError> {
@@ -70,7 +105,7 @@ impl Client {
         recv(&mut rpc)
     }
 
-    pub fn proc_call(
+    pub(crate) fn proc_call(
         service: &str,
         procedure: &str,
         args: Vec<schema::Argument>,
@@ -83,7 +118,7 @@ impl Client {
         }
     }
 
-    pub fn update_streams(self: &Arc<Self>) -> Result<(), RpcError> {
+    pub(crate) fn update_streams(self: &Arc<Self>) -> Result<(), RpcError> {
         let mut stream = self.stream.lock()?;
         let update = recv::<StreamUpdate>(&mut stream)?;
         for result in update.results {
@@ -95,19 +130,22 @@ impl Client {
         Ok(())
     }
 
-    pub fn read_stream<T: DecodeUntagged>(
+    pub(crate) fn read_stream<T: DecodeUntagged>(
         self: &Arc<Self>,
         id: u64,
     ) -> Result<T, RpcError> {
         self.streams.get(self.clone(), id)
     }
 
-    pub fn remove_stream(self: &Arc<Self>, id: u64) -> Result<(), RpcError> {
+    pub(crate) fn remove_stream(
+        self: &Arc<Self>,
+        id: u64,
+    ) -> Result<(), RpcError> {
         self.streams.remove(id);
         Ok(())
     }
 
-    pub fn await_stream(&self, id: u64) {
+    pub(crate) fn await_stream(&self, id: u64) {
         self.streams.wait(id)
     }
 }

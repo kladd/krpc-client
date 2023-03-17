@@ -2,6 +2,8 @@ pub mod client;
 pub mod error;
 pub mod stream;
 
+pub use client::Client;
+
 pub mod services {
     include!(concat!(env!("OUT_DIR"), "/services.rs"));
 }

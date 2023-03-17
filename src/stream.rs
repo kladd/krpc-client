@@ -11,6 +11,25 @@ use crate::{
     services::krpc::KRPC,
 };
 
+/// A streaming procedure call.
+///
+/// `Stream<T>` is created by calling any procedure with the
+/// `_stream()` suffix. This will start the stream
+/// automatically.
+///
+/// This type provides access to the procedure's
+/// results of type `T` via [`get`][get]. Results are pushed
+/// by the server at the rate selected by
+/// [`set_rate`][set_rate]. And consumers may block until a
+/// stream's value has changed with [`wait`][wait].
+///
+/// The stream will attempt to remove itself when dropped.
+/// Otherwise the server will remove remaining streams when
+/// the client disconnects.
+///
+/// [wait]: Stream::wait
+/// [set_rate]: Stream::set_rate
+/// [get]: Stream::get
 pub struct Stream<T: DecodeUntagged> {
     pub(crate) id: u64,
     krpc: KRPC,
@@ -84,19 +103,24 @@ impl<T: DecodeUntagged> Stream<T> {
         })
     }
 
+    /// Set the update rate for this streaming procedure.
     pub fn set_rate(&self, hz: f32) -> Result<(), RpcError> {
         self.krpc.set_stream_rate(self.id, hz)
     }
 
-    pub fn remove(&self) -> Result<(), RpcError> {
-        self.krpc.remove_stream(self.id)?;
-        self.client.remove_stream(self.id)
-    }
-
+    /// Retrieve the current result received for this
+    /// procedure. This value is not guaranteed to have
+    /// changed since the last call to [`get`][get]. Use
+    /// [`wait`][wait] to block until the value has changed.
+    ///
+    /// [wait]: Stream::wait
+    /// [get]: Stream::get
     pub fn get(&self) -> Result<T, RpcError> {
         self.client.read_stream(self.id)
     }
 
+    /// Block the current thread of execution until this
+    /// stream receives an update from the server.
     pub fn wait(&self) {
         self.client.await_stream(self.id);
     }
@@ -106,6 +130,7 @@ impl<T: DecodeUntagged> Drop for Stream<T> {
     // Try to remove the stream if it's dropped, but don't panic
     // if unable.
     fn drop(&mut self) {
-        self.remove().ok();
+        self.krpc.remove_stream(self.id).ok();
+        self.client.remove_stream(self.id).ok();
     }
 }
