@@ -4,7 +4,7 @@ use std::{
     io::{Read, Write},
     path::Path,
 };
-
+mod krpc_codegen;
 use protobuf_codegen::Customize;
 
 fn main() {
@@ -36,5 +36,5 @@ fn main() {
         .unwrap();
 
     let mut f = File::create(proto_path.join("services.rs")).unwrap();
-    krpc_build::build("service_definitions/", &mut f).unwrap();
+    krpc_codegen::build("service_definitions/", &mut f).unwrap();
 }
