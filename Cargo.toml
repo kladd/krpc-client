@@ -1,6 +1,6 @@
 [package]
 name = "krpc-client"
-version = "0.4.1-0.5.1"
+version = "0.4.2-0.5.1"
 edition = "2021"
 authors = ["Kyle Ladd <kyle@ladd.io>"]
 description = "A stand-alone client for the Kerbal Space Program kRPC mod."
