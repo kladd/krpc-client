@@ -101,3 +101,11 @@ impl<T: DecodeUntagged> Stream<T> {
         self.client.await_stream(self.id);
     }
 }
+
+impl<T: DecodeUntagged> Drop for Stream<T> {
+    // Try to remove the stream if it's dropped, but don't panic
+    // if unable.
+    fn drop(&mut self) {
+        self.remove().ok();
+    }
+}
