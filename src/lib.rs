@@ -92,8 +92,8 @@ mod schema {
     macro_rules! rpc_object {
         ($name:ident) => {
             pub struct $name {
-                pub id: u64,
-                pub client: ::std::sync::Arc<crate::client::Client>,
+                id: u64,
+                client: ::std::sync::Arc<crate::client::Client>,
             }
 
             impl crate::schema::DecodeUntagged for $name {

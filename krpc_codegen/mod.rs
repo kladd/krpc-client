@@ -121,7 +121,7 @@ impl<'a> RpcService<'a> {
         let _struct_def = module
             .new_struct(service_name)
             .vis("pub")
-            .field("pub client", "::std::sync::Arc<crate::client::Client>")
+            .field("client", "::std::sync::Arc<crate::client::Client>")
             .allow("dead_code");
 
         #[cfg(feature = "docs")]
