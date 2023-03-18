@@ -1,7 +1,7 @@
 {
   "LiDAR": {
     "id": 10,
-    "documentation": "<doc>\n<summary>\nLaserDist Service\n</summary>\n</doc>",
+    "documentation": "<doc>\n<summary>\nLaserDist service.\n</summary>\n</doc>",
     "procedures": {
       "Laser": {
         "id": 1,
@@ -21,7 +21,7 @@
           "name": "Laser"
         },
         "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nGet a LaserDist part\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nGet a LaserDist part.\n</summary>\n</doc>"
       },
       "get_Available": {
         "id": 2,
@@ -30,7 +30,7 @@
           "code": "BOOL"
         },
         "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nCheck if the LaserDist API is avaiable\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nCheck if the LaserDist API is available.\n</summary>\n</doc>"
       },
       "Laser_get_Part": {
         "id": 3,
