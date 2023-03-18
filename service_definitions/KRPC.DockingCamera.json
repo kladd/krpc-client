@@ -1,7 +1,7 @@
 {
   "DockingCamera": {
     "id": 11,
-    "documentation": "<doc>\n<summary>\nCamera Service\n</summary>\n</doc>",
+    "documentation": "<doc>\n<summary>\nCamera service.\n</summary>\n</doc>",
     "procedures": {
       "Camera": {
         "id": 1,
@@ -21,7 +21,7 @@
           "name": "Camera"
         },
         "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nGet a Camera part\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nGet a Camera part.\n</summary>\n</doc>"
       },
       "get_Available": {
         "id": 2,
@@ -30,7 +30,7 @@
           "code": "BOOL"
         },
         "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nCheck if the Camera API is avaiable\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nCheck if the Camera API is available.\n</summary>\n</doc>"
       },
       "Camera_get_Part": {
         "id": 3,
