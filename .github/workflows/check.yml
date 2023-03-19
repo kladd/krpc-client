@@ -8,7 +8,7 @@ name: check
 jobs:
   clippy:
     runs-on: ubuntu-latest
-    name: ${{ matrix.toolchain }} / clippy
+    name: clippy / ${{ matrix.toolchain }}
     permissions:
       contents: read
       checks: write
@@ -18,8 +18,6 @@ jobs:
         toolchain: [beta]
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: true
       - name: Install ${{ matrix.toolchain }}
         uses: dtolnay/rust-toolchain@master
         with:
