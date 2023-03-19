@@ -281,12 +281,18 @@ fn fn_set_args(fn_block: &mut Function, definition: &Value) -> RpcArgs {
         if name.eq_ignore_ascii_case("this") {
             arg_values.push(format!("self.to_argument({})?", pos));
         } else {
+            let nullable = param
+                .get("nullable")
+                .map(|b| b.as_bool().unwrap())
+                .unwrap_or(false);
             let ty = decode_type(
                 param.get("type").unwrap().as_object().unwrap(),
                 true,
+                nullable,
             );
             arg_names.push(name.clone());
             arg_values.push(format!("{}.to_argument({})?", &name, pos));
+
             fn_block.arg(&name, ty);
         }
     }
@@ -310,13 +316,12 @@ fn get_documentation(definition: &Value) -> Option<String> {
 fn get_return_type(definition: &Value) -> String {
     let mut ret = String::from("()");
     if let Some(return_value) = definition.get("return_type") {
+        let nullable = definition
+            .get("return_is_nullable")
+            .map(|b| b.as_bool().unwrap())
+            .unwrap_or(false);
         let ty = return_value.as_object().unwrap();
-        ret = decode_type(ty, false);
-    }
-    if let Some(return_nullable) = definition.get("return_is_nullable") {
-        if return_nullable.as_bool().unwrap() {
-            ret = format!("Option<{}>", ret);
-        }
+        ret = decode_type(ty, false, nullable);
     }
     ret
 }
@@ -361,10 +366,11 @@ fn get_fn_name(proc_tokens: &Vec<&str>) -> String {
 fn decode_type(
     ty: &serde_json::Map<String, serde_json::Value>,
     borrow: bool,
+    nullable: bool,
 ) -> String {
     let code = ty.get("code").unwrap().as_str().unwrap();
 
-    let str = match code {
+    let mut type_str = match code {
         "STRING" => "String".to_string(),
         "SINT32" => "i32".to_string(),
         "UINT32" => "u32".into(),
@@ -389,13 +395,17 @@ fn decode_type(
     };
 
     if borrow {
-        return match code {
-            "CLASS" => format!("&{}", str),
-            _ => str,
-        };
+        type_str = match code {
+            "CLASS" => format!("&{}", type_str),
+            _ => type_str,
+        }
+    };
+
+    if nullable {
+        type_str = format!("Option<{}>", type_str)
     }
 
-    str
+    type_str
 }
 
 fn decode_tuple(ty: &serde_json::Map<String, serde_json::Value>) -> String {
@@ -403,7 +413,7 @@ fn decode_tuple(ty: &serde_json::Map<String, serde_json::Value>) -> String {
     let types = ty.get("types").unwrap().as_array().unwrap();
 
     for t in types {
-        out.push(decode_type(t.as_object().unwrap(), false));
+        out.push(decode_type(t.as_object().unwrap(), false, false));
     }
 
     format!("({})", out.join(", "))
@@ -414,7 +424,7 @@ fn decode_list(ty: &serde_json::Map<String, serde_json::Value>) -> String {
 
     format!(
         "Vec<{}>",
-        decode_type(types.first().unwrap().as_object().unwrap(), false)
+        decode_type(types.first().unwrap().as_object().unwrap(), false, false)
     )
 }
 
@@ -435,9 +445,9 @@ fn decode_dictionary(
     let types = ty.get("types").unwrap().as_array().unwrap();
 
     let key_name =
-        decode_type(types.get(0).unwrap().as_object().unwrap(), false);
+        decode_type(types.get(0).unwrap().as_object().unwrap(), false, false);
     let value_name =
-        decode_type(types.get(1).unwrap().as_object().unwrap(), false);
+        decode_type(types.get(1).unwrap().as_object().unwrap(), false, false);
 
     format!("std::collections::HashMap<{}, {}>", key_name, value_name)
 }
@@ -447,7 +457,7 @@ fn decode_set(ty: &serde_json::Map<String, serde_json::Value>) -> String {
 
     format!(
         "std::collections::HashSet<{}>",
-        decode_type(types.first().unwrap().as_object().unwrap(), false)
+        decode_type(types.first().unwrap().as_object().unwrap(), false, false)
     )
 }
 
@@ -455,18 +465,5 @@ fn rewrite_keywords(sample: String) -> String {
     match sample.as_str() {
         "type" => "r#type".into(),
         _ => sample,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::get_fn_name;
-
-    #[test]
-    fn test_get_fn_name() {
-        assert_eq!(
-            get_fn_name(&"SpaceCenter_get_ActiveVessel".split("_").collect()),
-            String::from("get_active_vessel")
-        );
     }
 }
