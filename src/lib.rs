@@ -493,7 +493,7 @@ mod schema {
             client: Arc<Client>,
             buf: &[u8],
         ) -> Result<Self, RpcError> {
-            if buf == &[0u8] {
+            if buf == [0u8] {
                 Ok(None)
             } else {
                 Some(T::decode_untagged(client, buf)).transpose()
