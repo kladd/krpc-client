@@ -44,19 +44,6 @@ mod schema {
         }
     }
 
-    impl<T: DecodeUntagged> DecodeUntagged for Option<T> {
-        fn decode_untagged(
-            client: Arc<Client>,
-            buf: &[u8],
-        ) -> Result<Self, RpcError> {
-            if buf == &[0u8] {
-                Ok(None)
-            } else {
-                Some(T::decode_untagged(client, buf)).transpose()
-            }
-        }
-    }
-
     impl<T: DecodeUntagged> FromResponse for T {
         fn from_response(
             response: Response,
@@ -81,6 +68,12 @@ mod schema {
                 value: self.encode_untagged()?,
                 ..Default::default()
             })
+        }
+    }
+
+    impl<T: EncodeUntagged> EncodeUntagged for &T {
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
+            (*self).encode_untagged()
         }
     }
 
@@ -492,6 +485,28 @@ mod schema {
             }
 
             Ok(buf)
+        }
+    }
+
+    impl<T: DecodeUntagged> DecodeUntagged for Option<T> {
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError> {
+            if buf == &[0u8] {
+                Ok(None)
+            } else {
+                Some(T::decode_untagged(client, buf)).transpose()
+            }
+        }
+    }
+
+    impl<T: EncodeUntagged> EncodeUntagged for Option<T> {
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
+            match self {
+                Some(t) => t.encode_untagged(),
+                None => Ok(vec![0u8]),
+            }
         }
     }
 
