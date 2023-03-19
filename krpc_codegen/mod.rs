@@ -313,6 +313,11 @@ fn get_return_type(definition: &Value) -> String {
         let ty = return_value.as_object().unwrap();
         ret = decode_type(ty, false);
     }
+    if let Some(return_nullable) = definition.get("return_is_nullable") {
+        if return_nullable.as_bool().unwrap() {
+            ret = format!("Option<{}>", ret);
+        }
+    }
     ret
 }
 

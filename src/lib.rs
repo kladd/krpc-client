@@ -44,6 +44,19 @@ mod schema {
         }
     }
 
+    impl<T: DecodeUntagged> DecodeUntagged for Option<T> {
+        fn decode_untagged(
+            client: Arc<Client>,
+            buf: &[u8],
+        ) -> Result<Self, RpcError> {
+            if buf == &[0u8] {
+                Ok(None)
+            } else {
+                Some(T::decode_untagged(client, buf)).transpose()
+            }
+        }
+    }
+
     impl<T: DecodeUntagged> FromResponse for T {
         fn from_response(
             response: Response,
