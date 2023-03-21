@@ -1,11 +1,119 @@
 use std::{fs, io, path::Path};
 
 use convert_case::{Case, Casing};
-use quote::{__private::TokenStream, format_ident, quote, ToTokens};
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote, ToTokens};
 use serde_json::Value;
 use syn::Ident;
 
 type TokenSet<'a> = Box<dyn Iterator<Item = TokenStream> + 'a>;
+
+/// Generate source code from JSON service definitions.
+///
+/// Creates a module for each RPC service that contains all
+/// type and function definitions for that service.
+///
+/// # Examples
+/// ```json
+/// {
+///   "SpaceCenter": {
+///     "procedures": {
+///       "get_ActiveVessel": {
+///         "parameters": [],
+///         "return_type": {
+///           "code": "CLASS",
+///           "service": "SpaceCenter",
+///           "name": "Vessel"
+///         }
+///       }
+///     }
+///   }
+/// }
+/// ```
+/// becomes
+/// ```rust
+/// use std::sync::Arc;
+///
+/// use crate::{client::Client, error::RpcError, schema::rpc_object};
+///
+/// pub mod space_center {
+///     rpc_object!(Vessel);
+///
+///     pub struct SpaceCenter {
+///         pub client: Arc<Client>,
+///     }
+///
+///     impl SpaceCenter {
+///         pub fn get_active_vessel() -> Result<Vessel, RpcError> { ... }
+///     }
+/// }
+/// ```
+pub fn build<O: io::Write>(
+    service_definitions: impl AsRef<Path>,
+    out: &mut O,
+) -> Result<(), io::Error> {
+    for service_definition_path in fs::read_dir(service_definitions)? {
+        let service_definition_file =
+            fs::File::open(service_definition_path.unwrap().path())?;
+        let service_definition_json: Value =
+            serde_json::from_reader(service_definition_file)?;
+
+        for (service_name, service_definition) in
+            service_definition_json.as_object().unwrap().into_iter()
+        {
+            let service_module =
+                generate_module_definition(service_name, service_definition);
+
+            write!(out, "{}", service_module).unwrap();
+        }
+    }
+    Ok(())
+}
+
+fn generate_module_definition(
+    service_name: &str,
+    service_definition: &Value,
+) -> TokenStream {
+    let service_mod_name =
+        format_ident!("{}", service_name.to_case(Case::Snake));
+    let q_service_name = format_ident!("{}", service_name);
+
+    let classes = generate_class_definitions(service_definition);
+    let enums = generate_enum_definitions(service_definition);
+    let procedures = generate_procedure_definitions(
+        service_definition,
+        service_name,
+        &q_service_name,
+    );
+
+    let arc_client = quote! {
+        ::std::sync::Arc<crate::Client>
+    };
+
+    quote! {
+        #[allow(clippy::type_complexity)]
+        pub mod #service_mod_name {
+            use crate::{
+                schema::{ToArgument, FromResponse},
+                error::RpcError,
+            };
+
+            pub struct #q_service_name {
+                pub client: #arc_client,
+            }
+
+            impl #q_service_name {
+                pub fn new(client: #arc_client) -> Self {
+                    Self { client }
+                }
+            }
+
+            #(#classes)*
+            #(#enums)*
+            #(#procedures)*
+        }
+    }
+}
 
 fn generate_class_definitions(json: &Value) -> TokenSet {
     Box::new(
@@ -82,7 +190,7 @@ fn generate_procedure_definition(
     let class_name = get_struct(&name_tokens);
 
     let fn_name = get_fn_name(&name_tokens, &class_name);
-    let q_class_name = class_name.unwrap_or(q_service_name.clone());
+    let q_class_name = class_name.unwrap_or_else(|| q_service_name.clone());
 
     let Parameters {
         names,
@@ -193,66 +301,10 @@ impl Parameters {
     }
 }
 
-pub fn build<O: io::Write>(
-    service_definitions: impl AsRef<Path>,
-    out: &mut O,
-) -> Result<(), io::Error> {
-    let arc_client = quote! {
-        ::std::sync::Arc<crate::Client>
-    };
-
-    for def in fs::read_dir(service_definitions)? {
-        let def_file = fs::File::open(def.unwrap().path())?;
-        let json: Value = serde_json::from_reader(def_file)?;
-
-        for (service_name, service_definition) in
-            json.as_object().unwrap().into_iter()
-        {
-            let service_mod_name =
-                format_ident!("{}", service_name.to_case(Case::Snake));
-            let q_service_name = format_ident!("{}", service_name);
-
-            let classes = generate_class_definitions(service_definition);
-            let enums = generate_enum_definitions(service_definition);
-            let procedures = generate_procedure_definitions(
-                service_definition,
-                service_name,
-                &q_service_name,
-            );
-
-            let service_mod = quote! {
-                #[allow(clippy::type_complexity)]
-                pub mod #service_mod_name {
-                    use crate::{
-                        schema::{ToArgument, FromResponse},
-                        error::RpcError,
-                    };
-
-                    pub struct #q_service_name {
-                        pub client: #arc_client,
-                    }
-
-                    impl #q_service_name {
-                        pub fn new(client: #arc_client) -> Self {
-                            Self { client }
-                        }
-                    }
-
-                    #(#classes)*
-                    #(#enums)*
-                    #(#procedures)*
-                }
-            };
-            write!(out, "{}", service_mod.to_string()).unwrap();
-        }
-    }
-    Ok(())
-}
-
-fn get_fn_name<T>(proc_tokens: &Vec<&str>, class: &Option<T>) -> String {
+fn get_fn_name<T>(proc_tokens: &[&str], class: &Option<T>) -> String {
     match class {
         Some(_) => &proc_tokens[1..],
-        None => &proc_tokens[..],
+        None => proc_tokens,
     }
     .join("_")
     .to_case(Case::Snake)
