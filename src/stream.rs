@@ -9,6 +9,7 @@ use crate::{
     error::RpcError,
     schema::{DecodeUntagged, ProcedureCall, ProcedureResult},
     services::krpc::KRPC,
+    RpcType,
 };
 
 /// A streaming procedure call.
@@ -30,7 +31,7 @@ use crate::{
 /// [wait]: Stream::wait
 /// [set_rate]: Stream::set_rate
 /// [get]: Stream::get
-pub struct Stream<T: DecodeUntagged> {
+pub struct Stream<T: RpcType> {
     pub(crate) id: u64,
     krpc: KRPC,
     client: Arc<Client>,
@@ -86,7 +87,7 @@ impl StreamWrangler {
     }
 }
 
-impl<T: DecodeUntagged> Stream<T> {
+impl<T: RpcType> Stream<T> {
     pub(crate) fn new(
         client: Arc<Client>,
         call: ProcedureCall,
@@ -126,7 +127,7 @@ impl<T: DecodeUntagged> Stream<T> {
     }
 }
 
-impl<T: DecodeUntagged> Drop for Stream<T> {
+impl<T: crate::RpcType> Drop for Stream<T> {
     // Try to remove the stream if it's dropped, but don't panic
     // if unable.
     fn drop(&mut self) {
