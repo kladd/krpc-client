@@ -542,3 +542,7 @@ mod schema {
     pub(crate) use rpc_enum;
     pub(crate) use rpc_object;
 }
+
+pub trait RpcType: schema::DecodeUntagged {}
+
+impl<T: schema::DecodeUntagged> RpcType for T {}
