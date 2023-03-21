@@ -146,6 +146,7 @@ version = "0.5.0-0.5.2"
 dependencies = [
  "bytes",
  "convert_case",
+ "proc-macro2",
  "protobuf",
  "protobuf-codegen",
  "quote",
