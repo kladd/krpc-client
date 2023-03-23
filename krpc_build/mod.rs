@@ -64,12 +64,11 @@ pub fn build<O: io::Write>(
             let service_module =
                 generate_module_definition(service_name, service_definition);
 
-            write!(
-                out,
-                "{}",
-                prettyplease::unparse(&syn::parse2(service_module).unwrap())
-            )
-            .unwrap();
+            #[cfg(feature = "fmt")]
+            let service_module =
+                prettyplease::unparse(&syn::parse2(service_module).unwrap());
+
+            write!(out, "{service_module}").unwrap();
         }
     }
     Ok(())
