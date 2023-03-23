@@ -54,7 +54,7 @@ for _ in 0..10 {
 ```
 
 ### Features
-* `docs`: Include documentation with generated RPC types/procedures. Only services are documented right now.
+* `fmt` (default): Format generated services. Remove for a quicker build producing an unreadable file.
 
 ### Hacking
 
