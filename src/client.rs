@@ -155,7 +155,7 @@ fn connect(
     port: u16,
     request: ConnectionRequest,
 ) -> Result<(TcpStream, ConnectionResponse), RpcError> {
-    let mut conn = TcpStream::connect(format!("{}:{}", ip_addr, port))
+    let mut conn = TcpStream::connect(format!("{ip_addr}:{port}"))
         .map_err(RpcError::Connection)?;
 
     send(&mut conn, request)?;
