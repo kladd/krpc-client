@@ -11,7 +11,6 @@ license = "GPL-3.0"
 
 [features]
 default = ["fmt"]
-docs = ["dep:xml-rs"]
 fmt = ["dep:prettyplease"]
 
 [dependencies]
@@ -25,7 +24,6 @@ quote = "1.0.26"
 protobuf-codegen = "3.2.0"
 serde = "1.0"
 serde_json = "1.0"
-xml-rs = { version = "0.8.4", optional = true }
 convert_case = "0.6.0"
 proc-macro2 = "1.0"
 prettyplease = { version = "0.2", optional = true }
