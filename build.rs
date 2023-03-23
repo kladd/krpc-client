@@ -30,7 +30,7 @@ fn main() {
         .read_to_string(&mut contents)
         .unwrap();
 
-    let new_contents = format!("pub mod krpc {{\n{}\n}}", contents);
+    let new_contents = format!("pub mod krpc {{\n{contents}\n}}");
     File::create(proto_path.join("krpc.rs"))
         .unwrap()
         .write_all(new_contents.as_bytes())
