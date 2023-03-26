@@ -60,4 +60,4 @@ for _ in 0..10 {
 
 * `krpc-client/client.rs` contains basic connection, request, and response handling.
 * `krpc-client/lib.rs` declares traits for encoding and decoding RPC types.
-* `krpc-build` (used by `krpc-client/build.rs`), generates RPC types and procedures from definitions in `service_definitions/*.json`, and generates implementations of the encoding and decoding traits declared in `krpc-client/lib.rs`.
+* `krpc_build` (used by `krpc-client/build.rs`), generates RPC types and procedures from definitions in `service_definitions/*.json`, and generates implementations of the encoding and decoding traits declared in `krpc-client/lib.rs`.
