@@ -10,7 +10,7 @@ repository = "https://github.com/kladd/krpc-client"
 license = "GPL-3.0"
 
 [features]
-default = ["fmt", "async"]
+default = ["fmt"]
 fmt = ["dep:prettyplease"]
 async = ["dep:tokio", "dep:tokio-condvar"]
 
