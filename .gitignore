@@ -2,3 +2,6 @@
 /krpc_codegen/target
 # service_definitions/
 .idea
+
+# Direnv
+.direnv
