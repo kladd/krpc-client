@@ -1,9 +1,8 @@
-use std::{
-    collections::HashMap,
-    marker::PhantomData,
-    sync::{Arc, Condvar, Mutex},
-};
+#[cfg(not(feature = "async"))]
+use std::sync::{Condvar, Mutex};
+use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
+#[cfg(feature = "async")]
 use crate::{
     client::Client,
     error::RpcError,
@@ -11,6 +10,10 @@ use crate::{
     services::krpc::KRPC,
     RpcType,
 };
+#[cfg(feature = "async")]
+use tokio::sync::Mutex;
+#[cfg(feature = "async")]
+use tokio_condvar::Condvar;
 
 /// A streaming procedure call.
 ///
@@ -45,6 +48,7 @@ pub(crate) struct StreamWrangler {
 }
 
 impl StreamWrangler {
+    #[cfg(not(feature = "async"))]
     pub fn insert(
         &self,
         id: u64,
@@ -60,6 +64,23 @@ impl StreamWrangler {
         Ok(())
     }
 
+    #[cfg(feature = "async")]
+    pub async fn insert(
+        &self,
+        id: u64,
+        procedure_result: ProcedureResult,
+    ) -> Result<(), RpcError> {
+        let mut map = self.streams.lock().await;
+        let (lock, cvar) =
+            { &*map.entry(id).or_insert_with(Default::default).clone() };
+
+        *lock.lock().await = procedure_result;
+        cvar.notify_one();
+
+        Ok(())
+    }
+
+    #[cfg(not(feature = "async"))]
     pub fn wait(&self, id: u64) {
         let (lock, cvar) = {
             let mut map = self.streams.lock().unwrap();
@@ -69,11 +90,29 @@ impl StreamWrangler {
         let _result = cvar.wait(result).unwrap();
     }
 
+    #[cfg(feature = "async")]
+    pub async fn wait(&self, id: u64) {
+        let (lock, cvar) = {
+            let mut map = self.streams.lock().await;
+            &*map.entry(id).or_insert_with(Default::default).clone()
+        };
+        let result = lock.lock().await;
+        let _result = cvar.wait(result).await;
+    }
+
+    #[cfg(not(feature = "async"))]
     pub fn remove(&self, id: u64) {
         let mut map = self.streams.lock().unwrap();
         map.remove(&id);
     }
 
+    #[cfg(feature = "async")]
+    pub async fn remove(&self, id: u64) {
+        let mut map = self.streams.lock().await;
+        map.remove(&id);
+    }
+
+    #[cfg(not(feature = "async"))]
     pub fn get<T: DecodeUntagged>(
         &self,
         client: Arc<Client>,
@@ -83,6 +122,19 @@ impl StreamWrangler {
         let (lock, _) =
             { &*map.entry(id).or_insert_with(Default::default).clone() };
         let result = lock.lock().unwrap();
+        T::decode_untagged(client, &result.value)
+    }
+
+    #[cfg(feature = "async")]
+    pub async fn get<T: DecodeUntagged>(
+        &self,
+        client: Arc<Client>,
+        id: u64,
+    ) -> Result<T, RpcError> {
+        let mut map = self.streams.lock().await;
+        let (lock, _) =
+            { &*map.entry(id).or_insert_with(Default::default).clone() };
+        let result = lock.lock().await;
         T::decode_untagged(client, &result.value)
     }
 }
