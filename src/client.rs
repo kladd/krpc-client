@@ -203,19 +203,30 @@ impl Client {
         let mut stream = self.stream.lock().await;
         let update = recv::<StreamUpdate>(&mut stream).await?;
         for result in update.results {
-            self.streams.insert(
-                result.id,
-                result.result.into_option().ok_or(RpcError::Client)?,
-            )?;
+            self.streams
+                .insert(
+                    result.id,
+                    result.result.into_option().ok_or(RpcError::Client)?,
+                )
+                .await?;
         }
         Ok(())
     }
 
+    #[cfg(not(feature = "async"))]
     pub(crate) fn read_stream<T: DecodeUntagged>(
         self: &Arc<Self>,
         id: u64,
     ) -> Result<T, RpcError> {
         self.streams.get(self.clone(), id)
+    }
+
+    #[cfg(feature = "async")]
+    pub(crate) async fn read_stream<T: DecodeUntagged>(
+        self: &Arc<Self>,
+        id: u64,
+    ) -> Result<T, RpcError> {
+        self.streams.get(self.clone(), id).await
     }
 
     pub(crate) fn remove_stream(
@@ -226,8 +237,14 @@ impl Client {
         Ok(())
     }
 
+    #[cfg(not(feature = "async"))]
     pub(crate) fn await_stream(&self, id: u64) {
         self.streams.wait(id)
+    }
+
+    #[cfg(feature = "async")]
+    pub(crate) async fn await_stream(&self, id: u64) {
+        self.streams.wait(id).await
     }
 }
 

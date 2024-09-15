@@ -1,4 +1,4 @@
-use std::{fs, io, path::Path};
+use std::{env, fs, io, path::Path};
 
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
@@ -102,6 +102,7 @@ fn generate_module_definition(
                 error::RpcError,
             };
 
+            #[derive(Clone)]
             pub struct #q_service_name {
                 pub client: #arc_client,
             }
@@ -206,35 +207,70 @@ fn generate_procedure_definition(
     let stream_name = format_ident!("{fn_name}_stream");
     let fn_name = format_ident!("{fn_name}");
     let ret = get_return_type(definition);
-    quote! {
-        impl #q_class_name {
-            pub(crate) fn #call_name(
-                &self, #(#names: #types),*
-            ) -> Result<crate::schema::ProcedureCall, RpcError> {
-                Ok(crate::client::Client::proc_call(
-                    #service_name,
-                    #name,
-                    vec![#(#as_args),*]
-                ))
+    if env::var("CARGO_FEATURE_ASYNC").is_ok() {
+        quote! {
+            impl #q_class_name {
+                pub(crate) fn #call_name(
+                    &self, #(#names: #types),*
+                ) -> Result<crate::schema::ProcedureCall, RpcError> {
+                    Ok(crate::client::Client::proc_call(
+                        #service_name,
+                        #name,
+                        vec![#(#as_args),*]
+                    ))
+                }
+
+                pub async fn #stream_name(
+                    &self, #(#names: #types),*
+                ) -> Result<crate::stream::Stream<#ret>, RpcError> {
+                    crate::stream::Stream::new(
+                        self.client.clone(),
+                        self.#call_name(#(#names),*)?
+                    ).await
+                }
+
+                pub async fn #fn_name(
+                    &self, #(#names: #types),*
+                ) -> Result<#ret, RpcError> {
+                    let request = crate::schema::Request::from(
+                        self.#call_name(#(#names),*)?);
+                    let response = self.client.call(request).await?;
+
+                    <#ret>::from_response(response, self.client.clone())
+                }
             }
+        }
+    } else {
+        quote! {
+            impl #q_class_name {
+                pub(crate) fn #call_name(
+                    &self, #(#names: #types),*
+                ) -> Result<crate::schema::ProcedureCall, RpcError> {
+                    Ok(crate::client::Client::proc_call(
+                        #service_name,
+                        #name,
+                        vec![#(#as_args),*]
+                    ))
+                }
 
-            pub fn #stream_name(
-                &self, #(#names: #types),*
-            ) -> Result<crate::stream::Stream<#ret>, RpcError> {
-                crate::stream::Stream::new(
-                    self.client.clone(),
-                    self.#call_name(#(#names),*)?
-                )
-            }
+                pub fn #stream_name(
+                    &self, #(#names: #types),*
+                ) -> Result<crate::stream::Stream<#ret>, RpcError> {
+                    crate::stream::Stream::new(
+                        self.client.clone(),
+                        self.#call_name(#(#names),*)?
+                    )
+                }
 
-            pub fn #fn_name(
-                &self, #(#names: #types),*
-            ) -> Result<#ret, RpcError> {
-                let request = crate::schema::Request::from(
-                    self.#call_name(#(#names),*)?);
-                let response = self.client.call(request)?;
+                pub fn #fn_name(
+                    &self, #(#names: #types),*
+                ) -> Result<#ret, RpcError> {
+                    let request = crate::schema::Request::from(
+                        self.#call_name(#(#names),*)?);
+                    let response = self.client.call(request)?;
 
-                <#ret>::from_response(response, self.client.clone())
+                    <#ret>::from_response(response, self.client.clone())
+                }
             }
         }
     }

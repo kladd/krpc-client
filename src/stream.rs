@@ -34,7 +34,7 @@ use tokio_condvar::Condvar;
 /// [wait]: Stream::wait
 /// [set_rate]: Stream::set_rate
 /// [get]: Stream::get
-pub struct Stream<T: RpcType> {
+pub struct Stream<T: RpcType + Send> {
     pub(crate) id: u64,
     krpc: KRPC,
     client: Arc<Client>,
@@ -139,7 +139,8 @@ impl StreamWrangler {
     }
 }
 
-impl<T: RpcType> Stream<T> {
+impl<T: RpcType + Send> Stream<T> {
+    #[cfg(not(feature = "async"))]
     pub(crate) fn new(
         client: Arc<Client>,
         call: ProcedureCall,
@@ -156,9 +157,33 @@ impl<T: RpcType> Stream<T> {
         })
     }
 
+    #[cfg(feature = "async")]
+    pub(crate) async fn new(
+        client: Arc<Client>,
+        call: ProcedureCall,
+    ) -> Result<Self, RpcError> {
+        let krpc = KRPC::new(client.clone());
+        let stream = krpc.add_stream(call, true).await?;
+        client.await_stream(stream.id);
+
+        Ok(Self {
+            id: stream.id,
+            krpc,
+            client,
+            phantom: PhantomData,
+        })
+    }
+
     /// Set the update rate for this streaming procedure.
+    #[cfg(not(feature = "async"))]
     pub fn set_rate(&self, hz: f32) -> Result<(), RpcError> {
         self.krpc.set_stream_rate(self.id, hz)
+    }
+
+    /// Set the update rate for this streaming procedure.
+    #[cfg(feature = "async")]
+    pub async fn set_rate(&self, hz: f32) -> Result<(), RpcError> {
+        self.krpc.set_stream_rate(self.id, hz).await
     }
 
     /// Retrieve the current result received for this
@@ -168,8 +193,21 @@ impl<T: RpcType> Stream<T> {
     ///
     /// [wait]: Stream::wait
     /// [get]: Stream::get
+    #[cfg(not(feature = "async"))]
     pub fn get(&self) -> Result<T, RpcError> {
         self.client.read_stream(self.id)
+    }
+
+    /// Retrieve the current result received for this
+    /// procedure. This value is not guaranteed to have
+    /// changed since the last call to [`get`][get]. Use
+    /// [`wait`][wait] to block until the value has changed.
+    ///
+    /// [wait]: Stream::wait
+    /// [get]: Stream::get
+    #[cfg(feature = "async")]
+    pub async fn get(&self) -> Result<T, RpcError> {
+        self.client.read_stream(self.id).await
     }
 
     /// Block the current thread of execution until this
@@ -179,11 +217,23 @@ impl<T: RpcType> Stream<T> {
     }
 }
 
-impl<T: crate::RpcType> Drop for Stream<T> {
+impl<T: crate::RpcType + Send> Drop for Stream<T> {
     // Try to remove the stream if it's dropped, but don't panic
     // if unable.
+    #[cfg(not(feature = "async"))]
     fn drop(&mut self) {
         self.krpc.remove_stream(self.id).ok();
         self.client.remove_stream(self.id).ok();
+    }
+
+    #[cfg(feature = "async")]
+    fn drop(&mut self) {
+        let krpc = self.krpc.clone();
+        let client = self.client.clone();
+        let id = self.id;
+        tokio::task::spawn(async move {
+            krpc.remove_stream(id).await.ok();
+            client.remove_stream(id).ok();
+        });
     }
 }
