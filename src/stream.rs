@@ -212,6 +212,14 @@ impl<T: RpcType + Send> Stream<T> {
 
     /// Block the current thread of execution until this
     /// stream receives an update from the server.
+    #[cfg(not(feature = "async"))]
+    pub fn wait(&self) {
+        self.client.await_stream(self.id);
+    }
+
+    /// Block the current thread of execution until this
+    /// stream receives an update from the server.
+    #[cfg(feature = "async")]
     pub fn wait(&self) {
         self.client.await_stream(self.id);
     }
