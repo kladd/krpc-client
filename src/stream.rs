@@ -164,7 +164,7 @@ impl<T: RpcType + Send> Stream<T> {
     ) -> Result<Self, RpcError> {
         let krpc = KRPC::new(client.clone());
         let stream = krpc.add_stream(call, true).await?;
-        client.await_stream(stream.id);
+        client.await_stream(stream.id).await;
 
         Ok(Self {
             id: stream.id,
