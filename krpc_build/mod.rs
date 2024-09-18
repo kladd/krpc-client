@@ -207,7 +207,7 @@ fn generate_procedure_definition(
     let stream_name = format_ident!("{fn_name}_stream");
     let fn_name = format_ident!("{fn_name}");
     let ret = get_return_type(definition);
-    if env::var("CARGO_FEATURE_ASYNC").is_ok() {
+    if env::var("CARGO_FEATURE_TOKIO").is_ok() {
         quote! {
             impl #q_class_name {
                 pub(crate) fn #call_name(

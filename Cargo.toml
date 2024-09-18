@@ -12,7 +12,7 @@ license = "GPL-3.0"
 [features]
 default = ["fmt"]
 fmt = ["dep:prettyplease"]
-async = ["dep:tokio", "dep:tokio-condvar"]
+tokio = ["dep:tokio"]
 
 [dependencies]
 thiserror = "1.0"

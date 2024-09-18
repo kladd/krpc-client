@@ -1,8 +1,7 @@
-#[cfg(not(feature = "async"))]
+#[cfg(not(feature = "tokio"))]
 use std::sync::{Condvar, Mutex};
 use std::{collections::HashMap, marker::PhantomData, sync::Arc};
 
-#[cfg(feature = "async")]
 use crate::{
     client::Client,
     error::RpcError,
@@ -11,9 +10,9 @@ use crate::{
     RpcType,
 };
 #[cfg(feature = "async")]
-use tokio::sync::Mutex;
-#[cfg(feature = "async")]
 use tokio_condvar::Condvar;
+#[cfg(feature = "tokio")]
+use tokio::sync::{Mutex, Notify};
 
 /// A streaming procedure call.
 ///
@@ -48,7 +47,7 @@ pub(crate) struct StreamWrangler {
 }
 
 impl StreamWrangler {
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub fn insert(
         &self,
         id: u64,
@@ -64,7 +63,7 @@ impl StreamWrangler {
         Ok(())
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub async fn insert(
         &self,
         id: u64,
@@ -80,7 +79,7 @@ impl StreamWrangler {
         Ok(())
     }
 
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub fn wait(&self, id: u64) {
         let (lock, cvar) = {
             let mut map = self.streams.lock().unwrap();
@@ -90,7 +89,7 @@ impl StreamWrangler {
         let _result = cvar.wait(result).unwrap();
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub async fn wait(&self, id: u64) {
         let (lock, cvar) = {
             let mut map = self.streams.lock().await;
@@ -100,19 +99,19 @@ impl StreamWrangler {
         let _result = cvar.wait(result).await;
     }
 
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub fn remove(&self, id: u64) {
         let mut map = self.streams.lock().unwrap();
         map.remove(&id);
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub async fn remove(&self, id: u64) {
         let mut map = self.streams.lock().await;
         map.remove(&id);
     }
 
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub fn get<T: DecodeUntagged>(
         &self,
         client: Arc<Client>,
@@ -125,7 +124,7 @@ impl StreamWrangler {
         T::decode_untagged(client, &result.value)
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub async fn get<T: DecodeUntagged>(
         &self,
         client: Arc<Client>,
@@ -140,7 +139,7 @@ impl StreamWrangler {
 }
 
 impl<T: RpcType + Send> Stream<T> {
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub(crate) fn new(
         client: Arc<Client>,
         call: ProcedureCall,
@@ -157,7 +156,7 @@ impl<T: RpcType + Send> Stream<T> {
         })
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub(crate) async fn new(
         client: Arc<Client>,
         call: ProcedureCall,
@@ -175,13 +174,13 @@ impl<T: RpcType + Send> Stream<T> {
     }
 
     /// Set the update rate for this streaming procedure.
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub fn set_rate(&self, hz: f32) -> Result<(), RpcError> {
         self.krpc.set_stream_rate(self.id, hz)
     }
 
     /// Set the update rate for this streaming procedure.
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub async fn set_rate(&self, hz: f32) -> Result<(), RpcError> {
         self.krpc.set_stream_rate(self.id, hz).await
     }
@@ -193,7 +192,7 @@ impl<T: RpcType + Send> Stream<T> {
     ///
     /// [wait]: Stream::wait
     /// [get]: Stream::get
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub fn get(&self) -> Result<T, RpcError> {
         self.client.read_stream(self.id)
     }
@@ -205,21 +204,21 @@ impl<T: RpcType + Send> Stream<T> {
     ///
     /// [wait]: Stream::wait
     /// [get]: Stream::get
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub async fn get(&self) -> Result<T, RpcError> {
         self.client.read_stream(self.id).await
     }
 
     /// Block the current thread of execution until this
     /// stream receives an update from the server.
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub fn wait(&self) {
         self.client.await_stream(self.id);
     }
 
     /// Block the current thread of execution until this
     /// stream receives an update from the server.
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub async fn wait(&self) {
         self.client.await_stream(self.id).await;
     }
@@ -228,13 +227,13 @@ impl<T: RpcType + Send> Stream<T> {
 impl<T: crate::RpcType + Send> Drop for Stream<T> {
     // Try to remove the stream if it's dropped, but don't panic
     // if unable.
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     fn drop(&mut self) {
         self.krpc.remove_stream(self.id).ok();
         self.client.remove_stream(self.id).ok();
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     fn drop(&mut self) {
         let krpc = self.krpc.clone();
         let client = self.client.clone();

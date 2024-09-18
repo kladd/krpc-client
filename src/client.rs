@@ -1,7 +1,7 @@
 use std::sync::Arc;
-#[cfg(not(feature = "async"))]
+#[cfg(not(feature = "tokio"))]
 use std::{net::TcpStream, sync::Mutex, thread};
-#[cfg(feature = "async")]
+#[cfg(feature = "tokio")]
 use tokio::{net::TcpStream, sync::Mutex};
 
 use protobuf::CodedInputStream;
@@ -57,7 +57,7 @@ impl Client {
     /// use krpc_client::Client;
     /// let client = Client::new("Test KRPC", "127.0.0.1", 50000, 50001);
     /// ```
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub fn new(
         name: &str,
         ip_addr: &str,
@@ -104,8 +104,8 @@ impl Client {
     /// use krpc_client::Client;
     /// let client = Client::new("Test KRPC", "127.0.0.1", 50000, 50001);
     /// ```
-    #[cfg(feature = "async")]
     #[tracing::instrument]
+    #[cfg(feature = "tokio")]
     pub async fn new(
         name: &str,
         ip_addr: &str,
@@ -150,7 +150,7 @@ impl Client {
         Ok(client)
     }
 
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub(crate) fn call(
         &self,
         request: schema::Request,
@@ -161,7 +161,7 @@ impl Client {
         recv(&mut rpc)
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub(crate) async fn call(
         &self,
         request: schema::Request,
@@ -185,7 +185,7 @@ impl Client {
         }
     }
 
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub(crate) fn update_streams(self: &Arc<Self>) -> Result<(), RpcError> {
         let mut stream = self.stream.lock()?;
         let update = recv::<StreamUpdate>(&mut stream)?;
@@ -198,7 +198,7 @@ impl Client {
         Ok(())
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub(crate) async fn update_streams(
         self: &Arc<Self>,
     ) -> Result<(), RpcError> {
@@ -215,7 +215,7 @@ impl Client {
         Ok(())
     }
 
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub(crate) fn read_stream<T: DecodeUntagged>(
         self: &Arc<Self>,
         id: u64,
@@ -223,7 +223,7 @@ impl Client {
         self.streams.get(self.clone(), id)
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub(crate) async fn read_stream<T: DecodeUntagged>(
         self: &Arc<Self>,
         id: u64,
@@ -231,7 +231,7 @@ impl Client {
         self.streams.get(self.clone(), id).await
     }
 
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub(crate) fn remove_stream(
         self: &Arc<Self>,
         id: u64,
@@ -240,7 +240,7 @@ impl Client {
         Ok(())
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub(crate) async fn remove_stream(
         self: &Arc<Self>,
         id: u64,
@@ -249,18 +249,18 @@ impl Client {
         Ok(())
     }
 
-    #[cfg(not(feature = "async"))]
+    #[cfg(not(feature = "tokio"))]
     pub(crate) fn await_stream(&self, id: u64) {
         self.streams.wait(id)
     }
 
-    #[cfg(feature = "async")]
+    #[cfg(feature = "tokio")]
     pub(crate) async fn await_stream(&self, id: u64) {
         self.streams.wait(id).await
     }
 }
 
-#[cfg(not(feature = "async"))]
+#[cfg(not(feature = "tokio"))]
 fn connect(
     ip_addr: &str,
     port: u16,
@@ -278,7 +278,7 @@ fn connect(
     Ok((conn, response))
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "tokio")]
 async fn connect(
     ip_addr: &str,
     port: u16,
@@ -297,7 +297,7 @@ async fn connect(
     Ok((conn, response))
 }
 
-#[cfg(not(feature = "async"))]
+#[cfg(not(feature = "tokio"))]
 fn send<T: protobuf::Message>(
     rpc: &mut TcpStream,
     message: T,
@@ -307,7 +307,7 @@ fn send<T: protobuf::Message>(
         .map_err(Into::into)
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "tokio")]
 async fn send<T: protobuf::Message>(
     rpc: &mut TcpStream,
     message: T,
@@ -320,7 +320,7 @@ async fn send<T: protobuf::Message>(
     rpc.write_all(&message).await.map_err(Into::into)
 }
 
-#[cfg(not(feature = "async"))]
+#[cfg(not(feature = "tokio"))]
 fn recv<T: protobuf::Message + Default>(
     rpc: &mut TcpStream,
 ) -> Result<T, RpcError> {
@@ -329,7 +329,7 @@ fn recv<T: protobuf::Message + Default>(
         .map_err(Into::into)
 }
 
-#[cfg(feature = "async")]
+#[cfg(feature = "tokio")]
 async fn recv<T: protobuf::Message + Default>(
     rpc: &mut TcpStream,
 ) -> Result<T, RpcError> {
