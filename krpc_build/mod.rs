@@ -276,7 +276,7 @@ fn generate_procedure_definition(
     }
 }
 
-fn get_struct(proc_tokens: &Vec<&str>) -> Option<Ident> {
+fn get_struct(proc_tokens: &[&str]) -> Option<Ident> {
     proc_tokens
         .first()
         .filter(|segment| {
@@ -446,7 +446,7 @@ fn decode_dictionary(ty: &serde_json::Map<String, Value>) -> TokenStream {
     let types = ty.get("types").unwrap().as_array().unwrap();
 
     let key_name =
-        decode_type(types.get(0).unwrap().as_object().unwrap(), false, false);
+        decode_type(types.first().unwrap().as_object().unwrap(), false, false);
     let value_name =
         decode_type(types.get(1).unwrap().as_object().unwrap(), false, false);
 
