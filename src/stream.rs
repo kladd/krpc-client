@@ -241,7 +241,7 @@ impl<T: crate::RpcType + Send> Drop for Stream<T> {
         let id = self.id;
         tokio::task::spawn(async move {
             krpc.remove_stream(id).await.ok();
-            client.remove_stream(id).ok();
+            client.remove_stream(id).await.ok();
         });
     }
 }

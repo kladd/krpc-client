@@ -229,11 +229,21 @@ impl Client {
         self.streams.get(self.clone(), id).await
     }
 
+    #[cfg(not(feature = "async"))]
     pub(crate) fn remove_stream(
         self: &Arc<Self>,
         id: u64,
     ) -> Result<(), RpcError> {
         self.streams.remove(id);
+        Ok(())
+    }
+
+    #[cfg(feature = "async")]
+    pub(crate) async fn remove_stream(
+        self: &Arc<Self>,
+        id: u64,
+    ) -> Result<(), RpcError> {
+        self.streams.remove(id).await;
         Ok(())
     }
 
