@@ -104,7 +104,6 @@ impl Client {
     /// use krpc_client::Client;
     /// let client = Client::new("Test KRPC", "127.0.0.1", 50000, 50001);
     /// ```
-    #[tracing::instrument]
     #[cfg(feature = "tokio")]
     pub async fn new(
         name: &str,
@@ -119,7 +118,6 @@ impl Client {
         };
         let (rpc_stream, rpc_result) =
             connect(ip_addr, rpc_port, rpc_request).await?;
-        tracing::info!("Connected to rpc");
 
         let stream_request = schema::ConnectionRequest {
             type_: protobuf::EnumOrUnknown::new(
@@ -131,7 +129,6 @@ impl Client {
         };
         let (stream_stream, _) =
             connect(ip_addr, stream_port, stream_request).await?;
-        tracing::info!("Connected to stream");
 
         let client = Arc::new(Self {
             rpc: Mutex::new(rpc_stream),
@@ -337,7 +334,6 @@ async fn recv<T: protobuf::Message + Default>(
     use tokio::io::AsyncReadExt;
 
     let mut buffer = BytesMut::new();
-    tracing::trace!("Read");
     while buffer.is_empty() {
         rpc.read_buf(&mut buffer)
             .await
@@ -364,6 +360,5 @@ async fn recv<T: protobuf::Message + Default>(
             .map_err(Into::<RpcError>::into)?;
     }
 
-    tracing::trace!("Len: {}", buffer.len());
     T::parse_from_tokio_bytes(&buffer.freeze()).map_err(Into::into)
 }
