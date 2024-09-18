@@ -37,5 +37,13 @@ fn main() {
         .unwrap();
 
     let mut f = File::create(proto_path.join("services.rs")).unwrap();
-    krpc_build::build("service_definitions/", &mut f).unwrap();
+    if let Some(path) = env::var("KRPC_SERVICES")
+        .ok()
+        .map(|path| Path::new(&path).to_owned())
+        .filter(|path| path.exists())
+    {
+        krpc_build::build(path.to_str().unwrap(), &mut f).unwrap();
+    } else {
+        krpc_build::build("service_definitions/", &mut f).unwrap();
+    }
 }
