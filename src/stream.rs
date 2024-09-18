@@ -55,8 +55,7 @@ impl StreamWrangler {
         procedure_result: ProcedureResult,
     ) -> Result<(), RpcError> {
         let mut map = self.streams.lock().unwrap();
-        let (lock, cvar) =
-            { &*map.entry(id).or_insert_with(Default::default).clone() };
+        let (lock, cvar) = { &*map.entry(id).or_default().clone() };
 
         *lock.lock().unwrap() = procedure_result;
         cvar.notify_one();
@@ -84,7 +83,7 @@ impl StreamWrangler {
     pub fn wait(&self, id: u64) {
         let (lock, cvar) = {
             let mut map = self.streams.lock().unwrap();
-            &*map.entry(id).or_insert_with(Default::default).clone()
+            &*map.entry(id).or_default().clone()
         };
         let result = lock.lock().unwrap();
         let _result = cvar.wait(result).unwrap();
@@ -118,8 +117,7 @@ impl StreamWrangler {
         id: u64,
     ) -> Result<T, RpcError> {
         let mut map = self.streams.lock().unwrap();
-        let (lock, _) =
-            { &*map.entry(id).or_insert_with(Default::default).clone() };
+        let (lock, _) = { &*map.entry(id).or_default().clone() };
         let result = lock.lock().unwrap();
         T::decode_untagged(client, &result.value)
     }

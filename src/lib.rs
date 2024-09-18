@@ -209,7 +209,7 @@ mod schema {
             Ok((
                 T0::decode_untagged(
                     client.clone(),
-                    tuple.items.get(0).ok_or(RpcError::Encoding(
+                    tuple.items.first().ok_or(RpcError::Encoding(
                         "tuple element out of range".into(),
                     ))?,
                 )?,
@@ -254,7 +254,7 @@ mod schema {
             Ok((
                 T0::decode_untagged(
                     client.clone(),
-                    tuple.items.get(0).ok_or(RpcError::Encoding(
+                    tuple.items.first().ok_or(RpcError::Encoding(
                         "tuple element out of range".into(),
                     ))?,
                 )?,
@@ -308,7 +308,7 @@ mod schema {
             Ok((
                 T0::decode_untagged(
                     client.clone(),
-                    tuple.items.get(0).ok_or(RpcError::Encoding(
+                    tuple.items.first().ok_or(RpcError::Encoding(
                         "tuple element out of range".into(),
                     ))?,
                 )?,
