@@ -4,7 +4,6 @@ use std::{net::TcpStream, sync::Mutex, thread};
 #[cfg(feature = "async")]
 use tokio::{net::TcpStream, sync::Mutex};
 
-#[cfg(not(feature = "async"))]
 use protobuf::CodedInputStream;
 
 use crate::{
@@ -334,11 +333,37 @@ fn recv<T: protobuf::Message + Default>(
 async fn recv<T: protobuf::Message + Default>(
     rpc: &mut TcpStream,
 ) -> Result<T, RpcError> {
+    use bytes::{Buf, BytesMut};
     use tokio::io::AsyncReadExt;
 
-    let mut buffer = Vec::new();
-    rpc.read_to_end(&mut buffer)
-        .await
-        .map_err(Into::<RpcError>::into)?;
-    T::parse_from_bytes(&buffer).map_err(Into::into)
+    let mut buffer = BytesMut::new();
+    tracing::trace!("Read");
+    while buffer.is_empty() {
+        rpc.read_buf(&mut buffer)
+            .await
+            .map_err(Into::<RpcError>::into)?;
+    }
+
+    let (length, processed) = {
+        let mut decoder = CodedInputStream::from_bytes(&buffer);
+
+        (
+            decoder
+                .read_raw_varint64()?
+                .try_into()
+                .expect("Should always fit"),
+            decoder.pos().try_into().expect("Should always fit"),
+        )
+    };
+
+    buffer.advance(processed);
+
+    while buffer.len() < length {
+        rpc.read_buf(&mut buffer)
+            .await
+            .map_err(Into::<RpcError>::into)?;
+    }
+
+    tracing::trace!("Len: {}", buffer.len());
+    T::parse_from_tokio_bytes(&buffer.freeze()).map_err(Into::into)
 }
