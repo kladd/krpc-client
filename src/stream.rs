@@ -9,8 +9,6 @@ use crate::{
     services::krpc::KRPC,
     RpcType,
 };
-#[cfg(feature = "async")]
-use tokio_condvar::Condvar;
 #[cfg(feature = "tokio")]
 use tokio::sync::{Mutex, Notify};
 
@@ -40,7 +38,10 @@ pub struct Stream<T: RpcType + Send> {
     phantom: PhantomData<T>,
 }
 
+#[cfg(not(feature = "tokio"))]
 type StreamEntry = Arc<(Mutex<ProcedureResult>, Condvar)>;
+#[cfg(feature = "tokio")]
+type StreamEntry = Arc<(Mutex<ProcedureResult>, Notify)>;
 #[derive(Default)]
 pub(crate) struct StreamWrangler {
     streams: Mutex<HashMap<u64, StreamEntry>>,
@@ -91,12 +92,11 @@ impl StreamWrangler {
 
     #[cfg(feature = "tokio")]
     pub async fn wait(&self, id: u64) {
-        let (lock, cvar) = {
+        let (_lock, cvar) = {
             let mut map = self.streams.lock().await;
             &*map.entry(id).or_insert_with(Default::default).clone()
         };
-        let result = lock.lock().await;
-        let _result = cvar.wait(result).await;
+        cvar.notified().await;
     }
 
     #[cfg(not(feature = "tokio"))]
