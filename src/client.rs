@@ -106,6 +106,7 @@ impl Client {
     /// let client = Client::new("Test KRPC", "127.0.0.1", 50000, 50001);
     /// ```
     #[cfg(feature = "async")]
+    #[tracing::instrument]
     pub async fn new(
         name: &str,
         ip_addr: &str,
@@ -119,6 +120,7 @@ impl Client {
         };
         let (rpc_stream, rpc_result) =
             connect(ip_addr, rpc_port, rpc_request).await?;
+        tracing::info!("Connected to rpc");
 
         let stream_request = schema::ConnectionRequest {
             type_: protobuf::EnumOrUnknown::new(
@@ -130,6 +132,7 @@ impl Client {
         };
         let (stream_stream, _) =
             connect(ip_addr, stream_port, stream_request).await?;
+        tracing::info!("Connected to stream");
 
         let client = Arc::new(Self {
             rpc: Mutex::new(rpc_stream),
