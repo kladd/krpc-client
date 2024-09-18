@@ -55,6 +55,7 @@ for _ in 0..10 {
 
 ### Features
 * `fmt` (default): Format generated services. Remove for a quicker build producing an unreadable file.
+* `tokio`: Replace all blocking functions with async functions using the tokio runtime
 
 ### Hacking
 
