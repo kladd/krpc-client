@@ -53,6 +53,12 @@ for _ in 0..10 {
 }
 ```
 
+### Using Custom Service Definitions
+
+If you have a set of custom service definitions, for example from [KRPC.MechJeb](https://github.com/Genhis/KRPC.MechJeb) you can put them all in a directory and point the `KRPC_SERVICES` environment variable to it at build time, this crate will generate a rust client implementation for them.
+
+Important: If you do this you have to provide *all* service definitions, even the ones this crate usually  includes
+
 ### Features
 * `fmt` (default): Format generated services. Remove for a quicker build producing an unreadable file.
 
