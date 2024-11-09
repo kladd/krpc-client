@@ -1,4 +1,4 @@
-use std::{env, fs, io, path::Path};
+use std::{env, ffi::OsStr, fs, io, path::Path};
 
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
@@ -53,8 +53,11 @@ pub fn build<O: io::Write>(
     out: &mut O,
 ) -> Result<(), io::Error> {
     for service_definition_path in fs::read_dir(service_definitions)? {
-        let service_definition_file =
-            fs::File::open(service_definition_path.unwrap().path())?;
+        let path = service_definition_path.unwrap().path();
+        if !matches!(path.extension().and_then(OsStr::to_str), Some("json")) {
+            continue;
+        }
+        let service_definition_file = fs::File::open(path)?;
         let service_definition_json: Value =
             serde_json::from_reader(service_definition_file)?;
 
