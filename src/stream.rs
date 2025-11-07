@@ -1,6 +1,12 @@
-#[cfg(not(feature = "tokio"))]
-use std::sync::{Condvar, Mutex};
 use std::{collections::HashMap, marker::PhantomData, sync::Arc};
+#[cfg(not(feature = "tokio"))]
+use std::{
+    sync::{Condvar, Mutex},
+    time::Duration,
+};
+
+#[cfg(feature = "tokio")]
+use tokio::sync::{Mutex, Notify};
 
 use crate::{
     client::Client,
@@ -9,8 +15,6 @@ use crate::{
     services::krpc::KRPC,
     RpcType,
 };
-#[cfg(feature = "tokio")]
-use tokio::sync::{Mutex, Notify};
 
 /// A streaming procedure call.
 ///
@@ -87,6 +91,16 @@ impl StreamWrangler {
         };
         let result = lock.lock().unwrap();
         let _result = cvar.wait(result).unwrap();
+    }
+
+    #[cfg(not(feature = "tokio"))]
+    pub fn wait_timeout(&self, id: u64, dur: Duration) {
+        let (lock, cvar) = {
+            let mut map = self.streams.lock().unwrap();
+            &*map.entry(id).or_default().clone()
+        };
+        let result = lock.lock().unwrap();
+        let _result = cvar.wait_timeout(result, dur).unwrap();
     }
 
     #[cfg(feature = "tokio")]
@@ -212,6 +226,14 @@ impl<T: RpcType + Send> Stream<T> {
     #[cfg(not(feature = "tokio"))]
     pub fn wait(&self) {
         self.client.await_stream(self.id);
+    }
+
+    /// Block the current thread of execution until this
+    /// stream receives an update from the server or the
+    /// timeout is reached.
+    #[cfg(not(feature = "tokio"))]
+    pub fn wait_timeout(&self, dur: Duration) {
+        self.client.await_stream_timeout(self.id, dur);
     }
 
     /// Block the current thread of execution until this

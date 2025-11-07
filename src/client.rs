@@ -1,10 +1,10 @@
 use std::sync::Arc;
 #[cfg(not(feature = "tokio"))]
-use std::{net::TcpStream, sync::Mutex, thread};
-#[cfg(feature = "tokio")]
-use tokio::{net::TcpStream, sync::Mutex};
+use std::{net::TcpStream, sync::Mutex, thread, time::Duration};
 
 use protobuf::CodedInputStream;
+#[cfg(feature = "tokio")]
+use tokio::{net::TcpStream, sync::Mutex};
 
 use crate::{
     error::RpcError,
@@ -249,6 +249,11 @@ impl Client {
     #[cfg(not(feature = "tokio"))]
     pub(crate) fn await_stream(&self, id: u64) {
         self.streams.wait(id)
+    }
+
+    #[cfg(not(feature = "tokio"))]
+    pub(crate) fn await_stream_timeout(&self, id: u64, dur: Duration) {
+        self.streams.wait_timeout(id, dur)
     }
 
     #[cfg(feature = "tokio")]
