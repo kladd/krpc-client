@@ -123,7 +123,7 @@ fn generate_module_definition(
     }
 }
 
-fn generate_class_definitions(json: &Value) -> TokenSet {
+fn generate_class_definitions(json: &Value) -> TokenSet<'_> {
     Box::new(
         json.get("classes")
             .unwrap()
@@ -135,7 +135,7 @@ fn generate_class_definitions(json: &Value) -> TokenSet {
     )
 }
 
-fn generate_enum_definitions(json: &Value) -> TokenSet {
+fn generate_enum_definitions(json: &Value) -> TokenSet<'_> {
     let enums = json.get("enumerations").unwrap().as_object().unwrap();
     Box::new(enums.into_iter().map(|(name, values)| {
         let name = format_ident!("{name}");
@@ -146,7 +146,7 @@ fn generate_enum_definitions(json: &Value) -> TokenSet {
     }))
 }
 
-fn generate_enum_variant_definitions(json: &Value) -> TokenSet {
+fn generate_enum_variant_definitions(json: &Value) -> TokenSet<'_> {
     Box::new(
         json.as_object()
             .unwrap()
