@@ -196,6 +196,16 @@ impl Client {
     }
 
     #[cfg(feature = "tokio")]
+    pub(crate) fn register_stream(self: &Arc<Self>, stream_id: u64) -> u32 {
+        self.streams.increment_refcount(stream_id)
+    }
+
+    #[cfg(feature = "tokio")]
+    pub(crate) fn release_stream(self: &Arc<Self>, stream_id: u64) -> u32 {
+       self.streams.decrement_refcount(stream_id)
+    }
+
+    #[cfg(feature = "tokio")]
     pub(crate) async fn update_streams(
         self: &Arc<Self>,
     ) -> Result<(), RpcError> {
