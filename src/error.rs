@@ -11,6 +11,18 @@ pub enum RpcError {
     #[error("Connection failed")]
     Connection(#[from] io::Error),
 
+    #[error("Connection rejected ({status:?}): {message}")]
+    ConnectionRejected {
+        status: ConnectionStatus,
+        message: String,
+    },
+
+    #[error(
+        "Server protocol version {0} is not supported; this client \
+         requires protocol version 1 (kRPC v0.7.0 or later)"
+    )]
+    UnsupportedProtocolVersion(u32),
+
     /// `Client` errors capture runtime errors from within
     /// the client.
     #[error("Unexpected client error")]
@@ -25,6 +37,15 @@ pub enum RpcError {
     /// messages.
     #[error(transparent)]
     ProtobufError(#[from] protobuf::Error),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectionStatus {
+    MalformedMessage,
+    Timeout,
+    WrongType,
+    WrongProtocolVersion,
+    Unknown(i32),
 }
 
 impl<T> From<PoisonError<T>> for RpcError {

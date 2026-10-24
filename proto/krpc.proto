@@ -12,6 +12,7 @@ message ConnectionRequest {
   Type type = 1;
   string client_name = 2;
   bytes client_identifier = 3;
+  uint32 protocol_version = 4;
 
   enum Type {
     RPC = 0;
@@ -26,9 +27,11 @@ message ConnectionResponse {
     MALFORMED_MESSAGE = 1;
     TIMEOUT = 2;
     WRONG_TYPE = 3;
+    WRONG_PROTOCOL_VERSION = 4;
   }
   string message = 2;
   bytes client_identifier = 3;
+  uint32 protocol_version = 4;
 }
 
 // Messages for calling remote procedures
@@ -48,6 +51,7 @@ message ProcedureCall {
 message Argument {
   uint32 position = 1;
   bytes value = 2;
+  bool is_null = 3;
 }
 
 message Response {
@@ -58,6 +62,7 @@ message Response {
 message ProcedureResult {
   Error error = 1;
   bytes value = 2;
+  bool is_null = 3;
 }
 
 message Error {
@@ -91,15 +96,19 @@ message Service {
   repeated Enumeration enumerations = 4;
   repeated Exception exceptions = 5;
   string documentation = 6;
+  bool deprecated = 7;
+  string deprecated_reason = 8;
+  repeated Struct structs = 9;
 }
 
 message Procedure {
   string name = 1;
   repeated Parameter parameters = 2;
   Type return_type = 3;
-  bool return_is_nullable = 4;
   repeated GameScene game_scenes = 6;
   string documentation = 5;
+  bool deprecated = 7;
+  string deprecated_reason = 8;
 
   enum GameScene {
     SPACE_CENTER = 0;
@@ -108,36 +117,65 @@ message Procedure {
     EDITOR_VAB = 3;
     EDITOR_SPH = 4;
     MISSION_BUILDER = 5;
+    ASTRONAUT_COMPLEX = 6;
+    MISSION_CONTROL = 7;
+    RESEARCH_AND_DEVELOPMENT = 8;
+    ADMINISTRATION = 9;
   };
 }
 
 message Parameter {
   string name = 1;
   Type type = 2;
+  bool has_default_value = 5;
   bytes default_value = 3;
-  bool nullable = 4;
+  bool default_value_is_null = 6;
 }
 
 message Class {
   string name = 1;
   string documentation = 2;
+  bool deprecated = 3;
+  string deprecated_reason = 4;
 }
 
 message Enumeration {
   string name = 1;
   repeated EnumerationValue values = 2;
   string documentation = 3;
+  bool deprecated = 4;
+  string deprecated_reason = 5;
 }
 
 message EnumerationValue {
   string name = 1;
   int32 value = 2;
   string documentation = 3;
+  bool deprecated = 4;
+  string deprecated_reason = 5;
 }
 
 message Exception {
   string name = 1;
   string documentation = 2;
+  bool deprecated = 3;
+  string deprecated_reason = 4;
+}
+
+message Struct {
+  string name = 1;
+  repeated StructField fields = 2;
+  string documentation = 3;
+  bool deprecated = 4;
+  string deprecated_reason = 5;
+}
+
+message StructField {
+  string name = 1;
+  Type type = 2;
+  string documentation = 3;
+  bool deprecated = 4;
+  string deprecated_reason = 5;
 }
 
 message Type {
@@ -145,6 +183,7 @@ message Type {
   string service = 2;
   string name = 3;
   repeated Type types = 4;
+  bool nullable = 5;
 
   enum TypeCode {
     NONE = 0;
@@ -163,6 +202,7 @@ message Type {
     // Objects
     CLASS = 100;
     ENUMERATION = 101;
+    STRUCT = 102;
 
     // Messages
     EVENT = 200;
@@ -232,6 +272,7 @@ message Status {
   uint64 stream_rpcs_executed = 17;
   float stream_rpc_rate = 18;
   float time_per_stream_update = 19;
+  uint32 protocol_version = 20;
 }
 
 // Multiplexed request messages

@@ -7,13 +7,15 @@ use protobuf::CodedInputStream;
 use tokio::{net::TcpStream, sync::Mutex};
 
 use crate::{
-    error::RpcError,
+    error::{ConnectionStatus, RpcError},
     schema::{
         self, connection_request, connection_response::Status,
         ConnectionRequest, ConnectionResponse, DecodeUntagged, StreamUpdate,
     },
     stream::StreamWrangler,
 };
+
+const PROTOCOL_VERSION: u32 = 1;
 
 /// The base kRPC client type.
 ///
@@ -67,6 +69,7 @@ impl Client {
         let rpc_request = schema::ConnectionRequest {
             type_: protobuf::EnumOrUnknown::new(connection_request::Type::RPC),
             client_name: String::from(name),
+            protocol_version: PROTOCOL_VERSION,
             ..Default::default()
         };
         let (rpc_stream, rpc_result) = connect(ip_addr, rpc_port, rpc_request)?;
@@ -77,6 +80,7 @@ impl Client {
             ),
             client_name: String::from(name),
             client_identifier: rpc_result.client_identifier,
+            protocol_version: PROTOCOL_VERSION,
             ..Default::default()
         };
         let (stream_stream, _) = connect(ip_addr, stream_port, stream_request)?;
@@ -114,6 +118,7 @@ impl Client {
         let rpc_request = schema::ConnectionRequest {
             type_: protobuf::EnumOrUnknown::new(connection_request::Type::RPC),
             client_name: String::from(name),
+            protocol_version: PROTOCOL_VERSION,
             ..Default::default()
         };
         let (rpc_stream, rpc_result) =
@@ -125,6 +130,7 @@ impl Client {
             ),
             client_name: String::from(name),
             client_identifier: rpc_result.client_identifier,
+            protocol_version: PROTOCOL_VERSION,
             ..Default::default()
         };
         let (stream_stream, _) =
@@ -283,9 +289,7 @@ fn connect(
 
     send(&mut conn, request)?;
     let response = recv::<ConnectionResponse>(&mut conn)?;
-    if response.status.value() != Status::OK as i32 {
-        return Err(RpcError::Client);
-    }
+    check_connection_response(&response)?;
 
     Ok((conn, response))
 }
@@ -302,11 +306,40 @@ async fn connect(
 
     send(&mut conn, request).await?;
     let response = recv::<ConnectionResponse>(&mut conn).await?;
-    if response.status.value() != Status::OK as i32 {
-        return Err(RpcError::Client);
-    }
+    check_connection_response(&response)?;
 
     Ok((conn, response))
+}
+
+fn check_connection_response(
+    response: &ConnectionResponse,
+) -> Result<(), RpcError> {
+    let status = match response.status.enum_value() {
+        Ok(Status::OK) => None,
+        Ok(Status::MALFORMED_MESSAGE) => {
+            Some(ConnectionStatus::MalformedMessage)
+        }
+        Ok(Status::TIMEOUT) => Some(ConnectionStatus::Timeout),
+        Ok(Status::WRONG_TYPE) => Some(ConnectionStatus::WrongType),
+        Ok(Status::WRONG_PROTOCOL_VERSION) => {
+            Some(ConnectionStatus::WrongProtocolVersion)
+        }
+        Err(code) => Some(ConnectionStatus::Unknown(code)),
+    };
+    if let Some(status) = status {
+        return Err(RpcError::ConnectionRejected {
+            status,
+            message: response.message.clone(),
+        });
+    }
+
+    if response.protocol_version != PROTOCOL_VERSION {
+        return Err(RpcError::UnsupportedProtocolVersion(
+            response.protocol_version,
+        ));
+    }
+
+    Ok(())
 }
 
 #[cfg(not(feature = "tokio"))]
