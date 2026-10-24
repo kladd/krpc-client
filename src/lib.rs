@@ -26,6 +26,17 @@ mod schema {
             client: Arc<Client>,
             buf: &[u8],
         ) -> Result<Self, RpcError>;
+
+        fn decode_result(
+            client: Arc<Client>,
+            buf: &[u8],
+            is_null: bool,
+        ) -> Result<Self, RpcError> {
+            if is_null {
+                return Err(RpcError::Encoding("unexpected null value".into()));
+            }
+            Self::decode_untagged(client, buf)
+        }
     }
 
     pub trait FromResponse: Sized {
@@ -49,7 +60,8 @@ mod schema {
             response: Response,
             client: Arc<Client>,
         ) -> Result<T, RpcError> {
-            Self::decode_untagged(client, &response.results[0].value)
+            let result = &response.results[0];
+            Self::decode_result(client, &result.value, result.is_null)
         }
     }
 
@@ -59,13 +71,19 @@ mod schema {
 
     pub trait EncodeUntagged {
         fn encode_untagged(&self) -> Result<Vec<u8>, RpcError>;
+
+        fn encode_argument(&self) -> Result<Option<Vec<u8>>, RpcError> {
+            self.encode_untagged().map(Some)
+        }
     }
 
     impl<T: EncodeUntagged> ToArgument for T {
         fn to_argument(&self, pos: u32) -> Result<Argument, RpcError> {
+            let value = self.encode_argument()?;
             Ok(Argument {
                 position: pos,
-                value: self.encode_untagged()?,
+                is_null: value.is_none(),
+                value: value.unwrap_or_default(),
                 ..Default::default()
             })
         }
@@ -74,6 +92,10 @@ mod schema {
     impl<T: EncodeUntagged> EncodeUntagged for &T {
         fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
             (*self).encode_untagged()
+        }
+
+        fn encode_argument(&self) -> Result<Option<Vec<u8>>, RpcError> {
+            (*self).encode_argument()
         }
     }
 
@@ -493,10 +515,26 @@ mod schema {
             client: Arc<Client>,
             buf: &[u8],
         ) -> Result<Self, RpcError> {
-            if buf == [0u8] {
+            match buf.split_first() {
+                Some((0, _)) => Ok(None),
+                Some((1, value)) => {
+                    T::decode_untagged(client, value).map(Some)
+                }
+                _ => Err(RpcError::Encoding(
+                    "invalid presence bool for nullable value".into(),
+                )),
+            }
+        }
+
+        fn decode_result(
+            client: Arc<Client>,
+            buf: &[u8],
+            is_null: bool,
+        ) -> Result<Self, RpcError> {
+            if is_null {
                 Ok(None)
             } else {
-                Some(T::decode_untagged(client, buf)).transpose()
+                T::decode_untagged(client, buf).map(Some)
             }
         }
     }
@@ -504,9 +542,17 @@ mod schema {
     impl<T: EncodeUntagged> EncodeUntagged for Option<T> {
         fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
             match self {
-                Some(t) => t.encode_untagged(),
+                Some(t) => {
+                    let mut buf = vec![1u8];
+                    buf.extend(t.encode_untagged()?);
+                    Ok(buf)
+                }
                 None => Ok(vec![0u8]),
             }
+        }
+
+        fn encode_argument(&self) -> Result<Option<Vec<u8>>, RpcError> {
+            self.as_ref().map(T::encode_untagged).transpose()
         }
     }
 

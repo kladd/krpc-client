@@ -159,7 +159,7 @@ impl StreamWrangler {
         let mut map = self.streams.lock().unwrap();
         let (lock, _) = { &*map.entry(id).or_default().clone() };
         let result = lock.lock().unwrap();
-        T::decode_untagged(client, &result.value)
+        T::decode_result(client, &result.value, result.is_null)
     }
 
     #[cfg(feature = "tokio")]
@@ -172,7 +172,7 @@ impl StreamWrangler {
         let (lock, _) =
             { &*map.entry(id).or_insert_with(Default::default).clone() };
         let result = lock.lock().await;
-        T::decode_untagged(client, &result.value)
+        T::decode_result(client, &result.value, result.is_null)
     }
 }
 
