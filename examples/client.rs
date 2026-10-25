@@ -10,7 +10,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let sc = SpaceCenter::new(client.clone());
 
     // Check out our vessel.
-    let ship = sc.get_active_vessel()?;
+    let ship = sc.get_active_vessel()?.ok_or("no active vessel")?;
 
     // Greet the crew.
     match ship.get_crew()?.first() {

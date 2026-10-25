@@ -60,8 +60,36 @@ mod schema {
             response: Response,
             client: Arc<Client>,
         ) -> Result<T, RpcError> {
-            let result = &response.results[0];
-            Self::decode_result(client, &result.value, result.is_null)
+            if let Some(error) = response.error.as_ref() {
+                return Err(error.into());
+            }
+            response
+                .results
+                .first()
+                .ok_or(RpcError::Client)?
+                .decode(client)
+        }
+    }
+
+    impl ProcedureResult {
+        pub(crate) fn decode<T: DecodeUntagged>(
+            &self,
+            client: Arc<Client>,
+        ) -> Result<T, RpcError> {
+            if let Some(error) = self.error.as_ref() {
+                return Err(error.into());
+            }
+            T::decode_result(client, &self.value, self.is_null)
+        }
+    }
+
+    impl From<&Error> for RpcError {
+        fn from(error: &Error) -> Self {
+            RpcError::Server {
+                service: error.service.clone(),
+                name: error.name.clone(),
+                description: error.description.clone(),
+            }
         }
     }
 
@@ -120,10 +148,30 @@ mod schema {
     }
 
     macro_rules! rpc_object {
-        ($name:ident) => {
+        ($(#[$attr:meta])* $name:ident) => {
+            $(#[$attr])*
+            #[derive(Clone)]
             pub struct $name {
                 id: u64,
                 client: ::std::sync::Arc<crate::client::Client>,
+            }
+
+            impl ::std::fmt::Debug for $name {
+                fn fmt(
+                    &self,
+                    f: &mut ::std::fmt::Formatter<'_>,
+                ) -> ::std::fmt::Result {
+                    f.debug_struct(stringify!($name))
+                        .field("id", &self.id)
+                        .finish()
+                }
+            }
+
+            impl PartialEq for $name {
+                fn eq(&self, other: &Self) -> bool {
+                    self.id == other.id
+                        && ::std::sync::Arc::ptr_eq(&self.client, &other.client)
+                }
             }
 
             impl crate::schema::DecodeUntagged for $name {
@@ -147,9 +195,14 @@ mod schema {
     }
 
     macro_rules! rpc_enum {
-        ($name:ident, [$($value:ident),+$(,)?]) => {
+        (
+            $(#[$attr:meta])* $name:ident,
+            [$($(#[$value_attr:meta])* $value:ident),+$(,)?]
+        ) => {
+            $(#[$attr])*
             #[derive(Debug, Copy, Clone, PartialEq)]
             pub enum $name {$(
+                $(#[$value_attr])*
                 $value,
             )+}
 
@@ -510,6 +563,19 @@ mod schema {
         }
     }
 
+    impl EncodeUntagged for Vec<u8> {
+        fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
+            let mut buf: Vec<u8> = Vec::new();
+            {
+                let mut os = protobuf::CodedOutputStream::new(&mut buf);
+                os.write_bytes_no_tag(self).map_err(RpcError::from)?;
+                os.flush().map_err(RpcError::from)?;
+            }
+
+            Ok(buf)
+        }
+    }
+
     impl<T: DecodeUntagged> DecodeUntagged for Option<T> {
         fn decode_untagged(
             client: Arc<Client>,
@@ -517,9 +583,7 @@ mod schema {
         ) -> Result<Self, RpcError> {
             match buf.split_first() {
                 Some((0, _)) => Ok(None),
-                Some((1, value)) => {
-                    T::decode_untagged(client, value).map(Some)
-                }
+                Some((1, value)) => T::decode_untagged(client, value).map(Some),
                 _ => Err(RpcError::Encoding(
                     "invalid presence bool for nullable value".into(),
                 )),
@@ -561,6 +625,7 @@ mod schema {
     decode_untagged!(f32, read_float);
     decode_untagged!(f64, read_double);
     decode_untagged!(i32, read_sint32);
+    decode_untagged!(i64, read_sint64);
     decode_untagged!(u32, read_uint32);
     decode_untagged!(u64, read_uint64);
     decode_untagged!(Vec<u8>, read_bytes);
@@ -580,6 +645,7 @@ mod schema {
 
     encode_untagged!(bool, write_bool_no_tag);
     encode_untagged!(i32, write_sint32_no_tag);
+    encode_untagged!(i64, write_sint64_no_tag);
     encode_untagged!(u32, write_uint32_no_tag);
     encode_untagged!(f32, write_float_no_tag);
     encode_untagged!(f64, write_double_no_tag);

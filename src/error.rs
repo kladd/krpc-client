@@ -23,6 +23,13 @@ pub enum RpcError {
     )]
     UnsupportedProtocolVersion(u32),
 
+    #[error("{service}.{name}: {description}")]
+    Server {
+        service: String,
+        name: String,
+        description: String,
+    },
+
     /// `Client` errors capture runtime errors from within
     /// the client.
     #[error("Unexpected client error")]

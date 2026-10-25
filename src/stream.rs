@@ -49,35 +49,9 @@ type StreamEntry = Arc<(Mutex<ProcedureResult>, Notify)>;
 #[derive(Default)]
 pub(crate) struct StreamWrangler {
     streams: Mutex<HashMap<u64, StreamEntry>>,
-    #[cfg(feature = "tokio")]
-    refcounts: std::sync::Mutex<HashMap<u64, u32>>,
 }
 
 impl StreamWrangler {
-    #[cfg(feature = "tokio")]
-    pub fn increment_refcount(&self, id: u64) -> u32 {
-        let mut guard = self.refcounts.lock().unwrap();
-        let entry = guard.entry(id).or_insert(0);
-        *entry += 1;
-        *entry
-    }
-
-    #[cfg(feature = "tokio")]
-    pub fn decrement_refcount(&self, id: u64) -> u32 {
-        let mut guard = self.refcounts.lock().unwrap();
-        let Some(entry) = guard.get_mut(&id) else {
-            return 0;
-        };
-        *entry -= 1;
-
-        let result = *entry;
-        if result == 0 {
-            guard.remove(&id);
-        }
-
-        result
-    }
-
     #[cfg(not(feature = "tokio"))]
     pub fn insert(
         &self,
@@ -159,7 +133,7 @@ impl StreamWrangler {
         let mut map = self.streams.lock().unwrap();
         let (lock, _) = { &*map.entry(id).or_default().clone() };
         let result = lock.lock().unwrap();
-        T::decode_result(client, &result.value, result.is_null)
+        result.decode(client)
     }
 
     #[cfg(feature = "tokio")]
@@ -172,7 +146,7 @@ impl StreamWrangler {
         let (lock, _) =
             { &*map.entry(id).or_insert_with(Default::default).clone() };
         let result = lock.lock().await;
-        T::decode_result(client, &result.value, result.is_null)
+        result.decode(client)
     }
 }
 
@@ -183,7 +157,7 @@ impl<T: RpcType + Send> Stream<T> {
         call: ProcedureCall,
     ) -> Result<Self, RpcError> {
         let krpc = KRPC::new(client.clone());
-        let stream = krpc.add_stream(call, true)?;
+        let stream = krpc.add_stream(call)?;
         client.await_stream(stream.id);
 
         Ok(Self {
@@ -200,8 +174,7 @@ impl<T: RpcType + Send> Stream<T> {
         call: ProcedureCall,
     ) -> Result<Self, RpcError> {
         let krpc = KRPC::new(client.clone());
-        let stream = krpc.add_stream(call, true).await?;
-        client.register_stream(stream.id);
+        let stream = krpc.add_stream(call).await?;
         client.await_stream(stream.id).await;
 
         Ok(Self {
@@ -272,8 +245,8 @@ impl<T: RpcType + Send> Stream<T> {
 }
 
 impl<T: RpcType + Send> Drop for Stream<T> {
-    // Try to remove the stream if it's dropped, but don't panic
-    // if unable.
+    // Try to remove the stream if it's dropped, but don't
+    // panic if unable.
     #[cfg(not(feature = "tokio"))]
     fn drop(&mut self) {
         self.krpc.remove_stream(self.id).ok();
@@ -285,12 +258,9 @@ impl<T: RpcType + Send> Drop for Stream<T> {
         let krpc = self.krpc.clone();
         let client = self.client.clone();
         let id = self.id;
-        let refcount = client.release_stream(id);
-        if refcount == 0 {
-            tokio::task::spawn(async move {
-                krpc.remove_stream(id).await.ok();
-                client.remove_stream(id).await.ok();
-            });
-        }
+        tokio::task::spawn(async move {
+            krpc.remove_stream(id).await.ok();
+            client.remove_stream(id).await.ok();
+        });
     }
 }
