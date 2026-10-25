@@ -1,0 +1,1588 @@
+{
+  "StdLib": {
+    "id": 8,
+    "documentation": "<doc>\n<summary>\nA standard library of mathematics and printing for server side functions, and of the\ncolors other services use.\n</summary>\n<remarks>\nVectors are position and direction tuples, and rotations are unit quaternion tuples\nin the order x, y, z, w the SpaceCenter service uses. Angles are in radians unless\nstated otherwise.\n</remarks>\n</doc>",
+    "procedures": {
+      "Abs": {
+        "id": 1,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe absolute value of a number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Sign": {
+        "id": 2,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "SINT32"
+        },
+        "documentation": "<doc>\n<summary>\nThe sign of a number: -1 if it is negative, 1 if it is positive,\nand 0 if it is zero or not a number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "CopySign": {
+        "id": 3,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "y",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe magnitude of the first number with the sign of the second.\n</summary>\n<param name=\"x\">The number giving the magnitude.</param>\n<param name=\"y\">The number giving the sign.</param>\n</doc>"
+      },
+      "IsNan": {
+        "id": 4,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a number is not a number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "IsFinite": {
+        "id": 5,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a number is neither infinite nor not a number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Floor": {
+        "id": 6,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe largest whole number less than or equal to the given number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Ceiling": {
+        "id": 7,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe smallest whole number greater than or equal to the given number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Round": {
+        "id": 8,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "digits",
+            "type": {
+              "code": "SINT32"
+            },
+            "default_value": "AA=="
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe given number rounded to the given number of decimal places,\nwith a halfway value rounded to the nearer even number.\n</summary>\n<remarks>\nThrows an exception if the rounded value is too large for a double.\n</remarks>\n<param name=\"x\">The number.</param>\n<param name=\"digits\">The number of decimal places to round to.\nNegative to round to tens, hundreds and beyond.</param>\n</doc>"
+      },
+      "RoundHalfAwayFromZero": {
+        "id": 9,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "digits",
+            "type": {
+              "code": "SINT32"
+            },
+            "default_value": "AA=="
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe given number rounded to the given number of decimal places,\nwith a halfway value rounded away from zero.\n</summary>\n<remarks>\nThrows an exception if the rounded value is too large for a double.\n</remarks>\n<param name=\"x\">The number.</param>\n<param name=\"digits\">The number of decimal places to round to.\nNegative to round to tens, hundreds and beyond.</param>\n</doc>"
+      },
+      "RoundHalfUp": {
+        "id": 10,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "digits",
+            "type": {
+              "code": "SINT32"
+            },
+            "default_value": "AA=="
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe given number rounded to the given number of decimal places,\nwith a halfway value rounded toward positive infinity.\n</summary>\n<remarks>\nThrows an exception if the rounded value is too large for a double.\n</remarks>\n<param name=\"x\">The number.</param>\n<param name=\"digits\">The number of decimal places to round to.\nNegative to round to tens, hundreds and beyond.</param>\n</doc>"
+      },
+      "Sqrt": {
+        "id": 11,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe square root of a number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Hypot": {
+        "id": 12,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "y",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe length of the hypotenuse of a right triangle with the given sides.\n</summary>\n<param name=\"x\">The first side.</param>\n<param name=\"y\">The second side.</param>\n</doc>"
+      },
+      "Sin": {
+        "id": 13,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe sine of an angle, in radians.\n</summary>\n<param name=\"x\">The angle.</param>\n</doc>"
+      },
+      "Cos": {
+        "id": 14,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe cosine of an angle, in radians.\n</summary>\n<param name=\"x\">The angle.</param>\n</doc>"
+      },
+      "Tan": {
+        "id": 15,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe tangent of an angle, in radians.\n</summary>\n<param name=\"x\">The angle.</param>\n</doc>"
+      },
+      "Asin": {
+        "id": 16,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe angle, in radians, whose sine is the given number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Acos": {
+        "id": 17,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe angle, in radians, whose cosine is the given number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Atan": {
+        "id": 18,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe angle, in radians, whose tangent is the given number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Atan2": {
+        "id": 19,
+        "parameters": [
+          {
+            "name": "y",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe angle, in radians, between the positive x axis and the point (x, y).\n</summary>\n<param name=\"y\">The y coordinate.</param>\n<param name=\"x\">The x coordinate.</param>\n</doc>"
+      },
+      "Log": {
+        "id": 20,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "newBase",
+            "type": {
+              "code": "DOUBLE"
+            },
+            "default_value": "aVcUiwq/BUA="
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe logarithm of a number, natural unless another base is given.\n</summary>\n<param name=\"x\">The number.</param>\n<param name=\"newBase\">The base of the logarithm.</param>\n</doc>"
+      },
+      "Log10": {
+        "id": 21,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe base 10 logarithm of a number.\n</summary>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "Exp": {
+        "id": 22,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe number e raised to the given power.\n</summary>\n<param name=\"x\">The power.</param>\n</doc>"
+      },
+      "Min": {
+        "id": 23,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "y",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe smaller of two numbers.\n</summary>\n<param name=\"x\">The first number.</param>\n<param name=\"y\">The second number.</param>\n</doc>"
+      },
+      "Max": {
+        "id": 24,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "y",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe larger of two numbers.\n</summary>\n<param name=\"x\">The first number.</param>\n<param name=\"y\">The second number.</param>\n</doc>"
+      },
+      "Clamp": {
+        "id": 25,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "min",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "max",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe given number limited to the given range.\n</summary>\n<remarks>\nThrows an exception if the minimum is greater than the maximum.\n</remarks>\n<param name=\"x\">The number.</param>\n<param name=\"min\">The minimum of the range.</param>\n<param name=\"max\">The maximum of the range.</param>\n</doc>"
+      },
+      "Lerp": {
+        "id": 26,
+        "parameters": [
+          {
+            "name": "a",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "b",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "t",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nLinear interpolation between two numbers.\n</summary>\n<remarks>\nThe parameter is not limited to the range 0 to 1, and a value outside it\nextrapolates.\n</remarks>\n<param name=\"a\">The number when t is 0.</param>\n<param name=\"b\">The number when t is 1.</param>\n<param name=\"t\">The interpolation parameter.</param>\n</doc>"
+      },
+      "InverseLerp": {
+        "id": 27,
+        "parameters": [
+          {
+            "name": "a",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "b",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe interpolation parameter of a number between two others,\nlimited to the range 0 to 1.\n</summary>\n<remarks>\nReturns 0 if the two numbers are equal.\n</remarks>\n<param name=\"a\">The number at 0.</param>\n<param name=\"b\">The number at 1.</param>\n<param name=\"x\">The number.</param>\n</doc>"
+      },
+      "DegreesToRadians": {
+        "id": 28,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe angle in radians of an angle in degrees.\n</summary>\n<param name=\"x\">The angle in degrees.</param>\n</doc>"
+      },
+      "RadiansToDegrees": {
+        "id": 29,
+        "parameters": [
+          {
+            "name": "x",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe angle in degrees of an angle in radians.\n</summary>\n<param name=\"x\">The angle in radians.</param>\n</doc>"
+      },
+      "VectorAdd": {
+        "id": 30,
+        "parameters": [
+          {
+            "name": "u",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe sum of two vectors.\n</summary>\n<param name=\"u\">The first vector.</param>\n<param name=\"v\">The second vector.</param>\n</doc>"
+      },
+      "VectorSubtract": {
+        "id": 31,
+        "parameters": [
+          {
+            "name": "u",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe difference of two vectors.\n</summary>\n<param name=\"u\">The first vector.</param>\n<param name=\"v\">The second vector.</param>\n</doc>"
+      },
+      "VectorScale": {
+        "id": 32,
+        "parameters": [
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "scale",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nA vector scaled by a number.\n</summary>\n<param name=\"v\">The vector.</param>\n<param name=\"scale\">The scaling factor.</param>\n</doc>"
+      },
+      "VectorDot": {
+        "id": 33,
+        "parameters": [
+          {
+            "name": "u",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe dot product of two vectors.\n</summary>\n<param name=\"u\">The first vector.</param>\n<param name=\"v\">The second vector.</param>\n</doc>"
+      },
+      "VectorCross": {
+        "id": 34,
+        "parameters": [
+          {
+            "name": "u",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe cross product of two vectors.\n</summary>\n<param name=\"u\">The first vector.</param>\n<param name=\"v\">The second vector.</param>\n</doc>"
+      },
+      "VectorMagnitude": {
+        "id": 35,
+        "parameters": [
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe magnitude (length) of a vector.\n</summary>\n<param name=\"v\">The vector.</param>\n</doc>"
+      },
+      "VectorNormalize": {
+        "id": 36,
+        "parameters": [
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nA vector scaled to a magnitude of 1.\n</summary>\n<remarks>\nThrows an exception if the vector is zero.\n</remarks>\n<param name=\"v\">The vector.</param>\n</doc>"
+      },
+      "VectorDistance": {
+        "id": 37,
+        "parameters": [
+          {
+            "name": "u",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe distance between two positions.\n</summary>\n<param name=\"u\">The first position.</param>\n<param name=\"v\">The second position.</param>\n</doc>"
+      },
+      "VectorAngle": {
+        "id": 38,
+        "parameters": [
+          {
+            "name": "u",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe angle between two vectors, in radians, between 0 and pi.\n</summary>\n<remarks>\nThrows an exception if either vector is zero.\n</remarks>\n<param name=\"u\">The first vector.</param>\n<param name=\"v\">The second vector.</param>\n</doc>"
+      },
+      "VectorLerp": {
+        "id": 39,
+        "parameters": [
+          {
+            "name": "u",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "t",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nLinear interpolation between two vectors.\n</summary>\n<remarks>\nThe parameter is not limited to the range 0 to 1, and a value outside it\nextrapolates.\n</remarks>\n<param name=\"u\">The vector when t is 0.</param>\n<param name=\"v\">The vector when t is 1.</param>\n<param name=\"t\">The interpolation parameter.</param>\n</doc>"
+      },
+      "QuaternionMultiply": {
+        "id": 40,
+        "parameters": [
+          {
+            "name": "q",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "r",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe composition of two rotations: the rotation r followed by the\nrotation q.\n</summary>\n<remarks>\nThrows an exception if either quaternion is zero.\n</remarks>\n<param name=\"q\">The second rotation.</param>\n<param name=\"r\">The first rotation.</param>\n</doc>"
+      },
+      "QuaternionInverse": {
+        "id": 41,
+        "parameters": [
+          {
+            "name": "q",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe inverse of a rotation.\n</summary>\n<remarks>\nThrows an exception if the quaternion is zero.\n</remarks>\n<param name=\"q\">The rotation.</param>\n</doc>"
+      },
+      "QuaternionRotateVector": {
+        "id": 42,
+        "parameters": [
+          {
+            "name": "q",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nA vector rotated by a rotation.\n</summary>\n<remarks>\nThrows an exception if the quaternion is zero.\n</remarks>\n<param name=\"q\">The rotation.</param>\n<param name=\"v\">The vector.</param>\n</doc>"
+      },
+      "QuaternionFromAxisAngle": {
+        "id": 43,
+        "parameters": [
+          {
+            "name": "axis",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "angle",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe rotation about an axis by an angle.\n</summary>\n<remarks>\nThrows an exception if the axis is zero.\n</remarks>\n<param name=\"axis\">The axis of rotation.</param>\n<param name=\"angle\">The angle of rotation, in radians.</param>\n</doc>"
+      },
+      "QuaternionToAxisAngle": {
+        "id": 44,
+        "parameters": [
+          {
+            "name": "q",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "AxisAngle"
+        },
+        "documentation": "<doc>\n<summary>\nThe axis and angle of a rotation.\n</summary>\n<remarks>\nThrows an exception if the quaternion is zero.\n</remarks>\n<param name=\"q\">The rotation.</param>\n</doc>"
+      },
+      "QuaternionFromToRotation": {
+        "id": 45,
+        "parameters": [
+          {
+            "name": "u",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "v",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe shortest rotation that takes one direction onto another.\n</summary>\n<remarks>\nOpposite directions give a half turn about an arbitrary perpendicular axis.\nThrows an exception if either vector is zero.\n</remarks>\n<param name=\"u\">The direction to rotate from.</param>\n<param name=\"v\">The direction to rotate to.</param>\n</doc>"
+      },
+      "QuaternionLookRotation": {
+        "id": 46,
+        "parameters": [
+          {
+            "name": "forward",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "up",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe rotation that takes the z axis onto a forward direction, and the y axis\ntoward an up direction.\n</summary>\n<remarks>\nThe up direction need not be perpendicular to the forward direction. Throws an\nexception if either vector is zero, or if they are parallel.\n</remarks>\n<param name=\"forward\">The direction of the z axis.</param>\n<param name=\"up\">The direction the y axis points toward.</param>\n</doc>"
+      },
+      "QuaternionAngle": {
+        "id": 47,
+        "parameters": [
+          {
+            "name": "q",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "r",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe angle of the rotation that takes one rotation to another,\nin radians, between 0 and pi.\n</summary>\n<remarks>\nThrows an exception if either quaternion is zero.\n</remarks>\n<param name=\"q\">The first rotation.</param>\n<param name=\"r\">The second rotation.</param>\n</doc>"
+      },
+      "QuaternionSlerp": {
+        "id": 48,
+        "parameters": [
+          {
+            "name": "q",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "r",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "t",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nSpherical linear interpolation between two rotations.\n</summary>\n<remarks>\nThe parameter is not limited to the range 0 to 1, and a value outside it\nextrapolates. Throws an exception if either quaternion is zero.\n</remarks>\n<param name=\"q\">The rotation when t is 0.</param>\n<param name=\"r\">The rotation when t is 1.</param>\n<param name=\"t\">The interpolation parameter.</param>\n</doc>"
+      },
+      "Print": {
+        "id": 49,
+        "parameters": [
+          {
+            "name": "message",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWrites a message to the game's log, for debugging.\n</summary>\n<remarks>\nA function evaluated by a stream or an event prints on every update. The message is\nwritten at the Info level, so a server log level of Warning or Error hides it.\n</remarks>\n<param name=\"message\">The message.</param>\n</doc>"
+      },
+      "get_Pi": {
+        "id": 50,
+        "parameters": [],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe constant pi.\n</summary>\n</doc>"
+      },
+      "get_E": {
+        "id": 51,
+        "parameters": [],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe constant e, the base of the natural logarithm.\n</summary>\n</doc>"
+      }
+    },
+    "classes": {},
+    "enumerations": {},
+    "structs": {
+      "AxisAngle": {
+        "documentation": "<doc>\n<summary>\nA rotation as an axis and an angle.\n</summary>\n<remarks>\nSee <see cref=\"M:StdLib.QuaternionToAxisAngle\" />.\n</remarks>\n</doc>",
+        "fields": [
+          {
+            "name": "Axis",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            },
+            "documentation": "<doc>\n<summary>\nThe axis of the rotation, as a unit vector, or zero for no rotation.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Angle",
+            "type": {
+              "code": "DOUBLE"
+            },
+            "documentation": "<doc>\n<summary>\nThe angle of the rotation, in radians between 0 and pi.\n</summary>\n</doc>"
+          }
+        ]
+      },
+      "ColorRGB": {
+        "documentation": "<doc>\n<summary>\nA color, as red, green and blue components between 0 and 1.\n</summary>\n</doc>",
+        "fields": [
+          {
+            "name": "R",
+            "type": {
+              "code": "FLOAT"
+            },
+            "documentation": "<doc>\n<summary>\nThe red component.\n</summary>\n</doc>"
+          },
+          {
+            "name": "G",
+            "type": {
+              "code": "FLOAT"
+            },
+            "documentation": "<doc>\n<summary>\nThe green component.\n</summary>\n</doc>"
+          },
+          {
+            "name": "B",
+            "type": {
+              "code": "FLOAT"
+            },
+            "documentation": "<doc>\n<summary>\nThe blue component.\n</summary>\n</doc>"
+          }
+        ]
+      },
+      "ColorRGBA": {
+        "documentation": "<doc>\n<summary>\nA color, as red, green, blue and alpha components between 0 and 1.\n</summary>\n<remarks>\nAn alpha of 0 is fully transparent and 1 is fully opaque.\n</remarks>\n</doc>",
+        "fields": [
+          {
+            "name": "R",
+            "type": {
+              "code": "FLOAT"
+            },
+            "documentation": "<doc>\n<summary>\nThe red component.\n</summary>\n</doc>"
+          },
+          {
+            "name": "G",
+            "type": {
+              "code": "FLOAT"
+            },
+            "documentation": "<doc>\n<summary>\nThe green component.\n</summary>\n</doc>"
+          },
+          {
+            "name": "B",
+            "type": {
+              "code": "FLOAT"
+            },
+            "documentation": "<doc>\n<summary>\nThe blue component.\n</summary>\n</doc>"
+          },
+          {
+            "name": "A",
+            "type": {
+              "code": "FLOAT"
+            },
+            "documentation": "<doc>\n<summary>\nThe alpha component.\n</summary>\n</doc>"
+          }
+        ]
+      }
+    },
+    "exceptions": {}
+  }
+}

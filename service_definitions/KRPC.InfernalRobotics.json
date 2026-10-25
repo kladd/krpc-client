@@ -1,7 +1,7 @@
 {
   "InfernalRobotics": {
     "id": 4,
-    "documentation": "<doc>\n<summary>\nThis service provides functionality to interact with\n<a href=\"https://forum.kerbalspaceprogram.com/index.php?/topic/184787-infernal-robotics-next/\">Infernal Robotics</a>.\n</summary>\n</doc>",
+    "documentation": "<doc>\n<summary>\nThis service provides functionality to interact with\n<a href=\"https://forum.kerbalspaceprogram.com/topic/184787-infernal-robotics-next/\">Infernal Robotics</a>.\n</summary>\n</doc>",
     "procedures": {
       "ServoGroups": {
         "id": 1,
@@ -25,11 +25,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
-        "documentation": "<doc>\n<summary>\nA list of all the servo groups in the given <paramref name=\"vessel\" />.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA list of all the servo groups in the given <paramref name=\"vessel\" />.\n</summary>\n<remarks>\nWorks for any loaded vessel, not just the active one. Groups on a non-active vessel\nsupport movement and per-servo control, but not preset, key, speed-factor or\nexpanded state, which are only tracked by Infernal Robotics for the active vessel.\n</remarks>\n</doc>"
       },
       "ServoGroupWithName": {
         "id": 2,
@@ -52,9 +51,9 @@
         "return_type": {
           "code": "CLASS",
           "service": "InfernalRobotics",
-          "name": "ServoGroup"
+          "name": "ServoGroup",
+          "nullable": true
         },
-        "return_is_nullable": true,
         "game_scenes": [
           "FLIGHT"
         ],
@@ -81,9 +80,9 @@
         "return_type": {
           "code": "CLASS",
           "service": "InfernalRobotics",
-          "name": "Servo"
+          "name": "Servo",
+          "nullable": true
         },
-        "return_is_nullable": true,
         "game_scenes": [
           "FLIGHT"
         ],
@@ -95,10 +94,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
-        "game_scenes": [
-          "FLIGHT"
-        ],
         "documentation": "<doc>\n<summary>\nWhether Infernal Robotics is installed.\n</summary>\n</doc>"
       },
       "get_Ready": {
@@ -107,7 +102,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
@@ -210,8 +204,71 @@
         ],
         "documentation": "<doc>\n<summary>\nStops the servo.\n</summary>\n</doc>"
       },
-      "Servo_get_Name": {
+      "Servo_AddPreset": {
         "id": 11,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          },
+          {
+            "name": "position",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nAdds a preset position to the servo.\n</summary>\n<param name=\"position\">The position of the preset.</param>\n</doc>"
+      },
+      "Servo_RemovePresetAt": {
+        "id": 12,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          },
+          {
+            "name": "index",
+            "type": {
+              "code": "SINT32"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nRemoves the preset position at the given index.\n</summary>\n<param name=\"index\">The index of the preset to remove.</param>\n</doc>"
+      },
+      "Servo_SortPresets": {
+        "id": 13,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSorts the preset positions of the servo into ascending order.\n</summary>\n</doc>"
+      },
+      "Servo_get_Name": {
+        "id": 14,
         "parameters": [
           {
             "name": "this",
@@ -225,14 +282,13 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe name of the servo.\n</summary>\n</doc>"
       },
       "Servo_set_Name": {
-        "id": 12,
+        "id": 15,
         "parameters": [
           {
             "name": "this",
@@ -254,8 +310,28 @@
         ],
         "documentation": "<doc>\n<summary>\nThe name of the servo.\n</summary>\n</doc>"
       },
+      "Servo_get_UID": {
+        "id": 16,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "UINT32"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe unique identifier of the servo.\n</summary>\n</doc>"
+      },
       "Servo_get_Part": {
-        "id": 13,
+        "id": 17,
         "parameters": [
           {
             "name": "this",
@@ -271,14 +347,35 @@
           "service": "SpaceCenter",
           "name": "Part"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe part containing the servo.\n</summary>\n</doc>"
       },
+      "Servo_get_Mode": {
+        "id": 18,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "InfernalRobotics",
+          "name": "ServoMode"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the part acts as a servo or a rotor.\n</summary>\n</doc>"
+      },
       "Servo_set_Highlight": {
-        "id": 14,
+        "id": 19,
         "parameters": [
           {
             "name": "this",
@@ -301,7 +398,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servo should be highlighted in-game.\n</summary>\n</doc>"
       },
       "Servo_get_Position": {
-        "id": 15,
+        "id": 20,
         "parameters": [
           {
             "name": "this",
@@ -315,14 +412,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe position of the servo.\n</summary>\n</doc>"
       },
       "Servo_get_MinConfigPosition": {
-        "id": 16,
+        "id": 21,
         "parameters": [
           {
             "name": "this",
@@ -336,14 +432,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe minimum position of the servo, specified by the part configuration.\n</summary>\n</doc>"
       },
       "Servo_get_MaxConfigPosition": {
-        "id": 17,
+        "id": 22,
         "parameters": [
           {
             "name": "this",
@@ -357,14 +452,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe maximum position of the servo, specified by the part configuration.\n</summary>\n</doc>"
       },
       "Servo_get_MinPosition": {
-        "id": 18,
+        "id": 23,
         "parameters": [
           {
             "name": "this",
@@ -378,14 +472,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe minimum position of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_set_MinPosition": {
-        "id": 19,
+        "id": 24,
         "parameters": [
           {
             "name": "this",
@@ -408,7 +501,7 @@
         "documentation": "<doc>\n<summary>\nThe minimum position of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_get_MaxPosition": {
-        "id": 20,
+        "id": 25,
         "parameters": [
           {
             "name": "this",
@@ -422,14 +515,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe maximum position of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_set_MaxPosition": {
-        "id": 21,
+        "id": 26,
         "parameters": [
           {
             "name": "this",
@@ -452,7 +544,7 @@
         "documentation": "<doc>\n<summary>\nThe maximum position of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_get_ConfigSpeed": {
-        "id": 22,
+        "id": 27,
         "parameters": [
           {
             "name": "this",
@@ -466,14 +558,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe speed multiplier of the servo, specified by the part configuration.\n</summary>\n</doc>"
       },
       "Servo_get_Speed": {
-        "id": 23,
+        "id": 28,
         "parameters": [
           {
             "name": "this",
@@ -487,14 +578,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe speed multiplier of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_set_Speed": {
-        "id": 24,
+        "id": 29,
         "parameters": [
           {
             "name": "this",
@@ -517,7 +607,7 @@
         "documentation": "<doc>\n<summary>\nThe speed multiplier of the servo, specified by the in-game tweak menu.\n</summary>\n</doc>"
       },
       "Servo_get_CurrentSpeed": {
-        "id": 25,
+        "id": 30,
         "parameters": [
           {
             "name": "this",
@@ -531,14 +621,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe current speed at which the servo is moving.\n</summary>\n</doc>"
       },
       "Servo_get_Acceleration": {
-        "id": 26,
+        "id": 31,
         "parameters": [
           {
             "name": "this",
@@ -552,14 +641,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe current speed multiplier set in the UI.\n</summary>\n</doc>"
       },
       "Servo_set_Acceleration": {
-        "id": 27,
+        "id": 32,
         "parameters": [
           {
             "name": "this",
@@ -582,7 +670,7 @@
         "documentation": "<doc>\n<summary>\nThe current speed multiplier set in the UI.\n</summary>\n</doc>"
       },
       "Servo_get_IsMoving": {
-        "id": 28,
+        "id": 33,
         "parameters": [
           {
             "name": "this",
@@ -596,14 +684,13 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nWhether the servo is moving.\n</summary>\n</doc>"
       },
       "Servo_get_IsFreeMoving": {
-        "id": 29,
+        "id": 34,
         "parameters": [
           {
             "name": "this",
@@ -617,14 +704,13 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nWhether the servo is freely moving.\n</summary>\n</doc>"
       },
       "Servo_get_IsLocked": {
-        "id": 30,
+        "id": 35,
         "parameters": [
           {
             "name": "this",
@@ -638,14 +724,13 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nWhether the servo is locked.\n</summary>\n</doc>"
       },
       "Servo_set_IsLocked": {
-        "id": 31,
+        "id": 36,
         "parameters": [
           {
             "name": "this",
@@ -668,7 +753,7 @@
         "documentation": "<doc>\n<summary>\nWhether the servo is locked.\n</summary>\n</doc>"
       },
       "Servo_get_IsAxisInverted": {
-        "id": 32,
+        "id": 37,
         "parameters": [
           {
             "name": "this",
@@ -682,14 +767,13 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nWhether the servos axis is inverted.\n</summary>\n</doc>"
       },
       "Servo_set_IsAxisInverted": {
-        "id": 33,
+        "id": 38,
         "parameters": [
           {
             "name": "this",
@@ -711,8 +795,508 @@
         ],
         "documentation": "<doc>\n<summary>\nWhether the servos axis is inverted.\n</summary>\n</doc>"
       },
+      "Servo_get_TargetPosition": {
+        "id": 39,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe target position the servo is moving towards.\n</summary>\n</doc>"
+      },
+      "Servo_get_TargetSpeed": {
+        "id": 40,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe target speed the servo is moving at.\n</summary>\n</doc>"
+      },
+      "Servo_get_CommandedPosition": {
+        "id": 41,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe position the servo is currently being commanded to move to.\n</summary>\n</doc>"
+      },
+      "Servo_get_DefaultPosition": {
+        "id": 42,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe default (built) position of the servo.\n</summary>\n</doc>"
+      },
+      "Servo_get_ForceLimit": {
+        "id": 43,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe force limit of the servo, as a percentage of the maximum force.\n</summary>\n</doc>"
+      },
+      "Servo_set_ForceLimit": {
+        "id": 44,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe force limit of the servo, as a percentage of the maximum force.\n</summary>\n</doc>"
+      },
+      "Servo_get_MaxForce": {
+        "id": 45,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe maximum force the servo can generate.\n</summary>\n</doc>"
+      },
+      "Servo_get_MaxAcceleration": {
+        "id": 46,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe maximum acceleration the servo can achieve.\n</summary>\n</doc>"
+      },
+      "Servo_get_MaxSpeed": {
+        "id": 47,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe maximum speed the servo can achieve.\n</summary>\n</doc>"
+      },
+      "Servo_get_ElectricChargeRequired": {
+        "id": 48,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe rate at which the servo consumes electric charge, in units per second, when moving.\n</summary>\n</doc>"
+      },
+      "Servo_get_SpringPower": {
+        "id": 49,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe strength of the servo's spring, when it has one.\n</summary>\n</doc>"
+      },
+      "Servo_set_SpringPower": {
+        "id": 50,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe strength of the servo's spring, when it has one.\n</summary>\n</doc>"
+      },
+      "Servo_get_DampingPower": {
+        "id": 51,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe strength of the servo's damping.\n</summary>\n</doc>"
+      },
+      "Servo_set_DampingPower": {
+        "id": 52,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe strength of the servo's damping.\n</summary>\n</doc>"
+      },
+      "Servo_get_RotorAcceleration": {
+        "id": 53,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe acceleration of the servo when operating as a rotor.\n</summary>\n</doc>"
+      },
+      "Servo_set_RotorAcceleration": {
+        "id": 54,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe acceleration of the servo when operating as a rotor.\n</summary>\n</doc>"
+      },
+      "Servo_get_IsLimited": {
+        "id": 55,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the servo's range of movement is limited to the configured minimum and\nmaximum positions.\n</summary>\n</doc>"
+      },
+      "Servo_set_IsLimited": {
+        "id": 56,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the servo's range of movement is limited to the configured minimum and\nmaximum positions.\n</summary>\n</doc>"
+      },
+      "Servo_get_IsRotational": {
+        "id": 57,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the servo moves rotationally (as opposed to linearly).\n</summary>\n</doc>"
+      },
+      "Servo_get_IsServo": {
+        "id": 58,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the part is operating as a servo (rather than a rotor).\n</summary>\n</doc>"
+      },
+      "Servo_get_CanHaveLimits": {
+        "id": 59,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the servo can have its range of movement limited.\n</summary>\n</doc>"
+      },
+      "Servo_get_HasSpring": {
+        "id": 60,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the servo has a spring.\n</summary>\n</doc>"
+      },
+      "Servo_get_IsRunning": {
+        "id": 61,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the servo is running, when operating as a rotor.\n</summary>\n</doc>"
+      },
+      "Servo_get_PresetPositions": {
+        "id": 62,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "Servo"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "FLOAT"
+            }
+          ]
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe list of preset positions configured for the servo.\n</summary>\n</doc>"
+      },
       "ServoGroup_ServoWithName": {
-        "id": 34,
+        "id": 63,
         "parameters": [
           {
             "name": "this",
@@ -732,16 +1316,16 @@
         "return_type": {
           "code": "CLASS",
           "service": "InfernalRobotics",
-          "name": "Servo"
+          "name": "Servo",
+          "nullable": true
         },
-        "return_is_nullable": true,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nReturns the servo with the given <paramref name=\"name\" /> from this group,\nor <c>null</c> if none exists.\n</summary>\n<param name=\"name\">Name of servo to find.</param>\n</doc>"
       },
       "ServoGroup_MoveRight": {
-        "id": 35,
+        "id": 64,
         "parameters": [
           {
             "name": "this",
@@ -758,7 +1342,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the right.\n</summary>\n</doc>"
       },
       "ServoGroup_MoveLeft": {
-        "id": 36,
+        "id": 65,
         "parameters": [
           {
             "name": "this",
@@ -775,7 +1359,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the left.\n</summary>\n</doc>"
       },
       "ServoGroup_MoveCenter": {
-        "id": 37,
+        "id": 66,
         "parameters": [
           {
             "name": "this",
@@ -792,7 +1376,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the center.\n</summary>\n</doc>"
       },
       "ServoGroup_MoveNextPreset": {
-        "id": 38,
+        "id": 67,
         "parameters": [
           {
             "name": "this",
@@ -809,7 +1393,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the next preset.\n</summary>\n</doc>"
       },
       "ServoGroup_MovePrevPreset": {
-        "id": 39,
+        "id": 68,
         "parameters": [
           {
             "name": "this",
@@ -826,7 +1410,7 @@
         "documentation": "<doc>\n<summary>\nMoves all of the servos in the group to the previous preset.\n</summary>\n</doc>"
       },
       "ServoGroup_Stop": {
-        "id": 40,
+        "id": 69,
         "parameters": [
           {
             "name": "this",
@@ -843,7 +1427,7 @@
         "documentation": "<doc>\n<summary>\nStops the servos in the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Name": {
-        "id": 41,
+        "id": 70,
         "parameters": [
           {
             "name": "this",
@@ -857,14 +1441,13 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
-        "documentation": "<doc>\n<summary>\nThe name of the group.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe name of the group.\n</summary>\n<remarks>\nRenaming a group renames it for every servo in it. This object identifies the\ngroup by its name, so a rename destroys every object for the group, including the\none the rename was made through. Obtain the group again under the new name.\n</remarks>\n</doc>"
       },
       "ServoGroup_set_Name": {
-        "id": 42,
+        "id": 71,
         "parameters": [
           {
             "name": "this",
@@ -884,10 +1467,10 @@
         "game_scenes": [
           "FLIGHT"
         ],
-        "documentation": "<doc>\n<summary>\nThe name of the group.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe name of the group.\n</summary>\n<remarks>\nRenaming a group renames it for every servo in it. This object identifies the\ngroup by its name, so a rename destroys every object for the group, including the\none the rename was made through. Obtain the group again under the new name.\n</remarks>\n</doc>"
       },
       "ServoGroup_get_ForwardKey": {
-        "id": 43,
+        "id": 72,
         "parameters": [
           {
             "name": "this",
@@ -901,14 +1484,13 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe key assigned to be the \"forward\" key for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_set_ForwardKey": {
-        "id": 44,
+        "id": 73,
         "parameters": [
           {
             "name": "this",
@@ -931,7 +1513,7 @@
         "documentation": "<doc>\n<summary>\nThe key assigned to be the \"forward\" key for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_ReverseKey": {
-        "id": 45,
+        "id": 74,
         "parameters": [
           {
             "name": "this",
@@ -945,14 +1527,13 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe key assigned to be the \"reverse\" key for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_set_ReverseKey": {
-        "id": 46,
+        "id": 75,
         "parameters": [
           {
             "name": "this",
@@ -975,7 +1556,7 @@
         "documentation": "<doc>\n<summary>\nThe key assigned to be the \"reverse\" key for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Speed": {
-        "id": 47,
+        "id": 76,
         "parameters": [
           {
             "name": "this",
@@ -989,14 +1570,13 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe speed multiplier for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_set_Speed": {
-        "id": 48,
+        "id": 77,
         "parameters": [
           {
             "name": "this",
@@ -1019,7 +1599,7 @@
         "documentation": "<doc>\n<summary>\nThe speed multiplier for the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Expanded": {
-        "id": 49,
+        "id": 78,
         "parameters": [
           {
             "name": "this",
@@ -1033,14 +1613,13 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nWhether the group is expanded in the InfernalRobotics UI.\n</summary>\n</doc>"
       },
       "ServoGroup_set_Expanded": {
-        "id": 50,
+        "id": 79,
         "parameters": [
           {
             "name": "this",
@@ -1062,8 +1641,199 @@
         ],
         "documentation": "<doc>\n<summary>\nWhether the group is expanded in the InfernalRobotics UI.\n</summary>\n</doc>"
       },
+      "ServoGroup_get_Vessel": {
+        "id": 80,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "Vessel"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe vessel the group belongs to.\n</summary>\n</doc>"
+      },
+      "ServoGroup_get_MovingDirection": {
+        "id": 81,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "SINT32"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe direction the group is currently moving in: -1 for reverse, 0 for stopped\nand 1 for forward.\n</summary>\n</doc>"
+      },
+      "ServoGroup_get_AdvancedMode": {
+        "id": 82,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the group is in advanced mode.\n</summary>\n</doc>"
+      },
+      "ServoGroup_set_AdvancedMode": {
+        "id": 83,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the group is in advanced mode.\n</summary>\n</doc>"
+      },
+      "ServoGroup_get_ElectricChargeRequired": {
+        "id": 84,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nThe total rate at which the servos in the group consume electric charge, in units\nper second, when moving.\n</summary>\n</doc>"
+      },
+      "ServoGroup_get_BuildAid": {
+        "id": 85,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the build aid is enabled for the group.\n</summary>\n</doc>"
+      },
+      "ServoGroup_set_BuildAid": {
+        "id": 86,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the build aid is enabled for the group.\n</summary>\n</doc>"
+      },
+      "ServoGroup_get_IKActive": {
+        "id": 87,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether inverse kinematics is active for the group.\n</summary>\n</doc>"
+      },
+      "ServoGroup_set_IKActive": {
+        "id": 88,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "InfernalRobotics",
+              "name": "ServoGroup"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether inverse kinematics is active for the group.\n</summary>\n</doc>"
+      },
       "ServoGroup_get_Servos": {
-        "id": 51,
+        "id": 89,
         "parameters": [
           {
             "name": "this",
@@ -1084,14 +1854,13 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
         "documentation": "<doc>\n<summary>\nThe servos that are in the group.\n</summary>\n</doc>"
       },
       "ServoGroup_get_Parts": {
-        "id": 52,
+        "id": 90,
         "parameters": [
           {
             "name": "this",
@@ -1112,7 +1881,6 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "game_scenes": [
           "FLIGHT"
         ],
@@ -1127,7 +1895,24 @@
         "documentation": "<doc>\n<summary>\nA group of servos, obtained by calling <see cref=\"M:InfernalRobotics.ServoGroups\" />\nor <see cref=\"M:InfernalRobotics.ServoGroupWithName\" />. Represents the \"Servo Groups\"\nin the InfernalRobotics UI.\n</summary>\n</doc>"
       }
     },
-    "enumerations": {},
+    "enumerations": {
+      "ServoMode": {
+        "documentation": "<doc>\n<summary>\nThe mode a servo is operating in. See <see cref=\"M:InfernalRobotics.Servo.Mode\" />.\n</summary>\n</doc>",
+        "values": [
+          {
+            "name": "Servo",
+            "value": 1,
+            "documentation": "<doc>\n<summary>\nThe part acts as a servo, driving towards a target position.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Rotor",
+            "value": 2,
+            "documentation": "<doc>\n<summary>\nThe part acts as a rotor, spinning continuously.\n</summary>\n</doc>"
+          }
+        ]
+      }
+    },
+    "structs": {},
     "exceptions": {}
   }
 }

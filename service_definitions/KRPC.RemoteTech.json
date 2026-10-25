@@ -1,7 +1,7 @@
 {
   "RemoteTech": {
     "id": 6,
-    "documentation": "<doc>\n<summary>\nThis service provides functionality to interact with\n<a href=\"https://forum.kerbalspaceprogram.com/index.php?/topic/139167-13-remotetech-v188-2017-09-03/\">RemoteTech</a>.\n</summary>\n</doc>",
+    "documentation": "<doc>\n<summary>\nThis service provides functionality to interact with\n<a href=\"https://forum.kerbalspaceprogram.com/topic/139167-111-remotetech-v199-2020-12-19/\">RemoteTech</a>.\n</summary>\n</doc>",
     "procedures": {
       "Comms": {
         "id": 1,
@@ -20,7 +20,6 @@
           "service": "RemoteTech",
           "name": "Comms"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nGet a communications object, representing the communication capability of a particular vessel.\n</summary>\n</doc>"
       },
       "Antenna": {
@@ -40,7 +39,6 @@
           "service": "RemoteTech",
           "name": "Antenna"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nGet the antenna object for a particular part.\n</summary>\n</doc>"
       },
       "get_Available": {
@@ -49,7 +47,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nWhether RemoteTech is installed.\n</summary>\n</doc>"
       },
       "get_GroundStations": {
@@ -63,7 +60,6 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe names of the ground stations.\n</summary>\n</doc>"
       },
       "Antenna_get_Part": {
@@ -83,7 +79,6 @@
           "service": "SpaceCenter",
           "name": "Part"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nGet the part containing this antenna.\n</summary>\n</doc>"
       },
       "Antenna_get_HasConnection": {
@@ -101,7 +96,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nWhether the antenna has a connection.\n</summary>\n</doc>"
       },
       "Antenna_get_Target": {
@@ -121,7 +115,6 @@
           "service": "RemoteTech",
           "name": "Target"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe object that the antenna is targetting.\nThis property can be used to set the target to <see cref=\"M:RemoteTech.Target.None\" /> or <see cref=\"M:RemoteTech.Target.ActiveVessel\" />.\nTo set the target to a celestial body, ground station or vessel see <see cref=\"M:RemoteTech.Antenna.TargetBody\" />,\n<see cref=\"M:RemoteTech.Antenna.TargetGroundStation\" /> and <see cref=\"M:RemoteTech.Antenna.TargetVessel\" />.\n</summary>\n</doc>"
       },
       "Antenna_set_Target": {
@@ -163,7 +156,6 @@
           "service": "SpaceCenter",
           "name": "CelestialBody"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe celestial body the antenna is targetting.\n</summary>\n</doc>"
       },
       "Antenna_set_TargetBody": {
@@ -203,7 +195,6 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe ground station the antenna is targetting.\n</summary>\n</doc>"
       },
       "Antenna_set_TargetGroundStation": {
@@ -243,7 +234,6 @@
           "service": "SpaceCenter",
           "name": "Vessel"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe vessel the antenna is targetting.\n</summary>\n</doc>"
       },
       "Antenna_set_TargetVessel": {
@@ -291,7 +281,6 @@
         "return_type": {
           "code": "DOUBLE"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe signal delay between the this vessel and another vessel, in seconds.\n</summary>\n<param name=\"other\"></param>\n</doc>"
       },
       "Comms_get_Vessel": {
@@ -311,7 +300,6 @@
           "service": "SpaceCenter",
           "name": "Vessel"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nGet the vessel.\n</summary>\n</doc>"
       },
       "Comms_get_HasLocalControl": {
@@ -329,7 +317,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nWhether the vessel can be controlled locally.\n</summary>\n</doc>"
       },
       "Comms_get_HasFlightComputer": {
@@ -347,7 +334,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nWhether the vessel has a flight computer on board.\n</summary>\n</doc>"
       },
       "Comms_get_HasConnection": {
@@ -365,7 +351,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nWhether the vessel has any connection.\n</summary>\n</doc>"
       },
       "Comms_get_HasConnectionToGroundStation": {
@@ -383,7 +368,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nWhether the vessel has a connection to a ground station.\n</summary>\n</doc>"
       },
       "Comms_get_SignalDelay": {
@@ -401,7 +385,6 @@
         "return_type": {
           "code": "DOUBLE"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe shortest signal delay to the vessel, in seconds.\n</summary>\n</doc>"
       },
       "Comms_get_SignalDelayToGroundStation": {
@@ -419,7 +402,6 @@
         "return_type": {
           "code": "DOUBLE"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe signal delay between the vessel and the closest ground station, in seconds.\n</summary>\n</doc>"
       },
       "Comms_get_Antennas": {
@@ -444,7 +426,6 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe antennas for this vessel.\n</summary>\n</doc>"
       }
     },
@@ -488,6 +469,7 @@
         ]
       }
     },
+    "structs": {},
     "exceptions": {}
   }
 }

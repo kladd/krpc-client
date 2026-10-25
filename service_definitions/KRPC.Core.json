@@ -9,7 +9,6 @@
         "return_type": {
           "code": "BYTES"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nReturns the identifier for the current client.\n</summary>\n</doc>"
       },
       "GetClientName": {
@@ -18,7 +17,6 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nReturns the name of the current client.\nThis is an empty string if the client has no name.\n</summary>\n</doc>"
       },
       "GetStatus": {
@@ -27,7 +25,6 @@
         "return_type": {
           "code": "STATUS"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nReturns some information about the server, such as the version.\n</summary>\n</doc>"
       },
       "GetServices": {
@@ -36,7 +33,6 @@
         "return_type": {
           "code": "SERVICES"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nReturns information on all services, procedures, classes, properties etc. provided by the server.\nCan be used by client libraries to automatically create functionality such as stubs.\n</summary>\n</doc>"
       },
       "AddStream": {
@@ -47,35 +43,15 @@
             "type": {
               "code": "PROCEDURE_CALL"
             }
-          },
-          {
-            "name": "start",
-            "type": {
-              "code": "BOOL"
-            },
-            "default_value": "AQ=="
           }
         ],
         "return_type": {
           "code": "STREAM"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAdd a streaming request and return its identifier.\n</summary>\n</doc>"
-      },
-      "StartStream": {
-        "id": 6,
-        "parameters": [
-          {
-            "name": "id",
-            "type": {
-              "code": "UINT64"
-            }
-          }
-        ],
-        "documentation": "<doc>\n<summary>\nStart a previously added streaming request.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAdd a streaming request and return its identifier.\n</summary>\n<remarks>\nThe stream starts sending results from the next update.\n</remarks>\n</doc>"
       },
       "SetStreamRate": {
-        "id": 7,
+        "id": 6,
         "parameters": [
           {
             "name": "id",
@@ -90,10 +66,10 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nSet the update rate for a stream in Hz.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nSet the update rate for a stream in Hz.\n</summary>\n<remarks>\nDoes nothing for a stream that has ended. Throws an exception if the id has never\nbeen issued.\n</remarks>\n</doc>"
       },
       "RemoveStream": {
-        "id": 8,
+        "id": 7,
         "parameters": [
           {
             "name": "id",
@@ -102,13 +78,75 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nRemove a streaming request.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nRemove a streaming request.\n</summary>\n<remarks>\nDoes nothing for a stream that has ended. Throws an exception if the id has never\nbeen issued.\n</remarks>\n</doc>"
       },
-      "AddEvent": {
+      "AddFunctionStream": {
+        "id": 8,
+        "parameters": [
+          {
+            "name": "function",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STREAM"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a stream of the value a server side function computes on each update.\n</summary>\n<remarks>\nEach call adds a new stream, with values of the type given by\n<see cref=\"M:KRPC.Expression.ReturnType\" />. Any exception from the function ends the\nstream, including one for an object that is not loaded. A procedure that pauses\nexecution to resume on a later tick produces an error on the stream.\n</remarks>\n</doc>"
+      },
+      "CompileFunction": {
         "id": 9,
         "parameters": [
           {
-            "name": "expression",
+            "name": "function",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nCompile a server side function, so that running, streaming or adding it as an\nevent does not compile it.\n</summary>\n<remarks>\nCompiling a large function takes time on the game's main thread. Compiling it\nin advance keeps that time out of its first run.\n</remarks>\n</doc>"
+      },
+      "RunFunction": {
+        "id": 10,
+        "parameters": [
+          {
+            "name": "function",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arguments",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "BYTES",
+                  "nullable": true
+                }
+              ]
+            },
+            "default_value": ""
+          }
+        ],
+        "return_type": {
+          "code": "BYTES",
+          "nullable": true
+        },
+        "documentation": "<doc>\n<summary>\nRun a server side function once, within a single physics tick, and return\nthe value it produces.\n</summary>\n<remarks>\nThe arguments are encoded at the types given by <see cref=\"M:KRPC.Expression.ParameterTypes\" />.\nThrows an exception if a procedure the function calls pauses execution, and the\neffects up to the pause remain.\n</remarks>\n<returns>The encoded value of the function, or no bytes for a function with no\nvalue.</returns>\n<param name=\"function\">The function to run.</param>\n<param name=\"arguments\">The encoded arguments, one per parameter.</param>\n</doc>"
+      },
+      "AddEvent": {
+        "id": 11,
+        "parameters": [
+          {
+            "name": "function",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -119,215 +157,95 @@
         "return_type": {
           "code": "EVENT"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nCreate an event from a server side expression.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nCreate an event from a server side function that evaluates to a boolean value.\n</summary>\n<remarks>\nThe function is evaluated on each update, and each call adds a new event. Any\nexception from the function ends the event, including one for an object that is not\nloaded. A procedure that pauses execution to resume on a later tick produces an\nerror on the event's stream.\n</remarks>\n</doc>"
+      },
+      "HoldTick": {
+        "id": 12,
+        "parameters": [],
+        "documentation": "<doc>\n<summary>\nHold the game on its current physics tick until <see cref=\"M:KRPC.ReleaseTick\" /> is called\nor the hold times out. Every call made in between is executed before the game\nadvances, so a read, compute and write all happen in the state of one tick.\n</summary>\n<remarks>\nThe game renders no frame, takes no input and runs no physics while the tick is\nheld. Keep a hold as short as possible, and release it even when the code between\nthe two calls fails.\n\nA tick is held once, so this waits for the next tick when the current one has\nalready been released. One client holds the tick at a time, and only a client\nmaking a call can hold it: a stream or an event cannot.\n\nA hold ends by itself when it times out, when the client disconnects, and when the\nclient calls a procedure that takes more than one tick to finish, such as staging\nor warping. Stream updates are sent once the tick is released, so waiting for a\nstream or an event inside a hold waits out the timeout.\n</remarks>\n</doc>"
+      },
+      "ReleaseTick": {
+        "id": 13,
+        "parameters": [],
+        "documentation": "<doc>\n<summary>\nLet the game move on from the tick that <see cref=\"M:KRPC.HoldTick\" /> held it on. Does\nnothing when no tick is held, which is the case once a hold has timed out.\n</summary>\n</doc>"
+      },
+      "NextTick": {
+        "id": 14,
+        "parameters": [],
+        "documentation": "<doc>\n<summary>\nLet the game move on from the tick being held and hold the one after it, so that a\nprogram acts on consecutive physics ticks. Holds the soonest tick it can if no tick\nis currently being held.\n</summary>\n<remarks>\nA release and a hold made as two separate calls let the game advance between them.\nThis takes the next tick without that gap. Call it at the top of a loop that has to\nact on every tick, work, and come back to it.\n\nThe game advances one tick per call, so it runs at the rate of the loop for as long\nas the loop runs. End the loop with <see cref=\"M:KRPC.ReleaseTick\" />.\n\nEvery limit of <see cref=\"M:KRPC.HoldTick\" /> applies, the timeout included. A hold lost to\nthe timeout is not reported, and the next call takes whatever tick it lands on.\n</remarks>\n</doc>"
       },
       "get_Clients": {
-        "id": 10,
+        "id": 15,
         "parameters": [],
         "return_type": {
           "code": "LIST",
           "types": [
             {
-              "code": "TUPLE",
-              "types": [
-                {
-                  "code": "BYTES"
-                },
-                {
-                  "code": "STRING"
-                },
-                {
-                  "code": "STRING"
-                }
-              ]
+              "code": "STRUCT",
+              "service": "KRPC",
+              "name": "ClientInfo"
             }
           ]
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA list of RPC clients that are currently connected to the server.\nEach entry in the list is a clients identifier, name and address.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe RPC clients that are currently connected to the server.\n</summary>\n</doc>"
       },
-      "get_CurrentGameScene": {
-        "id": 11,
+      "get_GameScene": {
+        "id": 16,
         "parameters": [],
         "return_type": {
           "code": "ENUMERATION",
           "service": "KRPC",
           "name": "GameScene"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nGet the current game scene.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe current game scene. Setting this switches the game to the given\nscene, or opens/closes the corresponding facility for the pseudo-scenes.\nScene changes happen asynchronously: setting this property returns\nimmediately, and clients should poll it until it reports the requested\nscene. Setting it to <see cref=\"M:KRPC.GameScene.Flight\" /> resumes the save's\nactive vessel, and fails if there is none. Moving between\n<see cref=\"M:KRPC.GameScene.EditorVAB\" /> and <see cref=\"M:KRPC.GameScene.EditorSPH\" />\nkeeps the vessel that is being constructed, as the game's own switch\neditor button does. Leaving flight saves the game first, unless the game\ncannot be saved, e.g. while under acceleration.\n</summary>\n</doc>"
       },
-      "get_Paused": {
-        "id": 12,
-        "parameters": [],
-        "return_type": {
-          "code": "BOOL"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nWhether the game is paused.\n</summary>\n</doc>"
-      },
-      "set_Paused": {
-        "id": 13,
-        "parameters": [
-          {
-            "name": "value",
-            "type": {
-              "code": "BOOL"
-            }
-          }
-        ],
-        "documentation": "<doc>\n<summary>\nWhether the game is paused.\n</summary>\n</doc>"
-      },
-      "Expression_static_ConstantDouble": {
-        "id": 14,
-        "parameters": [
-          {
-            "name": "value",
-            "type": {
-              "code": "DOUBLE"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA constant value of double precision floating point type.\n</summary>\n<param name=\"value\"></param>\n</doc>"
-      },
-      "Expression_static_ConstantFloat": {
-        "id": 15,
-        "parameters": [
-          {
-            "name": "value",
-            "type": {
-              "code": "FLOAT"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA constant value of single precision floating point type.\n</summary>\n<param name=\"value\"></param>\n</doc>"
-      },
-      "Expression_static_ConstantInt": {
-        "id": 16,
-        "parameters": [
-          {
-            "name": "value",
-            "type": {
-              "code": "SINT32"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA constant value of integer type.\n</summary>\n<param name=\"value\"></param>\n</doc>"
-      },
-      "Expression_static_ConstantBool": {
+      "set_GameScene": {
         "id": 17,
         "parameters": [
           {
             "name": "value",
             "type": {
-              "code": "BOOL"
+              "code": "ENUMERATION",
+              "service": "KRPC",
+              "name": "GameScene"
             }
           }
         ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA constant value of boolean type.\n</summary>\n<param name=\"value\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe current game scene. Setting this switches the game to the given\nscene, or opens/closes the corresponding facility for the pseudo-scenes.\nScene changes happen asynchronously: setting this property returns\nimmediately, and clients should poll it until it reports the requested\nscene. Setting it to <see cref=\"M:KRPC.GameScene.Flight\" /> resumes the save's\nactive vessel, and fails if there is none. Moving between\n<see cref=\"M:KRPC.GameScene.EditorVAB\" /> and <see cref=\"M:KRPC.GameScene.EditorSPH\" />\nkeeps the vessel that is being constructed, as the game's own switch\neditor button does. Leaving flight saves the game first, unless the game\ncannot be saved, e.g. while under acceleration.\n</summary>\n</doc>"
       },
-      "Expression_static_ConstantString": {
+      "get_Paused": {
         "id": 18,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the game is paused.\n</summary>\n</doc>"
+      },
+      "set_Paused": {
+        "id": 19,
         "parameters": [
           {
             "name": "value",
             "type": {
-              "code": "STRING"
+              "code": "BOOL"
             }
           }
         ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA constant value of string type.\n</summary>\n<param name=\"value\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the game is paused.\n</summary>\n</doc>"
       },
-      "Expression_static_Call": {
-        "id": 19,
-        "parameters": [
-          {
-            "name": "call",
-            "type": {
-              "code": "PROCEDURE_CALL"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAn RPC call.\n</summary>\n<param name=\"call\"></param>\n</doc>"
-      },
-      "Expression_static_Equal": {
+      "get_GameStateLoads": {
         "id": 20,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
+        "parameters": [],
         "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
+          "code": "UINT32"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nEquality comparison.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe number of game states that have finished loading.\n</summary>\n<remarks>\nIncreases once a game load, quickload, revert or scene change has finished.\n</remarks>\n</doc>"
       },
-      "Expression_static_NotEqual": {
+      "Expression_static_ToList": {
         "id": 21,
         "parameters": [
           {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
+            "name": "arg",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -340,22 +258,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nInequality comparison.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA collection as a list.\n</summary>\n<returns>The collection as a list.</returns>\n<param name=\"arg\">The collection.</param>\n</doc>"
       },
-      "Expression_static_GreaterThan": {
+      "Expression_static_ToSet": {
         "id": 22,
         "parameters": [
           {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
+            "name": "arg",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -368,14 +277,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nGreater than numerical comparison.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA collection as a set.\n</summary>\n<remarks>\nThrows an exception if a value is null.\n</remarks>\n<returns>The collection as a set.</returns>\n<param name=\"arg\">The collection.</param>\n</doc>"
       },
-      "Expression_static_GreaterThanOrEqual": {
+      "Expression_static_Get": {
         "id": 23,
         "parameters": [
           {
-            "name": "arg0",
+            "name": "arg",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -383,7 +291,7 @@
             }
           },
           {
-            "name": "arg1",
+            "name": "index",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -396,22 +304,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nGreater than or equal numerical comparison.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAn element of a tuple, list or dictionary.\n</summary>\n<remarks>\nA tuple takes a constant integer index, a list a zero indexed integer and a\ndictionary a key. Throws an exception if the index is out of range or the key is\nmissing, and for a tuple when the expression is created.\n</remarks>\n<returns>The element.</returns>\n<param name=\"arg\">The tuple, list or dictionary.</param>\n<param name=\"index\">The index or key of the element.</param>\n</doc>"
       },
-      "Expression_static_LessThan": {
+      "Expression_static_Count": {
         "id": 24,
         "parameters": [
           {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
+            "name": "arg",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -424,22 +323,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nLess than numerical comparison.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe number of values in a collection.\n</summary>\n<returns>The number of elements in the collection.</returns>\n<param name=\"arg\">The list, set or dictionary.</param>\n</doc>"
       },
-      "Expression_static_LessThanOrEqual": {
+      "Expression_static_Sum": {
         "id": 25,
         "parameters": [
           {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
+            "name": "arg",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -452,22 +342,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nLess than or equal numerical comparison.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe sum of the values of a collection.\n</summary>\n<returns>The sum of the elements in the collection.</returns>\n<param name=\"arg\">The list or set.</param>\n</doc>"
       },
-      "Expression_static_And": {
+      "Expression_static_Max": {
         "id": 26,
         "parameters": [
           {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
+            "name": "arg",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -480,22 +361,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nBoolean and operator.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe largest value of a collection.\n</summary>\n<remarks>\nThrows an exception if the collection is empty and its values are not nullable.\n</remarks>\n<returns>The largest value in the collection.</returns>\n<param name=\"arg\">The list or set.</param>\n</doc>"
       },
-      "Expression_static_Or": {
+      "Expression_static_Min": {
         "id": 27,
         "parameters": [
           {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
+            "name": "arg",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -508,22 +380,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nBoolean or operator.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe smallest value of a collection.\n</summary>\n<remarks>\nThrows an exception if the collection is empty and its values are not nullable.\n</remarks>\n<returns>The smallest value in the collection.</returns>\n<param name=\"arg\">The list or set.</param>\n</doc>"
       },
-      "Expression_static_ExclusiveOr": {
+      "Expression_static_Average": {
         "id": 28,
         "parameters": [
           {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
+            "name": "arg",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -536,10 +399,9 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nBoolean exclusive-or operator.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe average of the values of a collection.\n</summary>\n<remarks>\nThrows an exception if the collection is empty and its values are not nullable.\n</remarks>\n<returns>The average of the elements in the collection.</returns>\n<param name=\"arg\">The list or set.</param>\n</doc>"
       },
-      "Expression_static_Not": {
+      "Expression_static_Select": {
         "id": 29,
         "parameters": [
           {
@@ -549,6 +411,14 @@
               "service": "KRPC",
               "name": "Expression"
             }
+          },
+          {
+            "name": "func",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
           }
         ],
         "return_type": {
@@ -556,235 +426,10 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nBoolean negation operator.\n</summary>\n<param name=\"arg\"></param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe result of a function for each value of a collection.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The collection of function results.</returns>\n<param name=\"arg\">The list or set.</param>\n<param name=\"func\">The function, taking an element of the collection.</param>\n</doc>"
       },
-      "Expression_static_Add": {
+      "Expression_static_Where": {
         "id": 30,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nNumerical addition.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
-      },
-      "Expression_static_Subtract": {
-        "id": 31,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nNumerical subtraction.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
-      },
-      "Expression_static_Multiply": {
-        "id": 32,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nNumerical multiplication.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
-      },
-      "Expression_static_Divide": {
-        "id": 33,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nNumerical division.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
-      },
-      "Expression_static_Modulo": {
-        "id": 34,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nNumerical modulo operator.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n<returns>The remainder of arg0 divided by arg1</returns>\n</doc>"
-      },
-      "Expression_static_Power": {
-        "id": 35,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nNumerical power operator.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n<returns>arg0 raised to the power of arg1, with type of arg0</returns>\n</doc>"
-      },
-      "Expression_static_LeftShift": {
-        "id": 36,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nBitwise left shift.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
-      },
-      "Expression_static_RightShift": {
-        "id": 37,
-        "parameters": [
-          {
-            "name": "arg0",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "arg1",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "KRPC",
-          "name": "Expression"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nBitwise right shift.\n</summary>\n<param name=\"arg0\"></param>\n<param name=\"arg1\"></param>\n</doc>"
-      },
-      "Expression_static_Cast": {
-        "id": 38,
         "parameters": [
           {
             "name": "arg",
@@ -795,11 +440,11 @@
             }
           },
           {
-            "name": "type",
+            "name": "func",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
-              "name": "Type"
+              "name": "Expression"
             }
           }
         ],
@@ -808,11 +453,965 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nPerform a cast to the given type.\n</summary>\n<param name=\"arg\"></param>\n<param name=\"type\">Type to cast the argument to.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe values of a collection for which a predicate function returns true.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The filtered collection.</returns>\n<param name=\"arg\">The list or set.</param>\n<param name=\"func\">The predicate function, taking an element of the collection.</param>\n</doc>"
       },
-      "Expression_static_Parameter": {
+      "Expression_static_Skip": {
+        "id": 31,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "count",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA collection without its first count values.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The collection without its first count values.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"count\">The number of values to skip.</param>\n</doc>"
+      },
+      "Expression_static_Take": {
+        "id": 32,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "count",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe first count values of a collection.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The first count values of the collection.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"count\">The number of values to take.</param>\n</doc>"
+      },
+      "Expression_static_SelectMany": {
+        "id": 33,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "func",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values of the collections a function returns for each value of a collection,\nflattened into one.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The flattened collection of function results.</returns>\n<param name=\"arg\">The list or set.</param>\n<param name=\"func\">The function, taking an element of the collection\nand returning a collection.</param>\n</doc>"
+      },
+      "Expression_static_BuildDictionary": {
+        "id": 34,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "keyFunc",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "valueFunc",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA dictionary built from a collection, with a key and a value computed from each\nelement.\n</summary>\n<remarks>\nA repeated key takes the last of its values.\n</remarks>\n<returns>The dictionary.</returns>\n<param name=\"arg\">The list or set.</param>\n<param name=\"keyFunc\">The function computing an element's key.</param>\n<param name=\"valueFunc\">The function computing an element's value.</param>\n</doc>"
+      },
+      "Expression_static_DictionaryKeys": {
+        "id": 35,
+        "parameters": [
+          {
+            "name": "dictionary",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe keys of a dictionary, as a list.\n</summary>\n<remarks>\nThe collection operations take the keys of a dictionary from here, and its values\nfrom <see cref=\"M:KRPC.Expression.DictionaryValues\" />.\n</remarks>\n<returns>The keys of the dictionary.</returns>\n<param name=\"dictionary\">The dictionary.</param>\n</doc>"
+      },
+      "Expression_static_DictionaryValues": {
+        "id": 36,
+        "parameters": [
+          {
+            "name": "dictionary",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values of a dictionary, as a list.\n</summary>\n<returns>The values of the dictionary.</returns>\n<param name=\"dictionary\">The dictionary.</param>\n</doc>"
+      },
+      "Expression_static_First": {
+        "id": 37,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe first value of a collection.\n</summary>\n<remarks>\nThrows an exception if the collection is empty.\n</remarks>\n<returns>The first value.</returns>\n<param name=\"arg\">The collection.</param>\n</doc>"
+      },
+      "Expression_static_Last": {
+        "id": 38,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe last value of a collection.\n</summary>\n<remarks>\nThrows an exception if the collection is empty.\n</remarks>\n<returns>The last value.</returns>\n<param name=\"arg\">The collection.</param>\n</doc>"
+      },
+      "Expression_static_ElementAt": {
         "id": 39,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "index",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe value at the given position in a collection.\n</summary>\n<remarks>\nThrows an exception if the index is out of range.\n</remarks>\n<returns>The value at the given position.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"index\">The position of the value, counting from zero.</param>\n</doc>"
+      },
+      "Expression_static_MinBy": {
+        "id": 40,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "key",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe value of a collection with the smallest key.\n</summary>\n<remarks>\nThrows an exception if the collection is empty.\n</remarks>\n<returns>The value with the smallest key.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"key\">A function producing the key to compare values by.</param>\n</doc>"
+      },
+      "Expression_static_MaxBy": {
+        "id": 41,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "key",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe value of a collection with the largest key.\n</summary>\n<remarks>\nThrows an exception if the collection is empty.\n</remarks>\n<returns>The value with the largest key.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"key\">A function producing the key to compare values by.</param>\n</doc>"
+      },
+      "Expression_static_Distinct": {
+        "id": 42,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values of a collection with duplicates removed, keeping the first\noccurrence of each.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The distinct values of the collection.</returns>\n<param name=\"arg\">The collection.</param>\n</doc>"
+      },
+      "Expression_static_Reverse": {
+        "id": 43,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values of a collection in the opposite order.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The reversed collection.</returns>\n<param name=\"arg\">The collection.</param>\n</doc>"
+      },
+      "Expression_static_Union": {
+        "id": 44,
+        "parameters": [
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg2",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values in either of two collections, with duplicates removed.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The union of the two collections.</returns>\n<param name=\"arg1\">The first collection.</param>\n<param name=\"arg2\">The second collection.</param>\n</doc>"
+      },
+      "Expression_static_Intersect": {
+        "id": 45,
+        "parameters": [
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg2",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values in both of two collections, with duplicates removed.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The intersection of the two collections.</returns>\n<param name=\"arg1\">The first collection.</param>\n<param name=\"arg2\">The second collection.</param>\n</doc>"
+      },
+      "Expression_static_Except": {
+        "id": 46,
+        "parameters": [
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg2",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values of the first collection that are not in the second, with\nduplicates removed.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The difference between the two collections.</returns>\n<param name=\"arg1\">The first collection.</param>\n<param name=\"arg2\">The second collection.</param>\n</doc>"
+      },
+      "Expression_static_Zip": {
+        "id": 47,
+        "parameters": [
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg2",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "func",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe results of a function applied to the values of two collections in pairs.\n</summary>\n<remarks>\nThe result is as long as the shorter of the two collections. It is lazily\nevaluated, and <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The combined collection.</returns>\n<param name=\"arg1\">The first collection.</param>\n<param name=\"arg2\">The second collection.</param>\n<param name=\"func\">A function combining a value from each collection.</param>\n</doc>"
+      },
+      "Expression_static_GroupBy": {
+        "id": 48,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "key",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values of a collection grouped by the key a function produces for each of them.\n</summary>\n<returns>A dictionary of each key to the values that produced it.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"key\">A function producing the key to group values by.</param>\n</doc>"
+      },
+      "Expression_static_Contains": {
+        "id": 49,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a collection contains a value.\n</summary>\n<returns>Whether the collection contains the value.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"value\">The value to look for.</param>\n</doc>"
+      },
+      "Expression_static_ContainsKey": {
+        "id": 50,
+        "parameters": [
+          {
+            "name": "dictionary",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "key",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a dictionary contains a key.\n</summary>\n<returns>Whether the dictionary contains the key.</returns>\n<param name=\"dictionary\">The dictionary.</param>\n<param name=\"key\">The key to look for.</param>\n</doc>"
+      },
+      "Expression_static_Aggregate": {
+        "id": 51,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "func",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe result of applying an accumulator function over a collection.\n</summary>\n<remarks>\nThrows an exception if the collection is empty.\n</remarks>\n<returns>The accumulated value.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"func\">The accumulator function.</param>\n</doc>"
+      },
+      "Expression_static_AggregateWithSeed": {
+        "id": 52,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "seed",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "func",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe result of applying an accumulator function over a collection, starting from a seed.\n</summary>\n<remarks>\nThe seed widens to the type of the accumulated value, the function's result.\n</remarks>\n<returns>The accumulated value.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"seed\">The seed value.</param>\n<param name=\"func\">The accumulator function.</param>\n</doc>"
+      },
+      "Expression_static_Concat": {
+        "id": 53,
+        "parameters": [
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg2",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values of one collection followed by those of another.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The first collection followed by the second.</returns>\n<param name=\"arg1\">The first collection.</param>\n<param name=\"arg2\">The second collection.</param>\n</doc>"
+      },
+      "Expression_static_OrderBy": {
+        "id": 54,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "key",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe values of a collection ordered by the key a function produces for each of them.\n</summary>\n<remarks>\nThe result is lazily evaluated. <see cref=\"M:KRPC.Expression.ToList\" /> makes it concrete.\n</remarks>\n<returns>The ordered collection.</returns>\n<param name=\"arg\">The collection to order.</param>\n<param name=\"key\">A function producing the key to order values by.</param>\n</doc>"
+      },
+      "Expression_static_All": {
+        "id": 55,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "predicate",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a predicate function returns true for every value of a collection.\n</summary>\n<returns>Whether all items satisfy the predicate.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"predicate\">The predicate function.</param>\n</doc>"
+      },
+      "Expression_static_Any": {
+        "id": 56,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "predicate",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a predicate function returns true for any value of a collection.\n</summary>\n<returns>Whether any item satisfies the predicate.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"predicate\">The predicate function.</param>\n</doc>"
+      },
+      "Expression_static_Throw": {
+        "id": 57,
+        "parameters": [
+          {
+            "name": "service",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "name",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "message",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA throw statement, which raises the named exception.\n</summary>\n<remarks>\nThe client receives the exception as an error from the function, or from the stream\nor event evaluating it. Throws an exception if the service does not declare it.\n</remarks>\n<param name=\"service\">The name of the service the exception is defined in.</param>\n<param name=\"name\">The name of the exception.</param>\n<param name=\"message\">The message of the exception.</param>\n</doc>"
+      },
+      "Expression_static_TryCatch": {
+        "id": 58,
+        "parameters": [
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "service",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "name",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "message",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression",
+              "nullable": true
+            }
+          },
+          {
+            "name": "handler",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA try-catch statement that handles the named exception.\n</summary>\n<remarks>\nOnly an exception a service declares can be named, and <see cref=\"M:KRPC.Expression.TryCatchAll\" />\nhandles any exception. Throws an exception if the service does not declare it.\n</remarks>\n<param name=\"body\">The statement to evaluate.</param>\n<param name=\"service\">The name of the service the exception is defined in.</param>\n<param name=\"name\">The name of the exception.</param>\n<param name=\"message\">A string variable assigned the exception's message, or null.</param>\n<param name=\"handler\">The statement evaluated when the exception is caught.</param>\n</doc>"
+      },
+      "Expression_static_TryCatchAll": {
+        "id": 59,
+        "parameters": [
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "message",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression",
+              "nullable": true
+            }
+          },
+          {
+            "name": "handler",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA try-catch statement that handles any exception.\n</summary>\n<param name=\"body\">The statement to evaluate.</param>\n<param name=\"message\">A string variable assigned the exception's message, or null.</param>\n<param name=\"handler\">The statement evaluated when an exception is caught.</param>\n</doc>"
+      },
+      "Expression_static_TryFinally": {
+        "id": 60,
+        "parameters": [
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "finalizer",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA try-finally statement.\n</summary>\n<remarks>\nThe finalizer is evaluated after the body, whether or not the body raises an\nexception. A break, continue or return cannot leave the finalizer.\n</remarks>\n<param name=\"body\">The statement to evaluate.</param>\n<param name=\"finalizer\">The statement evaluated after the body.</param>\n</doc>"
+      },
+      "Expression_static_Append": {
+        "id": 61,
+        "parameters": [
+          {
+            "name": "collection",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA statement adding a value to a list or a set.\n</summary>\n<remarks>\nThe value goes on the end of a list. A set holding the value is left unchanged.\n</remarks>\n<param name=\"collection\">The list or set to add to.</param>\n<param name=\"value\">The value to add.</param>\n</doc>"
+      },
+      "Expression_static_Set": {
+        "id": 62,
+        "parameters": [
+          {
+            "name": "collection",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "index",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA statement setting an element of a list, or an entry of a dictionary.\n</summary>\n<remarks>\nA key the dictionary does not hold is added. Throws an exception if the index\nis out of range for the list.\n</remarks>\n<param name=\"collection\">The list or dictionary.</param>\n<param name=\"index\">The index of the element, counting from zero, or the key of the entry.</param>\n<param name=\"value\">The value to set.</param>\n</doc>"
+      },
+      "Expression_static_Remove": {
+        "id": 63,
+        "parameters": [
+          {
+            "name": "collection",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA removal of a value from a list or a set, or of an entry from a dictionary.\n</summary>\n<remarks>\nThe first occurrence is removed from a list.\n</remarks>\n<returns>Whether the collection held the value.</returns>\n<param name=\"collection\">The list, set or dictionary.</param>\n<param name=\"value\">The value to remove, or the key of the entry to\nremove.</param>\n</doc>"
+      },
+      "Expression_static_RemoveAt": {
+        "id": 64,
+        "parameters": [
+          {
+            "name": "list",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "index",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA statement removing the element at an index of a list.\n</summary>\n<remarks>\nThrows an exception if the index is out of range.\n</remarks>\n<param name=\"list\">The list.</param>\n<param name=\"index\">The index of the element, counting from zero.</param>\n</doc>"
+      },
+      "Expression_static_Clear": {
+        "id": 65,
+        "parameters": [
+          {
+            "name": "collection",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA statement removing every value from a list or a set, or every entry from a dictionary.\n</summary>\n<param name=\"collection\">The list, set or dictionary.</param>\n</doc>"
+      },
+      "Expression_static_Variable": {
+        "id": 66,
         "parameters": [
           {
             "name": "name",
@@ -834,14 +1433,65 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA named parameter of type double.\n</summary>\n<returns>A named parameter.</returns>\n<param name=\"name\">The name of the parameter.</param>\n<param name=\"type\">The type of the parameter.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA local variable, declared by <see cref=\"M:KRPC.Expression.BlockWithVariables\" />.\n</summary>\n<returns>A local variable.</returns>\n<param name=\"name\">The name of the variable.</param>\n<param name=\"type\">The type of the variable.</param>\n</doc>"
       },
-      "Expression_static_Function": {
-        "id": 40,
+      "Expression_static_StateVariable": {
+        "id": 67,
         "parameters": [
           {
-            "name": "parameters",
+            "name": "name",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "initialValue",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA variable that keeps its value between evaluations of a function.\n</summary>\n<remarks>\nThe initial value is evaluated once, when the variable is created, and gives the\nvariable its type. The value belongs to the variable, so every function that\ncontains it shares it.\n</remarks>\n<returns>A state variable.</returns>\n<param name=\"name\">The name of the variable.</param>\n<param name=\"initialValue\">The initial value of the variable.</param>\n</doc>"
+      },
+      "Expression_static_Assign": {
+        "id": 68,
+        "parameters": [
+          {
+            "name": "variable",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nAn assignment to a local variable, state variable or function parameter.\n</summary>\n<remarks>\nThe value's type must be assignable to the variable's type. A numeric value of a\ndifferent type is widened, and narrowing it requires a cast.\n</remarks>\n<param name=\"variable\">The variable to assign to.</param>\n<param name=\"value\">The value to assign.</param>\n</doc>"
+      },
+      "Expression_static_Block": {
+        "id": 69,
+        "parameters": [
+          {
+            "name": "statements",
             "type": {
               "code": "LIST",
               "types": [
@@ -851,6 +1501,62 @@
                   "name": "Expression"
                 }
               ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA block of statements, whose value is that of its last statement.\n</summary>\n<param name=\"statements\">The statements.</param>\n</doc>"
+      },
+      "Expression_static_BlockWithVariables": {
+        "id": 70,
+        "parameters": [
+          {
+            "name": "variables",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "CLASS",
+                  "service": "KRPC",
+                  "name": "Expression"
+                }
+              ]
+            }
+          },
+          {
+            "name": "statements",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "CLASS",
+                  "service": "KRPC",
+                  "name": "Expression"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA block of statements with local variables.\n</summary>\n<remarks>\nThe value of the block is that of its last statement. The variables are in scope\nfor the statements of the block, including within nested functions.\n</remarks>\n<param name=\"variables\">The local variables of the block.</param>\n<param name=\"statements\">The statements.</param>\n</doc>"
+      },
+      "Expression_static_IfThen": {
+        "id": 71,
+        "parameters": [
+          {
+            "name": "condition",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
             }
           },
           {
@@ -867,14 +1573,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA function.\n</summary>\n<returns>A function.</returns>\n<param name=\"parameters\">The parameters of the function.</param>\n<param name=\"body\">The body of the function.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAn if statement, with no value.\n</summary>\n<remarks>\nUse <see cref=\"M:KRPC.Expression.Conditional\" /> for an if-then-else that produces a value.\n</remarks>\n<param name=\"condition\">The boolean condition.</param>\n<param name=\"body\">The statement evaluated when the condition is true.</param>\n</doc>"
       },
-      "Expression_static_Invoke": {
-        "id": 41,
+      "Expression_static_IfThenElse": {
+        "id": 72,
         "parameters": [
           {
-            "name": "function",
+            "name": "condition",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -882,13 +1587,167 @@
             }
           },
           {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "elseBody",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nAn if-else statement, with no value.\n</summary>\n<remarks>\nUse <see cref=\"M:KRPC.Expression.Conditional\" /> for an if-then-else that produces a value.\n</remarks>\n<param name=\"condition\">The boolean condition.</param>\n<param name=\"body\">The statement evaluated when the condition is true.</param>\n<param name=\"elseBody\">The statement evaluated when the condition is false.</param>\n</doc>"
+      },
+      "Expression_static_Break": {
+        "id": 73,
+        "parameters": [],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA break statement, which ends the enclosing loop.\n</summary>\n</doc>"
+      },
+      "Expression_static_Continue": {
+        "id": 74,
+        "parameters": [],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA continue statement, which skips to the next iteration of the enclosing loop.\n</summary>\n</doc>"
+      },
+      "Expression_static_Return": {
+        "id": 75,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA return statement, which ends the enclosing function with a value.\n</summary>\n<param name=\"value\">The value to return.</param>\n</doc>"
+      },
+      "Expression_static_ReturnNothing": {
+        "id": 76,
+        "parameters": [],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA return statement, which ends the enclosing function with no value.\n</summary>\n</doc>"
+      },
+      "Expression_static_While": {
+        "id": 77,
+        "parameters": [
+          {
+            "name": "condition",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA while loop, which evaluates the body while the condition is true.\n</summary>\n<remarks>\nA <see cref=\"M:KRPC.Expression.Break\" /> or <see cref=\"M:KRPC.Expression.Continue\" /> in the body applies to this loop.\n</remarks>\n<param name=\"condition\">The boolean condition.</param>\n<param name=\"body\">The statement evaluated on each iteration.</param>\n</doc>"
+      },
+      "Expression_static_ForEach": {
+        "id": 78,
+        "parameters": [
+          {
+            "name": "variable",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "collection",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA loop that evaluates the body once for each value of a collection.\n</summary>\n<remarks>\nThe loop variable is a local variable declared by an enclosing\n<see cref=\"M:KRPC.Expression.BlockWithVariables\" />, or a parameter of an enclosing <see cref=\"M:KRPC.Expression.Lambda\" />.\nA <see cref=\"M:KRPC.Expression.Break\" /> or <see cref=\"M:KRPC.Expression.Continue\" /> in the body applies to this loop.\n</remarks>\n<param name=\"variable\">The loop variable.</param>\n<param name=\"collection\">The collection to iterate over.</param>\n<param name=\"body\">The statement evaluated on each iteration.</param>\n</doc>"
+      },
+      "Expression_static_ConvertToString": {
+        "id": 79,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe string representation of a value.\n</summary>\n<remarks>\nA value other than a number, boolean, string or enumeration converts as .NET\nformats it, which for a collection is the name of its type. Throws an exception if\nthe value is null.\n</remarks>\n<returns>The string representation of the value.</returns>\n<param name=\"arg\">The value to convert.</param>\n</doc>"
+      },
+      "Expression_static_StringConcat": {
+        "id": 80,
+        "parameters": [
+          {
             "name": "args",
             "type": {
-              "code": "DICTIONARY",
+              "code": "LIST",
               "types": [
-                {
-                  "code": "STRING"
-                },
                 {
                   "code": "CLASS",
                   "service": "KRPC",
@@ -903,11 +1762,383 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nA function call.\n</summary>\n<returns>A function call.</returns>\n<param name=\"function\">The function to call.</param>\n<param name=\"args\">The arguments to call the function with.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe concatenation of strings.\n</summary>\n<remarks>\nUse <see cref=\"M:KRPC.Expression.ConvertToString\" /> to convert other values to strings.\n</remarks>\n<returns>The concatenated string.</returns>\n<param name=\"args\">The strings to concatenate, in order.</param>\n</doc>"
+      },
+      "Expression_static_StringLength": {
+        "id": 81,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe number of characters in a string.\n</summary>\n<returns>The length of the string.</returns>\n<param name=\"arg\">The string.</param>\n</doc>"
+      },
+      "Expression_static_StringGet": {
+        "id": 82,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "index",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe character at the given position in a string, as a string of length one.\n</summary>\n<remarks>\nThrows an exception if the index is out of range.\n</remarks>\n<returns>The character at the given position.</returns>\n<param name=\"arg\">The string.</param>\n<param name=\"index\">The position of the character, counting from zero.</param>\n</doc>"
+      },
+      "Expression_static_StringSubstring": {
+        "id": 83,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "start",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "length",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nPart of a string.\n</summary>\n<remarks>\nThrows an exception if the start or the length is out of range.\n</remarks>\n<returns>The substring.</returns>\n<param name=\"arg\">The string.</param>\n<param name=\"start\">The position to start at, counting from zero.</param>\n<param name=\"length\">The number of characters to take.</param>\n</doc>"
+      },
+      "Expression_static_StringIndexOf": {
+        "id": 84,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe position of the first occurrence of one string within another.\n</summary>\n<returns>The position of the value, counting from zero, or -1 if it does not occur.</returns>\n<param name=\"arg\">The string to search.</param>\n<param name=\"value\">The string to search for.</param>\n</doc>"
+      },
+      "Expression_static_StringContains": {
+        "id": 85,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nWhether one string occurs within another.\n</summary>\n<returns>Whether the value occurs in the string.</returns>\n<param name=\"arg\">The string to search.</param>\n<param name=\"value\">The string to search for.</param>\n</doc>"
+      },
+      "Expression_static_StringStartsWith": {
+        "id": 86,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a string starts with another.\n</summary>\n<returns>Whether the string starts with the value.</returns>\n<param name=\"arg\">The string to test.</param>\n<param name=\"value\">The string to test for.</param>\n</doc>"
+      },
+      "Expression_static_StringEndsWith": {
+        "id": 87,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a string ends with another.\n</summary>\n<returns>Whether the string ends with the value.</returns>\n<param name=\"arg\">The string to test.</param>\n<param name=\"value\">The string to test for.</param>\n</doc>"
+      },
+      "Expression_static_StringToUpper": {
+        "id": 88,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA string in upper case, independently of the game's language.\n</summary>\n<returns>The string in upper case.</returns>\n<param name=\"arg\">The string.</param>\n</doc>"
+      },
+      "Expression_static_StringToLower": {
+        "id": 89,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA string in lower case, independently of the game's language.\n</summary>\n<returns>The string in lower case.</returns>\n<param name=\"arg\">The string.</param>\n</doc>"
+      },
+      "Expression_static_StringTrim": {
+        "id": 90,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA string with white space removed from both ends.\n</summary>\n<returns>The trimmed string.</returns>\n<param name=\"arg\">The string.</param>\n</doc>"
+      },
+      "Expression_static_StringTrimStart": {
+        "id": 91,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA string with white space removed from its start.\n</summary>\n<returns>The trimmed string.</returns>\n<param name=\"arg\">The string.</param>\n</doc>"
+      },
+      "Expression_static_StringTrimEnd": {
+        "id": 92,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA string with white space removed from its end.\n</summary>\n<returns>The trimmed string.</returns>\n<param name=\"arg\">The string.</param>\n</doc>"
+      },
+      "Expression_static_StringReplace": {
+        "id": 93,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "oldValue",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "newValue",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA string with every occurrence of one string replaced by another.\n</summary>\n<remarks>\nThrows an exception if the string to replace is empty.\n</remarks>\n<returns>The string with the replacements made.</returns>\n<param name=\"arg\">The string to search.</param>\n<param name=\"oldValue\">The string to replace.</param>\n<param name=\"newValue\">The string to replace it with.</param>\n</doc>"
+      },
+      "Expression_static_StringSplit": {
+        "id": 94,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "separator",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe parts of a string separated by another string.\n</summary>\n<returns>The parts of the string.</returns>\n<param name=\"arg\">The string to split.</param>\n<param name=\"separator\">The string that separates the parts.</param>\n</doc>"
+      },
+      "Expression_static_StringJoin": {
+        "id": 95,
+        "parameters": [
+          {
+            "name": "separator",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "values",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nStrings joined together, separated by another string.\n</summary>\n<returns>The joined string.</returns>\n<param name=\"separator\">The string to put between the values.</param>\n<param name=\"values\">The strings to join.</param>\n</doc>"
       },
       "Expression_static_CreateTuple": {
-        "id": 42,
+        "id": 96,
         "parameters": [
           {
             "name": "elements",
@@ -928,11 +2159,42 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nConstruct a tuple.\n</summary>\n<returns>The tuple.</returns>\n<param name=\"elements\">The elements.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA tuple of the given elements. Throws an exception if there are no elements or more\nthan seven.\n</summary>\n<returns>The tuple.</returns>\n<param name=\"elements\">The elements.</param>\n</doc>"
+      },
+      "Expression_static_CreateStruct": {
+        "id": 97,
+        "parameters": [
+          {
+            "name": "type",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          },
+          {
+            "name": "fieldValues",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "CLASS",
+                  "service": "KRPC",
+                  "name": "Expression"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA structure with the given field values. Throws an exception if the field values do\nnot match its fields.\n</summary>\n<returns>The structure.</returns>\n<param name=\"type\">The type of the structure.</param>\n<param name=\"fieldValues\">The values of the structure's fields,\nin the order the structure declares them.</param>\n</doc>"
       },
       "Expression_static_CreateList": {
-        "id": 43,
+        "id": 98,
         "parameters": [
           {
             "name": "values",
@@ -953,11 +2215,10 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nConstruct a list.\n</summary>\n<returns>The list.</returns>\n<param name=\"values\">The value. Should all be of the same type.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA list of the given values, with numbers widened to their common type. Throws an\nexception if there are no values.\n</summary>\n<returns>The list.</returns>\n<param name=\"values\">The values.</param>\n</doc>"
       },
       "Expression_static_CreateSet": {
-        "id": 44,
+        "id": 99,
         "parameters": [
           {
             "name": "values",
@@ -978,11 +2239,10 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nConstruct a set.\n</summary>\n<returns>The set.</returns>\n<param name=\"values\">The values. Should all be of the same type.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA set of the given values, with numbers widened to their common type. Throws an\nexception if there are no values, or a value is null.\n</summary>\n<remarks>\nThe values are evaluated in an unspecified order.\n</remarks>\n<returns>The set.</returns>\n<param name=\"values\">The values.</param>\n</doc>"
       },
       "Expression_static_CreateDictionary": {
-        "id": 45,
+        "id": 100,
         "parameters": [
           {
             "name": "keys",
@@ -1016,18 +2276,17 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nConstruct a dictionary, from a list of corresponding keys and values.\n</summary>\n<returns>The dictionary.</returns>\n<param name=\"keys\">The keys. Should all be of the same type.</param>\n<param name=\"values\">The values. Should all be of the same type.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA dictionary of the given keys and corresponding values, with numbers widened to\ntheir common type. Throws an exception if there are no keys, the counts differ, the\nkeys are not of a valid key type, or a key is null.\n</summary>\n<remarks>\nA repeated key takes the last of its values.\n</remarks>\n<returns>The dictionary.</returns>\n<param name=\"keys\">The keys.</param>\n<param name=\"values\">The values.</param>\n</doc>"
       },
-      "Expression_static_ToList": {
-        "id": 46,
+      "Expression_static_CreateEmptyList": {
+        "id": 101,
         "parameters": [
           {
-            "name": "arg",
+            "name": "valueType",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
-              "name": "Expression"
+              "name": "Type"
             }
           }
         ],
@@ -1036,18 +2295,17 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nConvert a collection to a list.\n</summary>\n<returns>The collection as a list.</returns>\n<param name=\"arg\">The collection.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAn empty list of the given value type.\n</summary>\n<returns>The empty list.</returns>\n<param name=\"valueType\">The type of the values the list holds.</param>\n</doc>"
       },
-      "Expression_static_ToSet": {
-        "id": 47,
+      "Expression_static_CreateEmptySet": {
+        "id": 102,
         "parameters": [
           {
-            "name": "arg",
+            "name": "valueType",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
-              "name": "Expression"
+              "name": "Type"
             }
           }
         ],
@@ -1056,11 +2314,37 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nConvert a collection to a set.\n</summary>\n<returns>The collection as a set.</returns>\n<param name=\"arg\">The collection.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAn empty set of the given value type. Throws an exception if the value type is\nnullable.\n</summary>\n<returns>The empty set.</returns>\n<param name=\"valueType\">The type of the values the set holds.</param>\n</doc>"
       },
-      "Expression_static_Get": {
-        "id": 48,
+      "Expression_static_CreateEmptyDictionary": {
+        "id": 103,
+        "parameters": [
+          {
+            "name": "keyType",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          },
+          {
+            "name": "valueType",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nAn empty dictionary of the given key and value types. Throws an exception if the\nkey type is nullable or not a valid key type.\n</summary>\n<returns>The empty dictionary.</returns>\n<param name=\"keyType\">The type of the dictionary's keys.</param>\n<param name=\"valueType\">The type of the dictionary's values.</param>\n</doc>"
+      },
+      "Expression_static_GetField": {
+        "id": 104,
         "parameters": [
           {
             "name": "arg",
@@ -1071,11 +2355,9 @@
             }
           },
           {
-            "name": "index",
+            "name": "name",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "STRING"
             }
           }
         ],
@@ -1084,18 +2366,15 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAccess an element in a tuple, list or dictionary.\n</summary>\n<returns>The element.</returns>\n<param name=\"arg\">The tuple, list or dictionary.</param>\n<param name=\"index\">The index of the element to access.\nA zero indexed integer for a tuple or list, or a key for a dictionary.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe value of a field of a structure. Throws an exception if the value is not a\nstructure, or has no field of the given name.\n</summary>\n<returns>The value of the field.</returns>\n<param name=\"arg\">The structure.</param>\n<param name=\"name\">The name of the field to access.</param>\n</doc>"
       },
-      "Expression_static_Count": {
-        "id": 49,
+      "Expression_static_ConstantDouble": {
+        "id": 105,
         "parameters": [
           {
-            "name": "arg",
+            "name": "value",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "DOUBLE"
             }
           }
         ],
@@ -1104,18 +2383,15 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nNumber of elements in a collection.\n</summary>\n<returns>The number of elements in the collection.</returns>\n<param name=\"arg\">The list, set or dictionary.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA constant value of double precision floating point type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
       },
-      "Expression_static_Sum": {
-        "id": 50,
+      "Expression_static_ConstantFloat": {
+        "id": 106,
         "parameters": [
           {
-            "name": "arg",
+            "name": "value",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "FLOAT"
             }
           }
         ],
@@ -1124,18 +2400,15 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nSum all elements of a collection.\n</summary>\n<returns>The sum of the elements in the collection.</returns>\n<param name=\"arg\">The list or set.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA constant value of single precision floating point type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
       },
-      "Expression_static_Max": {
-        "id": 51,
+      "Expression_static_ConstantInt": {
+        "id": 107,
         "parameters": [
           {
-            "name": "arg",
+            "name": "value",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "SINT32"
             }
           }
         ],
@@ -1144,18 +2417,15 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nMaximum of all elements in a collection.\n</summary>\n<returns>The maximum elements in the collection.</returns>\n<param name=\"arg\">The list or set.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA constant value of integer type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
       },
-      "Expression_static_Min": {
-        "id": 52,
+      "Expression_static_ConstantLong": {
+        "id": 108,
         "parameters": [
           {
-            "name": "arg",
+            "name": "value",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "SINT64"
             }
           }
         ],
@@ -1164,18 +2434,15 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nMinimum of all elements in a collection.\n</summary>\n<returns>The minimum elements in the collection.</returns>\n<param name=\"arg\">The list or set.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA constant value of long integer type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
       },
-      "Expression_static_Average": {
-        "id": 53,
+      "Expression_static_ConstantUInt": {
+        "id": 109,
         "parameters": [
           {
-            "name": "arg",
+            "name": "value",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "UINT32"
             }
           }
         ],
@@ -1184,26 +2451,95 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nMinimum of all elements in a collection.\n</summary>\n<returns>The minimum elements in the collection.</returns>\n<param name=\"arg\">The list or set.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA constant value of unsigned integer type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
       },
-      "Expression_static_Select": {
-        "id": 54,
+      "Expression_static_ConstantULong": {
+        "id": 110,
         "parameters": [
           {
-            "name": "arg",
+            "name": "value",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "UINT64"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA constant value of unsigned long integer type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
+      },
+      "Expression_static_ConstantBool": {
+        "id": 111,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA constant value of boolean type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
+      },
+      "Expression_static_ConstantString": {
+        "id": 112,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA constant value of string type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
+      },
+      "Expression_static_ConstantBytes": {
+        "id": 113,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BYTES"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA constant value of bytes type.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
+      },
+      "Expression_static_ConstantEnum": {
+        "id": 114,
+        "parameters": [
+          {
+            "name": "service",
+            "type": {
+              "code": "STRING"
             }
           },
           {
-            "name": "func",
+            "name": "name",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "SINT32"
             }
           }
         ],
@@ -1212,26 +2548,17 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nRun a function on every element in the collection.\n</summary>\n<returns>The modified collection.</returns>\n<param name=\"arg\">The list or set.</param>\n<param name=\"func\">The function.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA constant value of an enumeration a service defines.\n</summary>\n<param name=\"service\">The name of the service the enumeration is defined in.</param>\n<param name=\"name\">The name of the enumeration.</param>\n<param name=\"value\">The value of the member of the enumeration.</param>\n</doc>"
       },
-      "Expression_static_Where": {
-        "id": 55,
+      "Expression_static_ConstantNull": {
+        "id": 115,
         "parameters": [
           {
-            "name": "arg",
+            "name": "type",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "func",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "name": "Type"
             }
           }
         ],
@@ -1240,20 +2567,28 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nRun a function on every element in the collection.\n</summary>\n<returns>The modified collection.</returns>\n<param name=\"arg\">The list or set.</param>\n<param name=\"func\">The function.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA null constant of the given type.\n</summary>\n<remarks>\nThe type is made nullable, as by <see cref=\"M:KRPC.Type.NullableType\" />.\n</remarks>\n<param name=\"type\">The type of the value.</param>\n</doc>"
       },
-      "Expression_static_Contains": {
-        "id": 56,
+      "Expression_static_ConstantObject": {
+        "id": 116,
         "parameters": [
           {
-            "name": "arg",
+            "name": "value",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "UINT64"
             }
-          },
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA constant object, an instance of a class a service defines.\n</summary>\n<remarks>\nThe object is given by its object identifier.\n</remarks>\n<param name=\"value\">The object identifier of the object.</param>\n</doc>"
+      },
+      "Expression_static_IsNull": {
+        "id": 117,
+        "parameters": [
           {
             "name": "value",
             "type": {
@@ -1268,26 +2603,15 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nDetermine if a collection contains a value.\n</summary>\n<returns>Whether the collection contains a value.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"value\">The value to look for.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether a value is null. Throws an exception if the type of the value cannot be null.\n</summary>\n<param name=\"value\">The value.</param>\n</doc>"
       },
-      "Expression_static_Aggregate": {
-        "id": 57,
+      "Expression_static_Call": {
+        "id": 118,
         "parameters": [
           {
-            "name": "arg",
+            "name": "call",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "func",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "PROCEDURE_CALL"
             }
           }
         ],
@@ -1296,34 +2620,31 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nApplies an accumulator function over a sequence.\n</summary>\n<returns>The accumulated value.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"func\">The accumulator function.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAn RPC call.\n</summary>\n<remarks>\nThe instance the call is made on, and the values of its arguments, are fixed\nwhen the expression is created. A call to a procedure with no return value is\nevaluated for its effects, as a statement in a <see cref=\"M:KRPC.Expression.Block\" />. A collection the\nprocedure returns is copied, as a client would receive it.\n</remarks>\n<param name=\"call\">The procedure call.</param>\n</doc>"
       },
-      "Expression_static_AggregateWithSeed": {
-        "id": 58,
+      "Expression_static_CallWithArguments": {
+        "id": 119,
         "parameters": [
           {
-            "name": "arg",
+            "name": "call",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "PROCEDURE_CALL"
             }
           },
           {
-            "name": "seed",
+            "name": "args",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "func",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "DICTIONARY",
+              "types": [
+                {
+                  "code": "SINT32"
+                },
+                {
+                  "code": "CLASS",
+                  "service": "KRPC",
+                  "name": "Expression"
+                }
+              ]
             }
           }
         ],
@@ -1332,12 +2653,19 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nApplies an accumulator function over a sequence, with a given seed.\n</summary>\n<returns>The accumulated value.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"seed\">The seed value.</param>\n<param name=\"func\">The accumulator function.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAn RPC call, where some or all of the arguments are computed by expressions.\n</summary>\n<remarks>\nPosition 0 is the instance of a class method or property. A position with no\nexpression takes the argument encoded in the call, or the parameter's default. A\ncollection the procedure returns is copied, as a client would receive it.\n</remarks>\n<param name=\"call\">The RPC to call.</param>\n<param name=\"args\">Expressions computing the call's arguments, by position.</param>\n</doc>"
       },
-      "Expression_static_Concat": {
-        "id": 59,
+      "Expression_static_Equal": {
+        "id": 120,
         "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
           {
             "name": "arg1",
             "type": {
@@ -1345,9 +2673,28 @@
               "service": "KRPC",
               "name": "Expression"
             }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nEquality comparison.\n</summary>\n<remarks>\nCollections, tuples, bytes and structures compare by their contents. Throws an\nexception if the operands are of unrelated types.\n</remarks>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_NotEqual": {
+        "id": 121,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
           },
           {
-            "name": "arg2",
+            "name": "arg1",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -1360,11 +2707,542 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nConcatenate two sequences.\n</summary>\n<returns>The first sequence followed by the second sequence.</returns>\n<param name=\"arg1\">The first sequence.</param>\n<param name=\"arg2\">The second sequence.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nInequality comparison.\n</summary>\n<remarks>\nCollections, tuples, bytes and structures compare by their contents. Throws an\nexception if the operands are of unrelated types.\n</remarks>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
       },
-      "Expression_static_OrderBy": {
-        "id": 60,
+      "Expression_static_GreaterThan": {
+        "id": 122,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nGreater than numerical comparison.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_GreaterThanOrEqual": {
+        "id": 123,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nGreater than or equal numerical comparison.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_LessThan": {
+        "id": 124,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nLess than numerical comparison.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_LessThanOrEqual": {
+        "id": 125,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nLess than or equal numerical comparison.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_And": {
+        "id": 126,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nLogical or bitwise and, which evaluates both operands.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_Or": {
+        "id": 127,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nLogical or bitwise or, which evaluates both operands.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_ConditionalAnd": {
+        "id": 128,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nLogical and, which evaluates the second operand only when the first is true.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_ConditionalOr": {
+        "id": 129,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nLogical or, which evaluates the second operand only when the first is false.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_ExclusiveOr": {
+        "id": 130,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nLogical or bitwise exclusive or.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_Not": {
+        "id": 131,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nLogical or bitwise negation.\n</summary>\n<param name=\"arg\">The operand.</param>\n</doc>"
+      },
+      "Expression_static_Negate": {
+        "id": 132,
+        "parameters": [
+          {
+            "name": "arg",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nNumerical negation, which negates a uint as a long.\n</summary>\n<param name=\"arg\">The operand.</param>\n</doc>"
+      },
+      "Expression_static_Conditional": {
+        "id": 133,
+        "parameters": [
+          {
+            "name": "condition",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "ifTrue",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "ifFalse",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nThe second argument if the condition is true, and the third argument otherwise.\n</summary>\n<remarks>\nThrows an exception if the two values have no common type.\n</remarks>\n<param name=\"condition\">The boolean condition.</param>\n<param name=\"ifTrue\">The value when the condition is true.</param>\n<param name=\"ifFalse\">The value when the condition is false.</param>\n</doc>"
+      },
+      "Expression_static_Add": {
+        "id": 134,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nNumerical addition.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_Subtract": {
+        "id": 135,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nNumerical subtraction.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_Multiply": {
+        "id": 136,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nNumerical multiplication.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_Divide": {
+        "id": 137,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nNumerical division.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_Modulo": {
+        "id": 138,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nNumerical modulo operator.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n<returns>The remainder of arg0 divided by arg1</returns>\n</doc>"
+      },
+      "Expression_static_Power": {
+        "id": 139,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nNumerical power operator.\n</summary>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n<returns>arg0 raised to the power of arg1, at the common type of the operands</returns>\n</doc>"
+      },
+      "Expression_static_LeftShift": {
+        "id": 140,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nBitwise left shift.\n</summary>\n<remarks>\nOnly the low 5 bits of the count are used for a 32-bit value, and the low 6 bits\nfor a 64-bit value.\n</remarks>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_RightShift": {
+        "id": 141,
+        "parameters": [
+          {
+            "name": "arg0",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          },
+          {
+            "name": "arg1",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nBitwise right shift.\n</summary>\n<remarks>\nOnly the low 5 bits of the count are used for a 32-bit value, and the low 6 bits\nfor a 64-bit value.\n</remarks>\n<param name=\"arg0\">The first operand.</param>\n<param name=\"arg1\">The second operand.</param>\n</doc>"
+      },
+      "Expression_static_Cast": {
+        "id": 142,
         "parameters": [
           {
             "name": "arg",
@@ -1375,7 +3253,64 @@
             }
           },
           {
-            "name": "key",
+            "name": "type",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA value cast to the given type.\n</summary>\n<remarks>\nA tuple or collection is cast element by element.\n</remarks>\n<param name=\"arg\">The value to cast.</param>\n<param name=\"type\">Type to cast the argument to.</param>\n</doc>"
+      },
+      "Expression_static_Parameter": {
+        "id": 143,
+        "parameters": [
+          {
+            "name": "name",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "type",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Expression"
+        },
+        "documentation": "<doc>\n<summary>\nA named parameter of a function.\n</summary>\n<remarks>\nA value is bound to it by name with <see cref=\"M:KRPC.Expression.Invoke\" />, or by its position in\nthe parameters of a <see cref=\"M:KRPC.Expression.Lambda\" />.\n</remarks>\n<returns>A named parameter.</returns>\n<param name=\"name\">The name of the parameter.</param>\n<param name=\"type\">The type of the parameter.</param>\n</doc>"
+      },
+      "Expression_static_Lambda": {
+        "id": 144,
+        "parameters": [
+          {
+            "name": "parameters",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "CLASS",
+                  "service": "KRPC",
+                  "name": "Expression"
+                }
+              ]
+            }
+          },
+          {
+            "name": "body",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -1388,14 +3323,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nOrder a collection using a key function.\n</summary>\n<returns>The ordered collection.</returns>\n<param name=\"arg\">The collection to order.</param>\n<param name=\"key\">A function that takes a value from the collection and generates a key to sort on.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA function with the given parameters and body.\n</summary>\n<remarks>\nThe body is an expression or a block of statements, and a body with no value is\nevaluated for its effects. A <see cref=\"M:KRPC.Expression.Return\" /> or <see cref=\"M:KRPC.Expression.ReturnNothing\" />\nstatement ends the evaluation.\n</remarks>\n<returns>A function.</returns>\n<param name=\"parameters\">The parameters of the function.</param>\n<param name=\"body\">The body of the function.</param>\n</doc>"
       },
-      "Expression_static_All": {
-        "id": 61,
+      "Expression_static_Invoke": {
+        "id": 145,
         "parameters": [
           {
-            "name": "arg",
+            "name": "function",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -1403,11 +3337,19 @@
             }
           },
           {
-            "name": "predicate",
+            "name": "args",
             "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
+              "code": "DICTIONARY",
+              "types": [
+                {
+                  "code": "STRING"
+                },
+                {
+                  "code": "CLASS",
+                  "service": "KRPC",
+                  "name": "Expression"
+                }
+              ]
             }
           }
         ],
@@ -1416,22 +3358,13 @@
           "service": "KRPC",
           "name": "Expression"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nDetermine whether all items in a collection satisfy a boolean predicate.\n</summary>\n<returns>Whether all items satisfy the predicate.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"predicate\">The predicate function.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA function call.\n</summary>\n<returns>A function call.</returns>\n<param name=\"function\">The function to call.</param>\n<param name=\"args\">The arguments to call the function with.</param>\n</doc>"
       },
-      "Expression_static_Any": {
-        "id": 62,
+      "Expression_get_ReturnType": {
+        "id": 146,
         "parameters": [
           {
-            "name": "arg",
-            "type": {
-              "code": "CLASS",
-              "service": "KRPC",
-              "name": "Expression"
-            }
-          },
-          {
-            "name": "predicate",
+            "name": "this",
             "type": {
               "code": "CLASS",
               "service": "KRPC",
@@ -1442,78 +3375,424 @@
         "return_type": {
           "code": "CLASS",
           "service": "KRPC",
-          "name": "Expression"
+          "name": "Type"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nDetermine whether any item in a collection satisfies a boolean predicate.\n</summary>\n<returns>Whether any item satisfies the predicate.</returns>\n<param name=\"arg\">The collection.</param>\n<param name=\"predicate\">The predicate function.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe type of the value the expression evaluates to. Throws an exception if the\nvalue cannot be sent to a client.\n</summary>\n<remarks>\nA function created with <see cref=\"M:KRPC.Expression.Lambda\" /> evaluates to the value it returns. A\nlazily evaluated collection, such as from <see cref=\"M:KRPC.Expression.Select\" />, is sent once\nconverted by <see cref=\"M:KRPC.Expression.ToList\" /> or <see cref=\"M:KRPC.Expression.ToSet\" />.\n</remarks>\n</doc>"
+      },
+      "Expression_get_ParameterTypes": {
+        "id": 147,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe types of the function's parameters.\n</summary>\n<remarks>\nEmpty for a function that is not created with <see cref=\"M:KRPC.Expression.Lambda\" />.\n</remarks>\n</doc>"
+      },
+      "Expression_get_HasReturnType": {
+        "id": 148,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Expression"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the expression evaluates to a value.\n</summary>\n<remarks>\nAn expression with no value has no <see cref=\"M:KRPC.Expression.ReturnType\" />. An empty\ncollection and no value both encode to an empty sequence of bytes.\n</remarks>\n</doc>"
       },
       "Type_static_Double": {
-        "id": 63,
+        "id": 149,
         "parameters": [],
         "return_type": {
           "code": "CLASS",
           "service": "KRPC",
           "name": "Type"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nDouble type.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA double precision floating point number type.\n</summary>\n</doc>"
       },
       "Type_static_Float": {
-        "id": 64,
+        "id": 150,
         "parameters": [],
         "return_type": {
           "code": "CLASS",
           "service": "KRPC",
           "name": "Type"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nFloat type.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA single precision floating point number type.\n</summary>\n</doc>"
       },
       "Type_static_Int": {
-        "id": 65,
+        "id": 151,
         "parameters": [],
         "return_type": {
           "code": "CLASS",
           "service": "KRPC",
           "name": "Type"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nInt type.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA signed 32-bit integer type.\n</summary>\n</doc>"
+      },
+      "Type_static_Long": {
+        "id": 152,
+        "parameters": [],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nA signed 64-bit integer type.\n</summary>\n</doc>"
+      },
+      "Type_static_UInt": {
+        "id": 153,
+        "parameters": [],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nAn unsigned 32-bit integer type.\n</summary>\n</doc>"
+      },
+      "Type_static_ULong": {
+        "id": 154,
+        "parameters": [],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nAn unsigned 64-bit integer type.\n</summary>\n</doc>"
       },
       "Type_static_Bool": {
-        "id": 66,
+        "id": 155,
         "parameters": [],
         "return_type": {
           "code": "CLASS",
           "service": "KRPC",
           "name": "Type"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nBool type.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA boolean type.\n</summary>\n</doc>"
       },
       "Type_static_String": {
-        "id": 67,
+        "id": 156,
         "parameters": [],
         "return_type": {
           "code": "CLASS",
           "service": "KRPC",
           "name": "Type"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nString type.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA string type.\n</summary>\n</doc>"
+      },
+      "Type_static_Bytes": {
+        "id": 157,
+        "parameters": [],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nA byte sequence type.\n</summary>\n</doc>"
+      },
+      "Type_static_ClassType": {
+        "id": 158,
+        "parameters": [
+          {
+            "name": "service",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "name",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nThe type of a class defined by a service.\n</summary>\n<param name=\"service\">The name of the service the class is defined in.</param>\n<param name=\"name\">The name of the class.</param>\n</doc>"
+      },
+      "Type_static_EnumerationType": {
+        "id": 159,
+        "parameters": [
+          {
+            "name": "service",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "name",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nThe type of an enumeration defined by a service.\n</summary>\n<param name=\"service\">The name of the service the enumeration is defined in.</param>\n<param name=\"name\">The name of the enumeration.</param>\n</doc>"
+      },
+      "Type_static_StructType": {
+        "id": 160,
+        "parameters": [
+          {
+            "name": "service",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "name",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nThe type of a structure defined by a service.\n</summary>\n<param name=\"service\">The name of the service the structure is defined in.</param>\n<param name=\"name\">The name of the structure.</param>\n</doc>"
+      },
+      "Type_static_TupleType": {
+        "id": 161,
+        "parameters": [
+          {
+            "name": "valueTypes",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "CLASS",
+                  "service": "KRPC",
+                  "name": "Type"
+                }
+              ]
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nA tuple type. Throws an exception if there are no element types or more than seven.\n</summary>\n<param name=\"valueTypes\">The types of the elements of the tuple.</param>\n</doc>"
+      },
+      "Type_static_ListType": {
+        "id": 162,
+        "parameters": [
+          {
+            "name": "valueType",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nA list type.\n</summary>\n<param name=\"valueType\">The type of the elements of the list.</param>\n</doc>"
+      },
+      "Type_static_SetType": {
+        "id": 163,
+        "parameters": [
+          {
+            "name": "valueType",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nA set type. Throws an exception if the element type is nullable.\n</summary>\n<param name=\"valueType\">The type of the elements of the set.</param>\n</doc>"
+      },
+      "Type_static_DictionaryType": {
+        "id": 164,
+        "parameters": [
+          {
+            "name": "keyType",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          },
+          {
+            "name": "valueType",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nA dictionary type. Throws an exception if the key type is nullable or not a valid\nkey type.\n</summary>\n<param name=\"keyType\">The type of the keys of the dictionary.</param>\n<param name=\"valueType\">The type of the values of the dictionary.</param>\n</doc>"
+      },
+      "Type_static_NullableType": {
+        "id": 165,
+        "parameters": [
+          {
+            "name": "valueType",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "KRPC",
+          "name": "Type"
+        },
+        "documentation": "<doc>\n<summary>\nA nullable type, holding a value of the given type or null.\n</summary>\n<param name=\"valueType\">The type of the value.</param>\n</doc>"
+      },
+      "Type_get_Code": {
+        "id": 166,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "KRPC",
+          "name": "TypeCode"
+        },
+        "documentation": "<doc>\n<summary>\nThe kind of the type.\n</summary>\n</doc>"
+      },
+      "Type_get_Service": {
+        "id": 167,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "documentation": "<doc>\n<summary>\nThe service a class, enumeration or structure type is defined in, or an empty string.\n</summary>\n</doc>"
+      },
+      "Type_get_Name": {
+        "id": 168,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "documentation": "<doc>\n<summary>\nThe name of a class, enumeration or structure type, or an empty string.\n</summary>\n</doc>"
+      },
+      "Type_get_Types": {
+        "id": 169,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe types of the elements of a tuple, list, set or dictionary type.\n</summary>\n<remarks>\nThe value types of a tuple, the value type of a list or set, or the key and value\ntypes of a dictionary. An empty list for any other type.\n</remarks>\n</doc>"
+      },
+      "Type_get_Nullable": {
+        "id": 170,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "KRPC",
+              "name": "Type"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a value of the type may be null.\n</summary>\n<remarks>\nAny type can be nullable. A string or class value of a type that is not nullable\nis never null.\n</remarks>\n</doc>"
       }
     },
     "classes": {
       "Expression": {
-        "documentation": "<doc>\n<summary>\nA server side expression.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA server side expression.\n</summary>\n<remarks>\nNumeric operands of differing types are converted to a common type.\n</remarks>\n</doc>"
       },
       "Type": {
-        "documentation": "<doc>\n<summary>\nA server side expression.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe type of a value a procedure takes or returns.\n</summary>\n</doc>"
       }
     },
     "enumerations": {
       "GameScene": {
-        "documentation": "<doc>\n<summary>\nThe game scene. See <see cref=\"M:KRPC.CurrentGameScene\" />.\n</summary>\n</doc>",
+        "documentation": "<doc>\n<summary>\nThe game scene. See <see cref=\"M:KRPC.GameScene\" />.\n</summary>\n</doc>",
         "values": [
           {
             "name": "SpaceCenter",
@@ -1539,6 +3818,144 @@
             "name": "EditorSPH",
             "value": 4,
             "documentation": "<doc>\n<summary>\nThe Space Plane Hangar.\n</summary>\n</doc>"
+          },
+          {
+            "name": "MissionBuilder",
+            "value": 5,
+            "documentation": "<doc>\n<summary>\nThe mission builder.\n</summary>\n</doc>"
+          },
+          {
+            "name": "AstronautComplex",
+            "value": 6,
+            "documentation": "<doc>\n<summary>\nThe astronaut complex. This is a pseudo-scene, shown when the\nastronaut complex facility is open within the space center scene.\n</summary>\n</doc>"
+          },
+          {
+            "name": "MissionControl",
+            "value": 7,
+            "documentation": "<doc>\n<summary>\nMission control. This is a pseudo-scene, shown when the\nmission control facility is open within the space center scene.\n</summary>\n</doc>"
+          },
+          {
+            "name": "ResearchAndDevelopment",
+            "value": 8,
+            "documentation": "<doc>\n<summary>\nResearch and development. This is a pseudo-scene, shown when the\nresearch and development facility is open within the space center scene.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Administration",
+            "value": 9,
+            "documentation": "<doc>\n<summary>\nThe administration facility. This is a pseudo-scene, shown when the\nadministration facility is open within the space center scene.\n</summary>\n</doc>"
+          }
+        ]
+      },
+      "TypeCode": {
+        "documentation": "<doc>\n<summary>\nThe kind of a type, with the values of the communication protocol's type codes.\n</summary>\n</doc>",
+        "values": [
+          {
+            "name": "Double",
+            "value": 1,
+            "documentation": "<doc>\n<summary>\nA double precision floating point number.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Float",
+            "value": 2,
+            "documentation": "<doc>\n<summary>\nA single precision floating point number.\n</summary>\n</doc>"
+          },
+          {
+            "name": "SInt32",
+            "value": 3,
+            "documentation": "<doc>\n<summary>\nA signed 32-bit integer.\n</summary>\n</doc>"
+          },
+          {
+            "name": "SInt64",
+            "value": 4,
+            "documentation": "<doc>\n<summary>\nA signed 64-bit integer.\n</summary>\n</doc>"
+          },
+          {
+            "name": "UInt32",
+            "value": 5,
+            "documentation": "<doc>\n<summary>\nAn unsigned 32-bit integer.\n</summary>\n</doc>"
+          },
+          {
+            "name": "UInt64",
+            "value": 6,
+            "documentation": "<doc>\n<summary>\nAn unsigned 64-bit integer.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Bool",
+            "value": 7,
+            "documentation": "<doc>\n<summary>\nA boolean.\n</summary>\n</doc>"
+          },
+          {
+            "name": "String",
+            "value": 8,
+            "documentation": "<doc>\n<summary>\nA string.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Bytes",
+            "value": 9,
+            "documentation": "<doc>\n<summary>\nA sequence of bytes.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Class",
+            "value": 100,
+            "documentation": "<doc>\n<summary>\nA class defined by a service.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Enumeration",
+            "value": 101,
+            "documentation": "<doc>\n<summary>\nAn enumeration defined by a service.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Struct",
+            "value": 102,
+            "documentation": "<doc>\n<summary>\nA structure defined by a service.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Tuple",
+            "value": 300,
+            "documentation": "<doc>\n<summary>\nA tuple, with the types of its values in <see cref=\"M:KRPC.Type.Types\" />.\n</summary>\n</doc>"
+          },
+          {
+            "name": "List",
+            "value": 301,
+            "documentation": "<doc>\n<summary>\nA list, with the type of its values in <see cref=\"M:KRPC.Type.Types\" />.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Set",
+            "value": 302,
+            "documentation": "<doc>\n<summary>\nA set, with the type of its values in <see cref=\"M:KRPC.Type.Types\" />.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Dictionary",
+            "value": 303,
+            "documentation": "<doc>\n<summary>\nA dictionary, with the types of its keys and values in <see cref=\"M:KRPC.Type.Types\" />.\n</summary>\n</doc>"
+          }
+        ]
+      }
+    },
+    "structs": {
+      "ClientInfo": {
+        "documentation": "<doc>\n<summary>\nA client connected to the server.\n</summary>\n<remarks>\nSee <see cref=\"M:KRPC.Clients\" />.\n</remarks>\n</doc>",
+        "fields": [
+          {
+            "name": "Id",
+            "type": {
+              "code": "BYTES"
+            },
+            "documentation": "<doc>\n<summary>\nThe identifier of the client.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Name",
+            "type": {
+              "code": "STRING"
+            },
+            "documentation": "<doc>\n<summary>\nThe name of the client, or an empty string if it has no name.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Address",
+            "type": {
+              "code": "STRING"
+            },
+            "documentation": "<doc>\n<summary>\nThe address of the client.\n</summary>\n</doc>"
           }
         ]
       }
@@ -1553,8 +3970,44 @@
       "ArgumentOutOfRangeException": {
         "documentation": "<doc>\n<summary>\nThe value of an argument is outside the allowable range of values as defined by the invoked method.\n</summary>\n</doc>"
       },
+      "DivideByZeroException": {
+        "documentation": "<doc>\n<summary>\nAn integer was divided by zero.\n</summary>\n</doc>"
+      },
+      "Error": {
+        "documentation": "<doc>\n<summary>\nA general error, described by its message.\n</summary>\n</doc>"
+      },
+      "IndexOutOfRangeException": {
+        "documentation": "<doc>\n<summary>\nAn index was outside the bounds of a collection, string or array.\n</summary>\n</doc>"
+      },
       "InvalidOperationException": {
         "documentation": "<doc>\n<summary>\nA method call was made to a method that is invalid\ngiven the current state of the object.\n</summary>\n</doc>"
+      },
+      "KeyNotFoundException": {
+        "documentation": "<doc>\n<summary>\nA key was not found in a dictionary.\n</summary>\n</doc>"
+      },
+      "NotSupportedException": {
+        "documentation": "<doc>\n<summary>\nA method was invoked that is not supported.\n</summary>\n</doc>"
+      },
+      "NullReferenceException": {
+        "documentation": "<doc>\n<summary>\nA value was null where its type does not allow one.\n</summary>\n</doc>"
+      },
+      "ObjectDestroyedException": {
+        "documentation": "<doc>\n<summary>\nThe game object that a service object refers to no longer exists,\nso the object cannot be used. For example, the part it represents\nwas destroyed, or the vessel it belongs to was recovered.\n</summary>\n</doc>"
+      },
+      "ObjectNotLoadedException": {
+        "documentation": "<doc>\n<summary>\nThe game object that a service object refers to exists, but is not loaded.\nFor example, the game is loading, or the vessel carrying the part is unloaded.\n</summary>\n</doc>"
+      },
+      "OverflowException": {
+        "documentation": "<doc>\n<summary>\nAn arithmetic or conversion operation overflowed.\n</summary>\n</doc>"
+      },
+      "StreamRemovedException": {
+        "documentation": "<doc>\n<summary>\nA stream was removed by the server, e.g. an event that has finished.\n</summary>\n</doc>"
+      },
+      "TimeoutException": {
+        "documentation": "<doc>\n<summary>\nAn operation did not complete in the time allotted to it.\n</summary>\n</doc>"
+      },
+      "UnsupportedSceneException": {
+        "documentation": "<doc>\n<summary>\nThe procedure is not available in the current game scene.\n</summary>\n</doc>"
       }
     }
   }

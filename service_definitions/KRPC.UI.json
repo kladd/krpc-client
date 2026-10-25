@@ -1,7 +1,7 @@
 {
   "UI": {
     "id": 7,
-    "documentation": "<doc>\n<summary>\nProvides functionality for drawing and interacting with in-game user interface elements.\n</summary>\n<remarks>\nFor drawing 3D objects in the flight scene, see the Drawing service.\n</remarks>\n</doc>",
+    "documentation": "<doc>\n<summary>\nProvides functionality for drawing and interacting with in-game user interface elements.\n</summary>\n<remarks>\nFor drawing 3D objects in the flight scene, see the Drawing service.\nUser interface elements created by a client are removed when that client\ndisconnects, and when the game scene changes. A client that needs its\ninterface in more than one scene must create it again in each of them.\n</remarks>\n</doc>",
     "procedures": {
       "AddCanvas": {
         "id": 1,
@@ -11,7 +11,6 @@
           "service": "UI",
           "name": "Canvas"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nAdd a new canvas.\n</summary>\n<remarks>\nIf you want to add UI elements to KSPs stock UI canvas, use <see cref=\"M:UI.StockCanvas\" />.\n</remarks>\n</doc>"
       },
       "Message": {
@@ -42,20 +41,11 @@
           {
             "name": "color",
             "type": {
-              "code": "TUPLE",
-              "types": [
-                {
-                  "code": "DOUBLE"
-                },
-                {
-                  "code": "DOUBLE"
-                },
-                {
-                  "code": "DOUBLE"
-                }
-              ]
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
             },
-            "default_value": "CggAAAAAAADwPwoIcT0K16Nw7T8KCPyp8dJNYpA/"
+            "default_value": "CgQAAIA/CgQfhWs/CgRvEoM8CgQAAIA/"
           },
           {
             "name": "size",
@@ -88,7 +78,6 @@
           "service": "UI",
           "name": "Canvas"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe stock UI canvas.\n</summary>\n</doc>"
       },
       "Button_Remove": {
@@ -105,28 +94,8 @@
         ],
         "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
       },
-      "Button_get_RectTransform": {
-        "id": 6,
-        "parameters": [
-          {
-            "name": "this",
-            "type": {
-              "code": "CLASS",
-              "service": "UI",
-              "name": "Button"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "UI",
-          "name": "RectTransform"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nThe rect transform for the text.\n</summary>\n</doc>"
-      },
       "Button_get_Text": {
-        "id": 7,
+        "id": 6,
         "parameters": [
           {
             "name": "this",
@@ -142,11 +111,10 @@
           "service": "UI",
           "name": "Text"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe text for the button.\n</summary>\n</doc>"
       },
       "Button_get_Clicked": {
-        "id": 8,
+        "id": 7,
         "parameters": [
           {
             "name": "this",
@@ -160,11 +128,10 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nWhether the button has been clicked.\n</summary>\n<remarks>\nThis property is set to true when the user clicks the button.\nA client script should reset the property to false in order to detect subsequent button presses.\n</remarks>\n</doc>"
       },
       "Button_set_Clicked": {
-        "id": 9,
+        "id": 8,
         "parameters": [
           {
             "name": "this",
@@ -183,7 +150,24 @@
         ],
         "documentation": "<doc>\n<summary>\nWhether the button has been clicked.\n</summary>\n<remarks>\nThis property is set to true when the user clicks the button.\nA client script should reset the property to false in order to detect subsequent button presses.\n</remarks>\n</doc>"
       },
-      "Button_get_Visible": {
+      "Button_get_Pressed": {
+        "id": 9,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the user is holding the button down right now.\n</summary>\n<remarks>\nTrue from the button being pressed until the pointer is released, however far\nit has moved by then. Polling this repeats an action for as long as the\nbutton is held, for nudging a value; <see cref=\"M:UI.Button.Clicked\" /> reports each\ncompleted click instead.\n</remarks>\n</doc>"
+      },
+      "Button_get_Interactable": {
         "id": 10,
         "parameters": [
           {
@@ -198,10 +182,9 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
       },
-      "Button_set_Visible": {
+      "Button_set_Interactable": {
         "id": 11,
         "parameters": [
           {
@@ -219,10 +202,163 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
+      },
+      "Button_get_Color": {
+        "id": 12,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "ColorRGBA"
+        },
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "Button_set_Color": {
+        "id": 13,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "Button_get_Tooltip": {
+        "id": 14,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "Button_set_Tooltip": {
+        "id": 15,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "Button_get_RectTransform": {
+        "id": 16,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "Button_get_LayoutElement": {
+        "id": 17,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "Button_get_Visible": {
+        "id": 18,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Button_set_Visible": {
+        "id": 19,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Button"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
       },
       "Canvas_AddPanel": {
-        "id": 12,
+        "id": 20,
         "parameters": [
           {
             "name": "this",
@@ -245,11 +381,10 @@
           "service": "UI",
           "name": "Panel"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nCreate a new container for user interface elements.\n</summary>\n<param name=\"visible\">Whether the panel is visible.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nCreate a panel within this object.\n</summary>\n<param name=\"visible\">Whether the new panel is visible.</param>\n</doc>"
       },
       "Canvas_AddText": {
-        "id": 13,
+        "id": 21,
         "parameters": [
           {
             "name": "this",
@@ -278,11 +413,10 @@
           "service": "UI",
           "name": "Text"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAdd text to the canvas.\n</summary>\n<param name=\"content\">The text.</param>\n<param name=\"visible\">Whether the text is visible.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAdd text to this object.\n</summary>\n<param name=\"content\">The text.</param>\n<param name=\"visible\">Whether the text is visible.</param>\n</doc>"
       },
       "Canvas_AddInputField": {
-        "id": 14,
+        "id": 22,
         "parameters": [
           {
             "name": "this",
@@ -305,11 +439,172 @@
           "service": "UI",
           "name": "InputField"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAdd an input field to the canvas.\n</summary>\n<param name=\"visible\">Whether the input field is visible.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAdd an input field to this object.\n</summary>\n<param name=\"visible\">Whether the input field is visible.</param>\n</doc>"
+      },
+      "Canvas_AddSlider": {
+        "id": 23,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Canvas"
+            }
+          },
+          {
+            "name": "vertical",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AA=="
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Slider"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a slider to this object.\n</summary>\n<param name=\"vertical\">\nWhether the slider runs from bottom to top, rather than from left to right.\n</param>\n<param name=\"visible\">Whether the slider is visible.</param>\n</doc>"
+      },
+      "Canvas_AddDropdown": {
+        "id": 24,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Canvas"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Dropdown"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a dropdown to this object.\n</summary>\n<param name=\"visible\">Whether the dropdown is visible.</param>\n</doc>"
+      },
+      "Canvas_AddImage": {
+        "id": 25,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Canvas"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Image"
+        },
+        "documentation": "<doc>\n<summary>\nAdd an image to this object.\n</summary>\n<param name=\"visible\">Whether the image is visible.</param>\n</doc>"
+      },
+      "Canvas_AddScrollView": {
+        "id": 26,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Canvas"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "ScrollView"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a scroll view to this object.\n</summary>\n<param name=\"visible\">Whether the scroll view is visible.</param>\n</doc>"
+      },
+      "Canvas_AddToggle": {
+        "id": 27,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Canvas"
+            }
+          },
+          {
+            "name": "content",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Toggle"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a toggle to this object.\n</summary>\n<param name=\"content\">The label for the toggle.</param>\n<param name=\"visible\">Whether the toggle is visible.</param>\n</doc>"
+      },
+      "Canvas_AddToggleGroup": {
+        "id": 28,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Canvas"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "ToggleGroup"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a toggle group to this object, to make a set of toggles into radio buttons.\n</summary>\n<remarks>\nThe group is not drawn and does not take up any space. The toggles that belong\nto it can be added anywhere.\n</remarks>\n</doc>"
       },
       "Canvas_AddButton": {
-        "id": 15,
+        "id": 29,
         "parameters": [
           {
             "name": "this",
@@ -338,11 +633,10 @@
           "service": "UI",
           "name": "Button"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAdd a button to the canvas.\n</summary>\n<param name=\"content\">The label for the button.</param>\n<param name=\"visible\">Whether the button is visible.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAdd a button to this object.\n</summary>\n<param name=\"content\">The label for the button.</param>\n<param name=\"visible\">Whether the button is visible.</param>\n</doc>"
       },
       "Canvas_Remove": {
-        "id": 16,
+        "id": 30,
         "parameters": [
           {
             "name": "this",
@@ -356,7 +650,7 @@
         "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
       },
       "Canvas_get_RectTransform": {
-        "id": 17,
+        "id": 31,
         "parameters": [
           {
             "name": "this",
@@ -372,11 +666,29 @@
           "service": "UI",
           "name": "RectTransform"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nThe rect transform for the canvas.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "Canvas_get_LayoutElement": {
+        "id": 32,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Canvas"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
       },
       "Canvas_get_Visible": {
-        "id": 18,
+        "id": 33,
         "parameters": [
           {
             "name": "this",
@@ -390,11 +702,10 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
       },
       "Canvas_set_Visible": {
-        "id": 19,
+        "id": 34,
         "parameters": [
           {
             "name": "this",
@@ -411,10 +722,578 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Dropdown_Remove": {
+        "id": 35,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
+      },
+      "Dropdown_get_Options": {
+        "id": 36,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "LIST",
+          "types": [
+            {
+              "code": "STRING"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe options that the dropdown offers.\n</summary>\n<remarks>\nSetting the options resets the selection to the first of them, or to nothing\nwhen the list is empty.\n</remarks>\n</doc>"
+      },
+      "Dropdown_set_Options": {
+        "id": 37,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "LIST",
+              "types": [
+                {
+                  "code": "STRING"
+                }
+              ]
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe options that the dropdown offers.\n</summary>\n<remarks>\nSetting the options resets the selection to the first of them, or to nothing\nwhen the list is empty.\n</remarks>\n</doc>"
+      },
+      "Dropdown_get_SelectedIndex": {
+        "id": 38,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "SINT32"
+        },
+        "documentation": "<doc>\n<summary>\nThe position in <see cref=\"M:UI.Dropdown.Options\" /> of the option that is chosen.\n</summary>\n<remarks>\nZero while the dropdown has no options, as there is nothing to choose.\n</remarks>\n</doc>"
+      },
+      "Dropdown_set_SelectedIndex": {
+        "id": 39,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "SINT32"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe position in <see cref=\"M:UI.Dropdown.Options\" /> of the option that is chosen.\n</summary>\n<remarks>\nZero while the dropdown has no options, as there is nothing to choose.\n</remarks>\n</doc>"
+      },
+      "Dropdown_get_Changed": {
+        "id": 40,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the chosen option has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user chooses an option, and not when a\nclient chooses one.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
+      },
+      "Dropdown_set_Changed": {
+        "id": 41,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the chosen option has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user chooses an option, and not when a\nclient chooses one.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
+      },
+      "Dropdown_get_Interactable": {
+        "id": 42,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
+      },
+      "Dropdown_set_Interactable": {
+        "id": 43,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
+      },
+      "Dropdown_get_Color": {
+        "id": 44,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "ColorRGBA"
+        },
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "Dropdown_set_Color": {
+        "id": 45,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "Dropdown_get_Tooltip": {
+        "id": 46,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "Dropdown_set_Tooltip": {
+        "id": 47,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "Dropdown_get_RectTransform": {
+        "id": 48,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "Dropdown_get_LayoutElement": {
+        "id": 49,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "Dropdown_get_Visible": {
+        "id": 50,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Dropdown_set_Visible": {
+        "id": 51,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Dropdown"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Image_SetPixels": {
+        "id": 52,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          },
+          {
+            "name": "data",
+            "type": {
+              "code": "BYTES"
+            }
+          },
+          {
+            "name": "width",
+            "type": {
+              "code": "SINT32"
+            }
+          },
+          {
+            "name": "height",
+            "type": {
+              "code": "SINT32"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nDraw the picture from raw pixels rather than a file, so that a client can\ndraw whatever it likes, a graph for instance, and redraw it as often as it\nlikes.\n</summary>\n<param name=\"data\">\nThe pixels, 4 bytes per pixel: red, green, blue and alpha, each 0 to 255.\nPixels run left to right and rows run top to bottom, the way image files\nstore them, so the array must hold width times height times 4 bytes.\n</param>\n<param name=\"width\">How many pixels wide the picture is.</param>\n<param name=\"height\">How many pixels tall the picture is.</param>\n<remarks>\nRedrawing at an unchanged size draws into the picture already there, so a\npicture redrawn every update does not build a new one each time.\n</remarks>\n</doc>"
+      },
+      "Image_UpdatePixels": {
+        "id": 53,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          },
+          {
+            "name": "data",
+            "type": {
+              "code": "BYTES"
+            }
+          },
+          {
+            "name": "x",
+            "type": {
+              "code": "SINT32"
+            }
+          },
+          {
+            "name": "y",
+            "type": {
+              "code": "SINT32"
+            }
+          },
+          {
+            "name": "width",
+            "type": {
+              "code": "SINT32"
+            }
+          },
+          {
+            "name": "height",
+            "type": {
+              "code": "SINT32"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nRedraw part of a picture drawn with <see cref=\"M:UI.Image.SetPixels\" />: a block of the\ngiven size, with its top left corner x pixels in from the left edge and y\npixels down from the top. The rest of the picture is left as it is, so a\nchange to a small part of a large picture, one new column of a scrolling\ngraph for instance, only sends the part that changed.\n</summary>\n<param name=\"data\">\nThe pixels of the block, laid out as for <see cref=\"M:UI.Image.SetPixels\" />: 4 bytes\nper pixel, rows top to bottom, width times height times 4 bytes in all.\n</param>\n<param name=\"x\">How many pixels the block sits in from the left edge.</param>\n<param name=\"y\">How many pixels the block sits down from the top.</param>\n<param name=\"width\">How many pixels wide the block is.</param>\n<param name=\"height\">How many pixels tall the block is.</param>\n<remarks>\nThe image must already be showing a picture drawn from raw pixels, which is\nwhat sets the size, and the block must fit inside it. A picture loaded from\na file cannot be redrawn this way: the file contents a client reads back\nwould no longer be what is on the screen.\n</remarks>\n</doc>"
+      },
+      "Image_Remove": {
+        "id": 54,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
+      },
+      "Image_get_Content": {
+        "id": 55,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BYTES"
+        },
+        "documentation": "<doc>\n<summary>\nThe picture to show, as the contents of a PNG or JPEG file. Set it to an empty\narray to show a plain rectangle instead.\n</summary>\n<remarks>\nReading this returns what was last set, not what is on the screen, and returns\nan empty array if no picture has been set. A picture drawn with\n<see cref=\"M:UI.Image.SetPixels\" /> is not returned here either.\n</remarks>\n</doc>"
+      },
+      "Image_set_Content": {
+        "id": 56,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BYTES"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe picture to show, as the contents of a PNG or JPEG file. Set it to an empty\narray to show a plain rectangle instead.\n</summary>\n<remarks>\nReading this returns what was last set, not what is on the screen, and returns\nan empty array if no picture has been set. A picture drawn with\n<see cref=\"M:UI.Image.SetPixels\" /> is not returned here either.\n</remarks>\n</doc>"
+      },
+      "Image_get_Color": {
+        "id": 57,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "ColorRGBA"
+        },
+        "documentation": "<doc>\n<summary>\nThe color the image is tinted with, or the color of the rectangle when no\npicture is set.\n</summary>\n</doc>"
+      },
+      "Image_set_Color": {
+        "id": 58,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe color the image is tinted with, or the color of the rectangle when no\npicture is set.\n</summary>\n</doc>"
+      },
+      "Image_get_RectTransform": {
+        "id": 59,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "Image_get_LayoutElement": {
+        "id": 60,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "Image_get_Visible": {
+        "id": 61,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Image_set_Visible": {
+        "id": 62,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Image"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
       },
       "InputField_Remove": {
-        "id": 20,
+        "id": 63,
         "parameters": [
           {
             "name": "this",
@@ -427,28 +1306,8 @@
         ],
         "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
       },
-      "InputField_get_RectTransform": {
-        "id": 21,
-        "parameters": [
-          {
-            "name": "this",
-            "type": {
-              "code": "CLASS",
-              "service": "UI",
-              "name": "InputField"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "UI",
-          "name": "RectTransform"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nThe rect transform for the input field.\n</summary>\n</doc>"
-      },
       "InputField_get_Value": {
-        "id": 22,
+        "id": 64,
         "parameters": [
           {
             "name": "this",
@@ -462,11 +1321,10 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe value of the input field.\n</summary>\n</doc>"
       },
       "InputField_set_Value": {
-        "id": 23,
+        "id": 65,
         "parameters": [
           {
             "name": "this",
@@ -486,7 +1344,7 @@
         "documentation": "<doc>\n<summary>\nThe value of the input field.\n</summary>\n</doc>"
       },
       "InputField_get_Text": {
-        "id": 24,
+        "id": 66,
         "parameters": [
           {
             "name": "this",
@@ -502,11 +1360,107 @@
           "service": "UI",
           "name": "Text"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe text component of the input field.\n</summary>\n<remarks>\nUse <see cref=\"M:UI.InputField.Value\" /> to get and set the value in the field.\nThis object can be used to alter the style of the input field's text.\n</remarks>\n</doc>"
       },
-      "InputField_get_Changed": {
-        "id": 25,
+      "InputField_get_Placeholder": {
+        "id": 67,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Text"
+        },
+        "documentation": "<doc>\n<summary>\nThe placeholder text component of the input field.\n</summary>\n<remarks>\nSet its <see cref=\"M:UI.Text.Content\" /> to the hint to show while the field is empty.\nThe hint is hidden as soon as the field has a value.\n</remarks>\n</doc>"
+      },
+      "InputField_get_ContentType": {
+        "id": 68,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "UI",
+          "name": "InputContentType"
+        },
+        "documentation": "<doc>\n<summary>\nThe content the field accepts from the user. Keystrokes that do not fit are\nignored as they are typed, so a numeric field only ever shows a number.\n</summary>\n<remarks>\nThe filter applies to typing alone. A value set by a client is shown as it is\ngiven.\n</remarks>\n</doc>"
+      },
+      "InputField_set_ContentType": {
+        "id": 69,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "InputContentType"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe content the field accepts from the user. Keystrokes that do not fit are\nignored as they are typed, so a numeric field only ever shows a number.\n</summary>\n<remarks>\nThe filter applies to typing alone. A value set by a client is shown as it is\ngiven.\n</remarks>\n</doc>"
+      },
+      "InputField_get_CharacterLimit": {
+        "id": 70,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "SINT32"
+        },
+        "documentation": "<doc>\n<summary>\nThe most characters the user can type into the field, or 0 for no limit.\n</summary>\n</doc>"
+      },
+      "InputField_set_CharacterLimit": {
+        "id": 71,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "SINT32"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe most characters the user can type into the field, or 0 for no limit.\n</summary>\n</doc>"
+      },
+      "InputField_get_ReadOnly": {
+        "id": 72,
         "parameters": [
           {
             "name": "this",
@@ -520,11 +1474,47 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nWhether the input field has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user modifies the value of the input field.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the user is stopped from editing the field. The value can still be\nselected and copied, and a client can still set it.\n</summary>\n<remarks>\nA read-only field is drawn as normal. Make the field not interactable instead\nto gray it out and stop the user selecting it.\n</remarks>\n</doc>"
+      },
+      "InputField_set_ReadOnly": {
+        "id": 73,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the user is stopped from editing the field. The value can still be\nselected and copied, and a client can still set it.\n</summary>\n<remarks>\nA read-only field is drawn as normal. Make the field not interactable instead\nto gray it out and stop the user selecting it.\n</remarks>\n</doc>"
+      },
+      "InputField_get_Changed": {
+        "id": 74,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the input field has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user modifies the value of the input field,\nand not when a client sets it.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
       },
       "InputField_set_Changed": {
-        "id": 26,
+        "id": 75,
         "parameters": [
           {
             "name": "this",
@@ -541,10 +1531,10 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nWhether the input field has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user modifies the value of the input field.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the input field has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user modifies the value of the input field,\nand not when a client sets it.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
       },
-      "InputField_get_Visible": {
-        "id": 27,
+      "InputField_get_Interactable": {
+        "id": 76,
         "parameters": [
           {
             "name": "this",
@@ -558,11 +1548,10 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
       },
-      "InputField_set_Visible": {
-        "id": 28,
+      "InputField_set_Interactable": {
+        "id": 77,
         "parameters": [
           {
             "name": "this",
@@ -579,10 +1568,680 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
+      },
+      "InputField_get_Color": {
+        "id": 78,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "ColorRGBA"
+        },
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "InputField_set_Color": {
+        "id": 79,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "InputField_get_Tooltip": {
+        "id": 80,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "InputField_set_Tooltip": {
+        "id": 81,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "InputField_get_RectTransform": {
+        "id": 82,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "InputField_get_LayoutElement": {
+        "id": 83,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "InputField_get_Visible": {
+        "id": 84,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "InputField_set_Visible": {
+        "id": 85,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "InputField"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Layout_get_Spacing": {
+        "id": 86,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "documentation": "<doc>\n<summary>\nThe gap left between the elements, in pixels. A grid layout uses it in both\ndirections.\n</summary>\n</doc>"
+      },
+      "Layout_set_Spacing": {
+        "id": 87,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe gap left between the elements, in pixels. A grid layout uses it in both\ndirections.\n</summary>\n</doc>"
+      },
+      "Layout_get_Padding": {
+        "id": 88,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "UI",
+          "name": "Padding"
+        },
+        "documentation": "<doc>\n<summary>\nThe gap left inside the edges of the panel.\n</summary>\n</doc>"
+      },
+      "Layout_set_Padding": {
+        "id": 89,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "UI",
+              "name": "Padding"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe gap left inside the edges of the panel.\n</summary>\n</doc>"
+      },
+      "Layout_get_ChildAlignment": {
+        "id": 90,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "UI",
+          "name": "TextAnchor"
+        },
+        "documentation": "<doc>\n<summary>\nWhere the elements are placed within the space the layout has to fill.\n</summary>\n</doc>"
+      },
+      "Layout_set_ChildAlignment": {
+        "id": 91,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "TextAnchor"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhere the elements are placed within the space the layout has to fill.\n</summary>\n</doc>"
+      },
+      "Layout_get_CellSize": {
+        "id": 92,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe size of each cell of a grid layout, in pixels.\n</summary>\n<remarks>\nOnly applies to a grid layout. Throws an exception for the other layouts, whose\nelements are sized individually using their layout elements.\n</remarks>\n</doc>"
+      },
+      "Layout_set_CellSize": {
+        "id": 93,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe size of each cell of a grid layout, in pixels.\n</summary>\n<remarks>\nOnly applies to a grid layout. Throws an exception for the other layouts, whose\nelements are sized individually using their layout elements.\n</remarks>\n</doc>"
+      },
+      "Layout_get_Constraint": {
+        "id": 94,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "UI",
+          "name": "GridConstraint"
+        },
+        "documentation": "<doc>\n<summary>\nWhat fixes the shape of a grid layout.\n</summary>\n<remarks>\nOnly applies to a grid layout. Throws an exception for the other layouts.\n</remarks>\n</doc>"
+      },
+      "Layout_set_Constraint": {
+        "id": 95,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "GridConstraint"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhat fixes the shape of a grid layout.\n</summary>\n<remarks>\nOnly applies to a grid layout. Throws an exception for the other layouts.\n</remarks>\n</doc>"
+      },
+      "Layout_get_ConstraintCount": {
+        "id": 96,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "SINT32"
+        },
+        "documentation": "<doc>\n<summary>\nThe number of columns or rows that <see cref=\"M:UI.Layout.Constraint\" /> fixes, ignored when\nthe constraint is <see cref=\"M:UI.GridConstraint.Flexible\" />.\n</summary>\n<remarks>\nOnly applies to a grid layout. Throws an exception for the other layouts.\n</remarks>\n</doc>"
+      },
+      "Layout_set_ConstraintCount": {
+        "id": 97,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Layout"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "SINT32"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe number of columns or rows that <see cref=\"M:UI.Layout.Constraint\" /> fixes, ignored when\nthe constraint is <see cref=\"M:UI.GridConstraint.Flexible\" />.\n</summary>\n<remarks>\nOnly applies to a grid layout. Throws an exception for the other layouts.\n</remarks>\n</doc>"
+      },
+      "LayoutElement_get_MinSize": {
+        "id": 98,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "LayoutElement"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe smallest size the element can be given, in pixels. A negative value in either\ndirection leaves that direction unconstrained.\n</summary>\n</doc>"
+      },
+      "LayoutElement_set_MinSize": {
+        "id": 99,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "LayoutElement"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe smallest size the element can be given, in pixels. A negative value in either\ndirection leaves that direction unconstrained.\n</summary>\n</doc>"
+      },
+      "LayoutElement_get_PreferredSize": {
+        "id": 100,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "LayoutElement"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe size the element asks for, in pixels. A negative value in either direction\nleaves that direction unconstrained.\n</summary>\n</doc>"
+      },
+      "LayoutElement_set_PreferredSize": {
+        "id": 101,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "LayoutElement"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe size the element asks for, in pixels. A negative value in either direction\nleaves that direction unconstrained.\n</summary>\n</doc>"
+      },
+      "LayoutElement_get_FlexibleSize": {
+        "id": 102,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "LayoutElement"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "TUPLE",
+          "types": [
+            {
+              "code": "DOUBLE"
+            },
+            {
+              "code": "DOUBLE"
+            }
+          ]
+        },
+        "documentation": "<doc>\n<summary>\nThe share the element takes of the space left over once every element has its\npreferred size. A negative value in either direction takes no share.\n</summary>\n</doc>"
+      },
+      "LayoutElement_set_FlexibleSize": {
+        "id": 103,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "LayoutElement"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe share the element takes of the space left over once every element has its\npreferred size. A negative value in either direction takes no share.\n</summary>\n</doc>"
+      },
+      "LayoutElement_get_IgnoreLayout": {
+        "id": 104,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "LayoutElement"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the layout leaves the element out and lets it be positioned by hand.\n</summary>\n</doc>"
+      },
+      "LayoutElement_set_IgnoreLayout": {
+        "id": 105,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "LayoutElement"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the layout leaves the element out and lets it be positioned by hand.\n</summary>\n</doc>"
+      },
+      "Panel_AddHorizontalLayout": {
+        "id": 106,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Layout"
+        },
+        "documentation": "<doc>\n<summary>\nArrange the elements of the panel in a row.\n</summary>\n</doc>"
+      },
+      "Panel_AddVerticalLayout": {
+        "id": 107,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Layout"
+        },
+        "documentation": "<doc>\n<summary>\nArrange the elements of the panel in a column.\n</summary>\n</doc>"
+      },
+      "Panel_AddGridLayout": {
+        "id": 108,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Layout"
+        },
+        "documentation": "<doc>\n<summary>\nArrange the elements of the panel in a grid of equally sized cells.\n</summary>\n<remarks>\nThe number of columns follows from the size of the panel and the size of a cell.\nUse <see cref=\"M:UI.Layout.Constraint\" /> to fix it instead.\n</remarks>\n</doc>"
+      },
+      "Panel_BringToFront": {
+        "id": 109,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nDraw the panel in front of the other elements beside it. Elements are drawn\nin the order they were added, so of two overlapping panels the newer hides\npart of the older until the older is brought to the front.\n</summary>\n<remarks>\nA draggable panel also brings itself to the front when the user starts\ndragging it, the way a window comes to the front when it is clicked.\n</remarks>\n</doc>"
       },
       "Panel_AddPanel": {
-        "id": 29,
+        "id": 110,
         "parameters": [
           {
             "name": "this",
@@ -605,11 +2264,10 @@
           "service": "UI",
           "name": "Panel"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nCreate a panel within this panel.\n</summary>\n<param name=\"visible\">Whether the new panel is visible.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nCreate a panel within this object.\n</summary>\n<param name=\"visible\">Whether the new panel is visible.</param>\n</doc>"
       },
       "Panel_AddText": {
-        "id": 30,
+        "id": 111,
         "parameters": [
           {
             "name": "this",
@@ -638,11 +2296,10 @@
           "service": "UI",
           "name": "Text"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAdd text to the panel.\n</summary>\n<param name=\"content\">The text.</param>\n<param name=\"visible\">Whether the text is visible.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAdd text to this object.\n</summary>\n<param name=\"content\">The text.</param>\n<param name=\"visible\">Whether the text is visible.</param>\n</doc>"
       },
       "Panel_AddInputField": {
-        "id": 31,
+        "id": 112,
         "parameters": [
           {
             "name": "this",
@@ -665,11 +2322,172 @@
           "service": "UI",
           "name": "InputField"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAdd an input field to the panel.\n</summary>\n<param name=\"visible\">Whether the input field is visible.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAdd an input field to this object.\n</summary>\n<param name=\"visible\">Whether the input field is visible.</param>\n</doc>"
+      },
+      "Panel_AddSlider": {
+        "id": 113,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          },
+          {
+            "name": "vertical",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AA=="
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Slider"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a slider to this object.\n</summary>\n<param name=\"vertical\">\nWhether the slider runs from bottom to top, rather than from left to right.\n</param>\n<param name=\"visible\">Whether the slider is visible.</param>\n</doc>"
+      },
+      "Panel_AddDropdown": {
+        "id": 114,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Dropdown"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a dropdown to this object.\n</summary>\n<param name=\"visible\">Whether the dropdown is visible.</param>\n</doc>"
+      },
+      "Panel_AddImage": {
+        "id": 115,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Image"
+        },
+        "documentation": "<doc>\n<summary>\nAdd an image to this object.\n</summary>\n<param name=\"visible\">Whether the image is visible.</param>\n</doc>"
+      },
+      "Panel_AddScrollView": {
+        "id": 116,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "ScrollView"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a scroll view to this object.\n</summary>\n<param name=\"visible\">Whether the scroll view is visible.</param>\n</doc>"
+      },
+      "Panel_AddToggle": {
+        "id": 117,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          },
+          {
+            "name": "content",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "visible",
+            "type": {
+              "code": "BOOL"
+            },
+            "default_value": "AQ=="
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Toggle"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a toggle to this object.\n</summary>\n<param name=\"content\">The label for the toggle.</param>\n<param name=\"visible\">Whether the toggle is visible.</param>\n</doc>"
+      },
+      "Panel_AddToggleGroup": {
+        "id": 118,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "ToggleGroup"
+        },
+        "documentation": "<doc>\n<summary>\nAdd a toggle group to this object, to make a set of toggles into radio buttons.\n</summary>\n<remarks>\nThe group is not drawn and does not take up any space. The toggles that belong\nto it can be added anywhere.\n</remarks>\n</doc>"
       },
       "Panel_AddButton": {
-        "id": 32,
+        "id": 119,
         "parameters": [
           {
             "name": "this",
@@ -698,11 +2516,10 @@
           "service": "UI",
           "name": "Button"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nAdd a button to the panel.\n</summary>\n<param name=\"content\">The label for the button.</param>\n<param name=\"visible\">Whether the button is visible.</param>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAdd a button to this object.\n</summary>\n<param name=\"content\">The label for the button.</param>\n<param name=\"visible\">Whether the button is visible.</param>\n</doc>"
       },
       "Panel_Remove": {
-        "id": 33,
+        "id": 120,
         "parameters": [
           {
             "name": "this",
@@ -715,8 +2532,8 @@
         ],
         "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
       },
-      "Panel_get_RectTransform": {
-        "id": 34,
+      "Panel_get_Style": {
+        "id": 121,
         "parameters": [
           {
             "name": "this",
@@ -728,15 +2545,77 @@
           }
         ],
         "return_type": {
-          "code": "CLASS",
+          "code": "ENUMERATION",
           "service": "UI",
-          "name": "RectTransform"
+          "name": "PanelStyle"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nThe rect transform for the panel.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nHow the background of the panel is drawn. A box is the frame to group related\ncontrols in, and is how a group box is made.\n</summary>\n</doc>"
       },
-      "Panel_get_Visible": {
-        "id": 35,
+      "Panel_set_Style": {
+        "id": 122,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "PanelStyle"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nHow the background of the panel is drawn. A box is the frame to group related\ncontrols in, and is how a group box is made.\n</summary>\n</doc>"
+      },
+      "Panel_get_Color": {
+        "id": 123,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "ColorRGBA"
+        },
+        "documentation": "<doc>\n<summary>\nThe color the background of the panel is tinted with.\n</summary>\n<remarks>\nHas no effect while the style of the panel is <see cref=\"M:UI.PanelStyle.None\" />,\nas the panel is then not drawn at all.\n</remarks>\n</doc>"
+      },
+      "Panel_set_Color": {
+        "id": 124,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe color the background of the panel is tinted with.\n</summary>\n<remarks>\nHas no effect while the style of the panel is <see cref=\"M:UI.PanelStyle.None\" />,\nas the panel is then not drawn at all.\n</remarks>\n</doc>"
+      },
+      "Panel_get_Draggable": {
+        "id": 125,
         "parameters": [
           {
             "name": "this",
@@ -750,11 +2629,10 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the user can move the panel by dragging it.\n</summary>\n<remarks>\nDragging anywhere on the panel moves it, including over the elements it\ncontains, unless one of them takes the pointer for itself. Give a panel a title\nbar of its own if only part of it should move it.\nA panel whose style is <see cref=\"M:UI.PanelStyle.None\" /> is not drawn, so it takes\nno pointer events of its own and can only be dragged by the elements it\ncontains.\n</remarks>\n</doc>"
       },
-      "Panel_set_Visible": {
-        "id": 36,
+      "Panel_set_Draggable": {
+        "id": 126,
         "parameters": [
           {
             "name": "this",
@@ -771,10 +2649,124 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the user can move the panel by dragging it.\n</summary>\n<remarks>\nDragging anywhere on the panel moves it, including over the elements it\ncontains, unless one of them takes the pointer for itself. Give a panel a title\nbar of its own if only part of it should move it.\nA panel whose style is <see cref=\"M:UI.PanelStyle.None\" /> is not drawn, so it takes\nno pointer events of its own and can only be dragged by the elements it\ncontains.\n</remarks>\n</doc>"
+      },
+      "Panel_get_Layout": {
+        "id": 127,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Layout",
+          "nullable": true
+        },
+        "documentation": "<doc>\n<summary>\nThe layout that arranges the elements of the panel, or <c>null</c> if they are\npositioned by hand.\n</summary>\n</doc>"
+      },
+      "Panel_get_SizeFitter": {
+        "id": 128,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "SizeFitter"
+        },
+        "documentation": "<doc>\n<summary>\nSizes the panel to fit what it contains.\n</summary>\n<remarks>\nBoth directions start out unconstrained, which leaves the size of the panel\nalone.\n</remarks>\n</doc>"
+      },
+      "Panel_get_RectTransform": {
+        "id": 129,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "Panel_get_LayoutElement": {
+        "id": 130,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "Panel_get_Visible": {
+        "id": 131,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Panel_set_Visible": {
+        "id": 132,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Panel"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
       },
       "RectTransform_get_Position": {
-        "id": 37,
+        "id": 133,
         "parameters": [
           {
             "name": "this",
@@ -796,11 +2788,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nPosition of the rectangles pivot point relative to the anchors.\n</summary>\n</doc>"
       },
       "RectTransform_set_Position": {
-        "id": 38,
+        "id": 134,
         "parameters": [
           {
             "name": "this",
@@ -828,7 +2819,7 @@
         "documentation": "<doc>\n<summary>\nPosition of the rectangles pivot point relative to the anchors.\n</summary>\n</doc>"
       },
       "RectTransform_get_LocalPosition": {
-        "id": 39,
+        "id": 135,
         "parameters": [
           {
             "name": "this",
@@ -853,11 +2844,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nPosition of the rectangles pivot point relative to the anchors.\n</summary>\n</doc>"
       },
       "RectTransform_set_LocalPosition": {
-        "id": 40,
+        "id": 136,
         "parameters": [
           {
             "name": "this",
@@ -888,7 +2878,7 @@
         "documentation": "<doc>\n<summary>\nPosition of the rectangles pivot point relative to the anchors.\n</summary>\n</doc>"
       },
       "RectTransform_get_Size": {
-        "id": 41,
+        "id": 137,
         "parameters": [
           {
             "name": "this",
@@ -910,11 +2900,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nWidth and height of the rectangle.\n</summary>\n</doc>"
       },
       "RectTransform_set_Size": {
-        "id": 42,
+        "id": 138,
         "parameters": [
           {
             "name": "this",
@@ -942,7 +2931,7 @@
         "documentation": "<doc>\n<summary>\nWidth and height of the rectangle.\n</summary>\n</doc>"
       },
       "RectTransform_get_UpperRight": {
-        "id": 43,
+        "id": 139,
         "parameters": [
           {
             "name": "this",
@@ -964,11 +2953,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nPosition of the rectangles upper right corner relative to the anchors.\n</summary>\n</doc>"
       },
       "RectTransform_set_UpperRight": {
-        "id": 44,
+        "id": 140,
         "parameters": [
           {
             "name": "this",
@@ -996,7 +2984,7 @@
         "documentation": "<doc>\n<summary>\nPosition of the rectangles upper right corner relative to the anchors.\n</summary>\n</doc>"
       },
       "RectTransform_get_LowerLeft": {
-        "id": 45,
+        "id": 141,
         "parameters": [
           {
             "name": "this",
@@ -1018,11 +3006,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nPosition of the rectangles lower left corner relative to the anchors.\n</summary>\n</doc>"
       },
       "RectTransform_set_LowerLeft": {
-        "id": 46,
+        "id": 142,
         "parameters": [
           {
             "name": "this",
@@ -1050,7 +3037,7 @@
         "documentation": "<doc>\n<summary>\nPosition of the rectangles lower left corner relative to the anchors.\n</summary>\n</doc>"
       },
       "RectTransform_set_Anchor": {
-        "id": 47,
+        "id": 143,
         "parameters": [
           {
             "name": "this",
@@ -1078,7 +3065,7 @@
         "documentation": "<doc>\n<summary>\nSet the minimum and maximum anchor points as a fraction of the size of the parent rectangle.\n</summary>\n</doc>"
       },
       "RectTransform_get_AnchorMax": {
-        "id": 48,
+        "id": 144,
         "parameters": [
           {
             "name": "this",
@@ -1100,11 +3087,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe anchor point for the lower left corner of the rectangle defined as a fraction of the size of the parent rectangle.\n</summary>\n</doc>"
       },
       "RectTransform_set_AnchorMax": {
-        "id": 49,
+        "id": 145,
         "parameters": [
           {
             "name": "this",
@@ -1132,7 +3118,7 @@
         "documentation": "<doc>\n<summary>\nThe anchor point for the lower left corner of the rectangle defined as a fraction of the size of the parent rectangle.\n</summary>\n</doc>"
       },
       "RectTransform_get_AnchorMin": {
-        "id": 50,
+        "id": 146,
         "parameters": [
           {
             "name": "this",
@@ -1154,11 +3140,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe anchor point for the upper right corner of the rectangle defined as a fraction of the size of the parent rectangle.\n</summary>\n</doc>"
       },
       "RectTransform_set_AnchorMin": {
-        "id": 51,
+        "id": 147,
         "parameters": [
           {
             "name": "this",
@@ -1186,7 +3171,7 @@
         "documentation": "<doc>\n<summary>\nThe anchor point for the upper right corner of the rectangle defined as a fraction of the size of the parent rectangle.\n</summary>\n</doc>"
       },
       "RectTransform_get_Pivot": {
-        "id": 52,
+        "id": 148,
         "parameters": [
           {
             "name": "this",
@@ -1208,11 +3193,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nLocation of the pivot point around which the rectangle rotates, defined as a fraction of the size of the rectangle itself.\n</summary>\n</doc>"
       },
       "RectTransform_set_Pivot": {
-        "id": 53,
+        "id": 149,
         "parameters": [
           {
             "name": "this",
@@ -1240,7 +3224,7 @@
         "documentation": "<doc>\n<summary>\nLocation of the pivot point around which the rectangle rotates, defined as a fraction of the size of the rectangle itself.\n</summary>\n</doc>"
       },
       "RectTransform_get_Rotation": {
-        "id": 54,
+        "id": 150,
         "parameters": [
           {
             "name": "this",
@@ -1268,11 +3252,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nRotation, as a quaternion, of the object around its pivot point.\n</summary>\n</doc>"
       },
       "RectTransform_set_Rotation": {
-        "id": 55,
+        "id": 151,
         "parameters": [
           {
             "name": "this",
@@ -1306,7 +3289,7 @@
         "documentation": "<doc>\n<summary>\nRotation, as a quaternion, of the object around its pivot point.\n</summary>\n</doc>"
       },
       "RectTransform_get_Scale": {
-        "id": 56,
+        "id": 152,
         "parameters": [
           {
             "name": "this",
@@ -1331,11 +3314,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nScale factor applied to the object in the x, y and z dimensions.\n</summary>\n</doc>"
       },
       "RectTransform_set_Scale": {
-        "id": 57,
+        "id": 153,
         "parameters": [
           {
             "name": "this",
@@ -1365,8 +3347,624 @@
         ],
         "documentation": "<doc>\n<summary>\nScale factor applied to the object in the x, y and z dimensions.\n</summary>\n</doc>"
       },
+      "ScrollView_Remove": {
+        "id": 154,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
+      },
+      "ScrollView_get_Content": {
+        "id": 155,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Panel"
+        },
+        "documentation": "<doc>\n<summary>\nThe panel that is scrolled, which the elements to show are added to.\n</summary>\n</doc>"
+      },
+      "ScrollView_get_Horizontal": {
+        "id": 156,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the view can be scrolled from side to side.\n</summary>\n</doc>"
+      },
+      "ScrollView_set_Horizontal": {
+        "id": 157,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the view can be scrolled from side to side.\n</summary>\n</doc>"
+      },
+      "ScrollView_get_Vertical": {
+        "id": 158,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the view can be scrolled up and down.\n</summary>\n</doc>"
+      },
+      "ScrollView_set_Vertical": {
+        "id": 159,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the view can be scrolled up and down.\n</summary>\n</doc>"
+      },
+      "ScrollView_get_RectTransform": {
+        "id": 160,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "ScrollView_get_LayoutElement": {
+        "id": 161,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "ScrollView_get_Visible": {
+        "id": 162,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "ScrollView_set_Visible": {
+        "id": 163,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ScrollView"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "SizeFitter_get_HorizontalFit": {
+        "id": 164,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "SizeFitter"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "UI",
+          "name": "ContentSizeFit"
+        },
+        "documentation": "<doc>\n<summary>\nHow the width of the panel is chosen.\n</summary>\n</doc>"
+      },
+      "SizeFitter_set_HorizontalFit": {
+        "id": 165,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "SizeFitter"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "ContentSizeFit"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nHow the width of the panel is chosen.\n</summary>\n</doc>"
+      },
+      "SizeFitter_get_VerticalFit": {
+        "id": 166,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "SizeFitter"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "ENUMERATION",
+          "service": "UI",
+          "name": "ContentSizeFit"
+        },
+        "documentation": "<doc>\n<summary>\nHow the height of the panel is chosen.\n</summary>\n</doc>"
+      },
+      "SizeFitter_set_VerticalFit": {
+        "id": 167,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "SizeFitter"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "ENUMERATION",
+              "service": "UI",
+              "name": "ContentSizeFit"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nHow the height of the panel is chosen.\n</summary>\n</doc>"
+      },
+      "Slider_Remove": {
+        "id": 168,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
+      },
+      "Slider_get_Value": {
+        "id": 169,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "documentation": "<doc>\n<summary>\nThe value of the slider, between <see cref=\"M:UI.Slider.Min\" /> and <see cref=\"M:UI.Slider.Max\" />.\nSetting a value outside the range is refused.\n</summary>\n</doc>"
+      },
+      "Slider_set_Value": {
+        "id": 170,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe value of the slider, between <see cref=\"M:UI.Slider.Min\" /> and <see cref=\"M:UI.Slider.Max\" />.\nSetting a value outside the range is refused.\n</summary>\n</doc>"
+      },
+      "Slider_get_Min": {
+        "id": 171,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "documentation": "<doc>\n<summary>\nThe value at the low end of the slider, which is its left hand end, or the\nbottom of a vertical slider. Must not be greater than <see cref=\"M:UI.Slider.Max\" />.\n</summary>\n</doc>"
+      },
+      "Slider_set_Min": {
+        "id": 172,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe value at the low end of the slider, which is its left hand end, or the\nbottom of a vertical slider. Must not be greater than <see cref=\"M:UI.Slider.Max\" />.\n</summary>\n</doc>"
+      },
+      "Slider_get_Max": {
+        "id": 173,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "documentation": "<doc>\n<summary>\nThe value at the high end of the slider, which is its right hand end, or the\ntop of a vertical slider. Must not be less than <see cref=\"M:UI.Slider.Min\" />.\n</summary>\n</doc>"
+      },
+      "Slider_set_Max": {
+        "id": 174,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe value at the high end of the slider, which is its right hand end, or the\ntop of a vertical slider. Must not be less than <see cref=\"M:UI.Slider.Min\" />.\n</summary>\n</doc>"
+      },
+      "Slider_get_Changed": {
+        "id": 175,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the slider has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user moves the slider, and not when a\nclient sets its value.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
+      },
+      "Slider_set_Changed": {
+        "id": 176,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the slider has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user moves the slider, and not when a\nclient sets its value.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
+      },
+      "Slider_get_Interactable": {
+        "id": 177,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
+      },
+      "Slider_set_Interactable": {
+        "id": 178,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
+      },
+      "Slider_get_Color": {
+        "id": 179,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "ColorRGBA"
+        },
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "Slider_set_Color": {
+        "id": 180,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "Slider_get_Tooltip": {
+        "id": 181,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "Slider_set_Tooltip": {
+        "id": 182,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "Slider_get_RectTransform": {
+        "id": 183,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "Slider_get_LayoutElement": {
+        "id": 184,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "Slider_get_Visible": {
+        "id": 185,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Slider_set_Visible": {
+        "id": 186,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Slider"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
       "Text_Remove": {
-        "id": 58,
+        "id": 187,
         "parameters": [
           {
             "name": "this",
@@ -1379,28 +3977,8 @@
         ],
         "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
       },
-      "Text_get_RectTransform": {
-        "id": 59,
-        "parameters": [
-          {
-            "name": "this",
-            "type": {
-              "code": "CLASS",
-              "service": "UI",
-              "name": "Text"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "CLASS",
-          "service": "UI",
-          "name": "RectTransform"
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nThe rect transform for the text.\n</summary>\n</doc>"
-      },
       "Text_get_AvailableFonts": {
-        "id": 60,
+        "id": 188,
         "parameters": [
           {
             "name": "this",
@@ -1419,11 +3997,10 @@
             }
           ]
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nA list of all available fonts.\n</summary>\n</doc>"
       },
       "Text_get_Content": {
-        "id": 61,
+        "id": 189,
         "parameters": [
           {
             "name": "this",
@@ -1437,11 +4014,10 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nThe text string\n</summary>\n</doc>"
       },
       "Text_set_Content": {
-        "id": 62,
+        "id": 190,
         "parameters": [
           {
             "name": "this",
@@ -1461,7 +4037,7 @@
         "documentation": "<doc>\n<summary>\nThe text string\n</summary>\n</doc>"
       },
       "Text_get_Font": {
-        "id": 63,
+        "id": 191,
         "parameters": [
           {
             "name": "this",
@@ -1475,11 +4051,10 @@
         "return_type": {
           "code": "STRING"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nName of the font\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nName of the font\n</summary>\n<remarks>\nEmpty if the game provided no font to draw the text with, in which case it is\nnot drawn. See <see cref=\"M:UI.Text.AvailableFonts\" /> for the names that can be set.\n</remarks>\n</doc>"
       },
       "Text_set_Font": {
-        "id": 64,
+        "id": 192,
         "parameters": [
           {
             "name": "this",
@@ -1496,10 +4071,10 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nName of the font\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nName of the font\n</summary>\n<remarks>\nEmpty if the game provided no font to draw the text with, in which case it is\nnot drawn. See <see cref=\"M:UI.Text.AvailableFonts\" /> for the names that can be set.\n</remarks>\n</doc>"
       },
       "Text_get_Size": {
-        "id": 65,
+        "id": 193,
         "parameters": [
           {
             "name": "this",
@@ -1513,11 +4088,10 @@
         "return_type": {
           "code": "SINT32"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nFont size.\n</summary>\n</doc>"
       },
       "Text_set_Size": {
-        "id": 66,
+        "id": 194,
         "parameters": [
           {
             "name": "this",
@@ -1537,7 +4111,7 @@
         "documentation": "<doc>\n<summary>\nFont size.\n</summary>\n</doc>"
       },
       "Text_get_Style": {
-        "id": 67,
+        "id": 195,
         "parameters": [
           {
             "name": "this",
@@ -1553,11 +4127,10 @@
           "service": "UI",
           "name": "FontStyle"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nFont style.\n</summary>\n</doc>"
       },
       "Text_set_Style": {
-        "id": 68,
+        "id": 196,
         "parameters": [
           {
             "name": "this",
@@ -1579,7 +4152,7 @@
         "documentation": "<doc>\n<summary>\nFont style.\n</summary>\n</doc>"
       },
       "Text_get_Alignment": {
-        "id": 69,
+        "id": 197,
         "parameters": [
           {
             "name": "this",
@@ -1595,11 +4168,10 @@
           "service": "UI",
           "name": "TextAnchor"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nAlignment.\n</summary>\n</doc>"
       },
       "Text_set_Alignment": {
-        "id": 70,
+        "id": 198,
         "parameters": [
           {
             "name": "this",
@@ -1621,7 +4193,7 @@
         "documentation": "<doc>\n<summary>\nAlignment.\n</summary>\n</doc>"
       },
       "Text_get_LineSpacing": {
-        "id": 71,
+        "id": 199,
         "parameters": [
           {
             "name": "this",
@@ -1635,11 +4207,10 @@
         "return_type": {
           "code": "FLOAT"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nLine spacing.\n</summary>\n</doc>"
       },
       "Text_set_LineSpacing": {
-        "id": 72,
+        "id": 200,
         "parameters": [
           {
             "name": "this",
@@ -1658,68 +4229,8 @@
         ],
         "documentation": "<doc>\n<summary>\nLine spacing.\n</summary>\n</doc>"
       },
-      "Text_get_Color": {
-        "id": 73,
-        "parameters": [
-          {
-            "name": "this",
-            "type": {
-              "code": "CLASS",
-              "service": "UI",
-              "name": "Text"
-            }
-          }
-        ],
-        "return_type": {
-          "code": "TUPLE",
-          "types": [
-            {
-              "code": "DOUBLE"
-            },
-            {
-              "code": "DOUBLE"
-            },
-            {
-              "code": "DOUBLE"
-            }
-          ]
-        },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nSet the color\n</summary>\n</doc>"
-      },
-      "Text_set_Color": {
-        "id": 74,
-        "parameters": [
-          {
-            "name": "this",
-            "type": {
-              "code": "CLASS",
-              "service": "UI",
-              "name": "Text"
-            }
-          },
-          {
-            "name": "value",
-            "type": {
-              "code": "TUPLE",
-              "types": [
-                {
-                  "code": "DOUBLE"
-                },
-                {
-                  "code": "DOUBLE"
-                },
-                {
-                  "code": "DOUBLE"
-                }
-              ]
-            }
-          }
-        ],
-        "documentation": "<doc>\n<summary>\nSet the color\n</summary>\n</doc>"
-      },
-      "Text_get_Visible": {
-        "id": 75,
+      "Text_get_WordWrap": {
+        "id": 201,
         "parameters": [
           {
             "name": "this",
@@ -1733,11 +4244,10 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the text wraps onto further lines when it is wider than the space it\nhas. Text that does not wrap carries on past the edge, and its preferred size\nis that of a single line, so a changing value leaves a layout in place.\n</summary>\n</doc>"
       },
-      "Text_set_Visible": {
-        "id": 76,
+      "Text_set_WordWrap": {
+        "id": 202,
         "parameters": [
           {
             "name": "this",
@@ -1754,30 +4264,679 @@
             }
           }
         ],
-        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nWhether the text wraps onto further lines when it is wider than the space it\nhas. Text that does not wrap carries on past the edge, and its preferred size\nis that of a single line, so a changing value leaves a layout in place.\n</summary>\n</doc>"
+      },
+      "Text_get_Color": {
+        "id": 203,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "ColorRGBA"
+        },
+        "documentation": "<doc>\n<summary>\nThe color the text is drawn in.\n</summary>\n</doc>"
+      },
+      "Text_set_Color": {
+        "id": 204,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe color the text is drawn in.\n</summary>\n</doc>"
+      },
+      "Text_get_RectTransform": {
+        "id": 205,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "Text_get_LayoutElement": {
+        "id": 206,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "Text_get_Visible": {
+        "id": 207,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Text"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Text_set_Visible": {
+        "id": 208,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Text"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Toggle_Remove": {
+        "id": 209,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
+      },
+      "Toggle_get_Text": {
+        "id": 210,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Text"
+        },
+        "documentation": "<doc>\n<summary>\nThe text for the toggle.\n</summary>\n</doc>"
+      },
+      "Toggle_get_Checked": {
+        "id": 211,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the toggle is checked.\n</summary>\n<remarks>\nChecking a toggle that belongs to a <see cref=\"T:UI.ToggleGroup\" /> unchecks the rest\nof that group, whether or not it is on the screen.\n</remarks>\n</doc>"
+      },
+      "Toggle_set_Checked": {
+        "id": 212,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the toggle is checked.\n</summary>\n<remarks>\nChecking a toggle that belongs to a <see cref=\"T:UI.ToggleGroup\" /> unchecks the rest\nof that group, whether or not it is on the screen.\n</remarks>\n</doc>"
+      },
+      "Toggle_get_Group": {
+        "id": 213,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "ToggleGroup",
+          "nullable": true
+        },
+        "documentation": "<doc>\n<summary>\nThe group that the toggle belongs to, or <c>null</c> if it does not belong to one.\n</summary>\n<remarks>\nOnly one toggle in a group can be checked at a time, so a group turns a set of\ntoggles into radio buttons. A group does not have to contain the toggles, so\nthey can be grouped independently of how they are laid out.\n</remarks>\n</doc>"
+      },
+      "Toggle_set_Group": {
+        "id": 214,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup",
+              "nullable": true
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe group that the toggle belongs to, or <c>null</c> if it does not belong to one.\n</summary>\n<remarks>\nOnly one toggle in a group can be checked at a time, so a group turns a set of\ntoggles into radio buttons. A group does not have to contain the toggles, so\nthey can be grouped independently of how they are laid out.\n</remarks>\n</doc>"
+      },
+      "Toggle_get_Changed": {
+        "id": 215,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the toggle has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user changes the toggle, and not when a\nclient checks or unchecks it.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
+      },
+      "Toggle_set_Changed": {
+        "id": 216,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the toggle has been changed.\n</summary>\n<remarks>\nThis property is set to true when the user changes the toggle, and not when a\nclient checks or unchecks it.\nA client script should reset the property to false in order to detect subsequent changes.\n</remarks>\n</doc>"
+      },
+      "Toggle_get_Interactable": {
+        "id": 217,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
+      },
+      "Toggle_set_Interactable": {
+        "id": 218,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the control responds to the user.\n</summary>\n<remarks>\nA control that is not interactable is drawn grayed out and ignores the user,\nbut is still visible. Set its visibility to false to hide it instead.\n</remarks>\n</doc>"
+      },
+      "Toggle_get_Color": {
+        "id": 219,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRUCT",
+          "service": "StdLib",
+          "name": "ColorRGBA"
+        },
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "Toggle_set_Color": {
+        "id": 220,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRUCT",
+              "service": "StdLib",
+              "name": "ColorRGBA"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe color the control is tinted with. White, the default, leaves the control drawn\nas the skin has it.\n</summary>\n<remarks>\nThe tint multiplies the sprite the control is drawn with, in every state, so\na control can show a state of its own, an engaged autopilot for instance, by\ncolor. It is applied to the part of the control that responds to the user:\nthe body of a button, dropdown or input field, the box of a toggle, and the\nhandle of a slider. A control's label is tinted through the color of its\ntext.\n</remarks>\n</doc>"
+      },
+      "Toggle_get_Tooltip": {
+        "id": 221,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "STRING"
+        },
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "Toggle_set_Tooltip": {
+        "id": 222,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "STRING"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nA short piece of text shown beside the pointer while it rests on the\ncontrol. Empty, the default, shows nothing.\n</summary>\n</doc>"
+      },
+      "Toggle_get_RectTransform": {
+        "id": 223,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "Toggle_get_LayoutElement": {
+        "id": 224,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "Toggle_get_Visible": {
+        "id": 225,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "Toggle_set_Visible": {
+        "id": 226,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "Toggle"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "ToggleGroup_Remove": {
+        "id": 227,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nRemove the UI object.\n</summary>\n</doc>"
+      },
+      "ToggleGroup_get_Selected": {
+        "id": 228,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "Toggle",
+          "nullable": true
+        },
+        "documentation": "<doc>\n<summary>\nThe toggle in the group that is checked, or <c>null</c> if none of them are.\n</summary>\n</doc>"
+      },
+      "ToggleGroup_get_AllowSwitchOff": {
+        "id": 229,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether all of the toggles in the group are allowed to be unchecked at once.\n</summary>\n<remarks>\nWhen this is false, the user cannot clear the checked toggle, they can only\ncheck a different one. It does not stop a client setting\n<see cref=\"M:UI.Toggle.Checked\" />, which is obeyed either way.\nA group starts out with no toggle checked either way.\n</remarks>\n</doc>"
+      },
+      "ToggleGroup_set_AllowSwitchOff": {
+        "id": 230,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether all of the toggles in the group are allowed to be unchecked at once.\n</summary>\n<remarks>\nWhen this is false, the user cannot clear the checked toggle, they can only\ncheck a different one. It does not stop a client setting\n<see cref=\"M:UI.Toggle.Checked\" />, which is obeyed either way.\nA group starts out with no toggle checked either way.\n</remarks>\n</doc>"
+      },
+      "ToggleGroup_get_RectTransform": {
+        "id": 231,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "RectTransform"
+        },
+        "documentation": "<doc>\n<summary>\nThe rect transform for the UI object.\n</summary>\n</doc>"
+      },
+      "ToggleGroup_get_LayoutElement": {
+        "id": 232,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "UI",
+          "name": "LayoutElement"
+        },
+        "documentation": "<doc>\n<summary>\nHow much space the UI object asks a layout for.\n</summary>\n<remarks>\nOnly has an effect when the object is in a panel that has a layout. A canvas is\nnot inside a layout and does not have one.\n</remarks>\n</doc>"
+      },
+      "ToggleGroup_get_Visible": {
+        "id": 233,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
+      },
+      "ToggleGroup_set_Visible": {
+        "id": 234,
+        "parameters": [
+          {
+            "name": "this",
+            "type": {
+              "code": "CLASS",
+              "service": "UI",
+              "name": "ToggleGroup"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the UI object is visible.\n</summary>\n<remarks>\nThis is the object's own setting, which is what it was last set to. An object is\nonly drawn when everything it is inside is visible as well, so an interface can\nbe built with its parts visible, inside a panel that is not, and shown all at\nonce by making that panel visible.\n</remarks>\n</doc>"
       }
     },
     "classes": {
       "Button": {
-        "documentation": "<doc>\n<summary>\nA text label. See <see cref=\"M:UI.Panel.AddButton\" />.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA button that the user can click.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n</doc>"
       },
       "Canvas": {
         "documentation": "<doc>\n<summary>\nA canvas for user interface elements. See <see cref=\"M:UI.StockCanvas\" /> and <see cref=\"M:UI.AddCanvas\" />.\n</summary>\n</doc>"
       },
+      "Dropdown": {
+        "documentation": "<doc>\n<summary>\nA control for choosing one of a list of options, which are shown when it is clicked.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n</doc>"
+      },
+      "Image": {
+        "documentation": "<doc>\n<summary>\nA picture, or a plain colored rectangle.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n</doc>"
+      },
       "InputField": {
-        "documentation": "<doc>\n<summary>\nAn input field. See <see cref=\"M:UI.Panel.AddInputField\" />.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nAn input field.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n</doc>"
+      },
+      "Layout": {
+        "documentation": "<doc>\n<summary>\nArranges the elements of a panel automatically, so that they do not have to be\npositioned one by one. See <see cref=\"M:UI.Panel.AddHorizontalLayout\" />,\n<see cref=\"M:UI.Panel.AddVerticalLayout\" /> and <see cref=\"M:UI.Panel.AddGridLayout\" />.\n</summary>\n</doc>"
+      },
+      "LayoutElement": {
+        "documentation": "<doc>\n<summary>\nHow much space a user interface element asks a <see cref=\"T:UI.Layout\" /> for.\n</summary>\n<remarks>\nA layout gives every element its minimum size first. Any space left over is shared\nout to bring elements up to their preferred size, and anything still left over is\nshared between the elements with a flexible size, in proportion to it.\n</remarks>\n</doc>"
       },
       "Panel": {
-        "documentation": "<doc>\n<summary>\nA container for user interface elements. See <see cref=\"M:UI.Canvas.AddPanel\" />.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA container for user interface elements.\nAdded to a <see cref=\"T:UI.Canvas\" /> or another panel.\n</summary>\n</doc>"
       },
       "RectTransform": {
         "documentation": "<doc>\n<summary>\nA Unity engine Rect Transform for a UI object.\nSee the <a href=\"https://docs.unity3d.com/Manual/class-RectTransform.html\">Unity manual</a> for more details.\n</summary>\n</doc>"
       },
+      "ScrollView": {
+        "documentation": "<doc>\n<summary>\nA view onto a panel that is larger than the space available for it, with scroll bars\nto move around it.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n<remarks>\nAdd the elements to <see cref=\"M:UI.ScrollView.Content\" />, not to the scroll view itself. Giving\nthe content a layout and setting its size fitter to the preferred size is the\nsimplest way to have it grow to hold what is put in it.\n</remarks>\n</doc>"
+      },
+      "SizeFitter": {
+        "documentation": "<doc>\n<summary>\nSizes a panel to fit what it contains, rather than the other way round.\nSee <see cref=\"M:UI.Panel.SizeFitter\" />.\n</summary>\n</doc>"
+      },
+      "Slider": {
+        "documentation": "<doc>\n<summary>\nA control for choosing a number by dragging a handle along a track.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n</doc>"
+      },
       "Text": {
-        "documentation": "<doc>\n<summary>\nA text label. See <see cref=\"M:UI.Panel.AddText\" />.\n</summary>\n</doc>"
+        "documentation": "<doc>\n<summary>\nA text label.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n</doc>"
+      },
+      "Toggle": {
+        "documentation": "<doc>\n<summary>\nA control that is either checked or not.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n<remarks>\nOn its own a toggle is a check box. Put several of them in the same\n<see cref=\"T:UI.ToggleGroup\" /> and they become radio buttons, as only one toggle in a\ngroup can be checked at a time.\n</remarks>\n</doc>"
+      },
+      "ToggleGroup": {
+        "documentation": "<doc>\n<summary>\nA set of toggles of which only one can be checked at a time, which is what turns\na set of <see cref=\"T:UI.Toggle\" /> controls into radio buttons.\nAdded to a <see cref=\"T:UI.Canvas\" /> or a <see cref=\"T:UI.Panel\" />.\n</summary>\n<remarks>\nA group does not contain its toggles, it only refers to them, so toggles can be\ngrouped independently of how they are laid out. A column of radio buttons in a grid\nof them is one group, even though each row is laid out separately.\n</remarks>\n</doc>"
       }
     },
     "enumerations": {
+      "ContentSizeFit": {
+        "documentation": "<doc>\n<summary>\nHow a size fitter sizes a panel along one direction.\n</summary>\n</doc>",
+        "values": [
+          {
+            "name": "Unconstrained",
+            "value": 0,
+            "documentation": "<doc>\n<summary>\nLeave the size alone.\n</summary>\n</doc>"
+          },
+          {
+            "name": "MinSize",
+            "value": 1,
+            "documentation": "<doc>\n<summary>\nUse the smallest size the contents will fit in.\n</summary>\n</doc>"
+          },
+          {
+            "name": "PreferredSize",
+            "value": 2,
+            "documentation": "<doc>\n<summary>\nUse the size the contents ask for.\n</summary>\n</doc>"
+          }
+        ]
+      },
       "FontStyle": {
         "documentation": "<doc>\n<summary>\nFont style.\n</summary>\n</doc>",
         "values": [
@@ -1803,6 +4962,56 @@
           }
         ]
       },
+      "GridConstraint": {
+        "documentation": "<doc>\n<summary>\nWhat fixes the shape of a grid layout.\n</summary>\n</doc>",
+        "values": [
+          {
+            "name": "Flexible",
+            "value": 0,
+            "documentation": "<doc>\n<summary>\nFit as many columns and rows as the size of the panel allows.\n</summary>\n</doc>"
+          },
+          {
+            "name": "FixedColumnCount",
+            "value": 1,
+            "documentation": "<doc>\n<summary>\nUse a fixed number of columns, and as many rows as are needed.\n</summary>\n</doc>"
+          },
+          {
+            "name": "FixedRowCount",
+            "value": 2,
+            "documentation": "<doc>\n<summary>\nUse a fixed number of rows, and as many columns as are needed.\n</summary>\n</doc>"
+          }
+        ]
+      },
+      "InputContentType": {
+        "documentation": "<doc>\n<summary>\nWhat an input field lets the user type into it.\n</summary>\n</doc>",
+        "values": [
+          {
+            "name": "Standard",
+            "value": 0,
+            "documentation": "<doc>\n<summary>\nAny text.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Integer",
+            "value": 1,
+            "documentation": "<doc>\n<summary>\nA whole number: digits, with a leading minus sign.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Decimal",
+            "value": 2,
+            "documentation": "<doc>\n<summary>\nA number: digits, with a decimal separator and a leading minus sign.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Alphanumeric",
+            "value": 3,
+            "documentation": "<doc>\n<summary>\nLetters and digits.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Password",
+            "value": 4,
+            "documentation": "<doc>\n<summary>\nAny text, drawn as asterisks so that it cannot be read off the screen.\n</summary>\n</doc>"
+          }
+        ]
+      },
       "MessagePosition": {
         "documentation": "<doc>\n<summary>\nMessage position.\n</summary>\n</doc>",
         "values": [
@@ -1825,6 +5034,26 @@
             "name": "TopRight",
             "value": 3,
             "documentation": "<doc>\n<summary>\nTop right.\n</summary>\n</doc>"
+          }
+        ]
+      },
+      "PanelStyle": {
+        "documentation": "<doc>\n<summary>\nHow the background of a panel is drawn.\n</summary>\n</doc>",
+        "values": [
+          {
+            "name": "Window",
+            "value": 0,
+            "documentation": "<doc>\n<summary>\nAs a window, the heavier of the two frames the game uses.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Box",
+            "value": 1,
+            "documentation": "<doc>\n<summary>\nAs a box, the lighter frame the game groups related controls in.\n</summary>\n</doc>"
+          },
+          {
+            "name": "None",
+            "value": 2,
+            "documentation": "<doc>\n<summary>\nNot drawn at all, leaving whatever is behind the panel showing through.\n</summary>\n</doc>"
           }
         ]
       },
@@ -1895,6 +5124,41 @@
             "name": "UpperRight",
             "value": 8,
             "documentation": "<doc>\n<summary>\nUpper right.\n</summary>\n</doc>"
+          }
+        ]
+      }
+    },
+    "structs": {
+      "Padding": {
+        "documentation": "<doc>\n<summary>\nThe gap left inside each edge of a layout, in whole pixels.\n</summary>\n<remarks>\nSee <see cref=\"M:UI.Layout.Padding\" />.\n</remarks>\n</doc>",
+        "fields": [
+          {
+            "name": "Left",
+            "type": {
+              "code": "SINT32"
+            },
+            "documentation": "<doc>\n<summary>\nThe gap inside the left edge.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Right",
+            "type": {
+              "code": "SINT32"
+            },
+            "documentation": "<doc>\n<summary>\nThe gap inside the right edge.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Top",
+            "type": {
+              "code": "SINT32"
+            },
+            "documentation": "<doc>\n<summary>\nThe gap inside the top edge.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Bottom",
+            "type": {
+              "code": "SINT32"
+            },
+            "documentation": "<doc>\n<summary>\nThe gap inside the bottom edge.\n</summary>\n</doc>"
           }
         ]
       }

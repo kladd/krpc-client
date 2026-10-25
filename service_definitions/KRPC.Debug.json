@@ -1,0 +1,959 @@
+{
+  "Debug": {
+    "id": 12,
+    "documentation": "<doc>\n<summary>\nProvides functionality to modify the state of the simulation directly, in ways\nthe game normally does not allow: teleporting a vessel, setting its attitude,\napplying forces to its parts, refilling its tanks and enabling the game's cheat\noptions.\n</summary>\n<remarks>\nEverything in this service is cheating. It has the same effect on a save as the\ngame's own debug menu (Alt+F12), and the same consequences: contracts, records and\ncareer progress made with it are not earned. It is intended for setting up a\nscenario to fly or a script to test, without flying there first.\n</remarks>\n</doc>",
+    "procedures": {
+      "SetCircularOrbit": {
+        "id": 1,
+        "parameters": [
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "CelestialBody"
+            }
+          },
+          {
+            "name": "altitude",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMove the active vessel onto a circular orbit around a body.\n</summary>\n<param name=\"body\">Body to orbit.</param>\n<param name=\"altitude\">Altitude of the orbit, in meters above sea level.</param>\n</doc>"
+      },
+      "SetOrbit": {
+        "id": 2,
+        "parameters": [
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "CelestialBody"
+            }
+          },
+          {
+            "name": "semiMajorAxis",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "eccentricity",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "inclination",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "longitudeOfAscendingNode",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "argumentOfPeriapsis",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "meanAnomalyAtEpoch",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "epoch",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMove the active vessel onto the orbit with the given orbital elements. The angles use\nthe same units and conventions as <see cref=\"T:SpaceCenter.Orbit\" />.\n</summary>\n<param name=\"body\">Body to orbit.</param>\n<param name=\"semiMajorAxis\">Semi-major axis of the orbit, in meters.</param>\n<param name=\"eccentricity\">Eccentricity of the orbit.</param>\n<param name=\"inclination\">Inclination of the orbit, in radians.</param>\n<param name=\"longitudeOfAscendingNode\">Longitude of the ascending node, in radians.</param>\n<param name=\"argumentOfPeriapsis\">Argument of periapsis, in radians.</param>\n<param name=\"meanAnomalyAtEpoch\">Mean anomaly at epoch, in radians.</param>\n<param name=\"epoch\">Universal time of the epoch, in seconds.</param>\n</doc>"
+      },
+      "SetLanded": {
+        "id": 3,
+        "parameters": [
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "CelestialBody"
+            }
+          },
+          {
+            "name": "latitude",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "longitude",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "altitude",
+            "type": {
+              "code": "DOUBLE"
+            },
+            "default_value": "AAAAAAAAAAA="
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nPlace the active vessel on the surface of a body at the given latitude and longitude,\nand wait for it to come to rest.\n</summary>\n<param name=\"body\">Body to land on.</param>\n<param name=\"latitude\">Latitude in degrees.</param>\n<param name=\"longitude\">Longitude in degrees.</param>\n<param name=\"altitude\">Height above the terrain to settle at, in meters.\nDefaults to 0, resting on the surface.</param>\n</doc>"
+      },
+      "SetFlight": {
+        "id": 4,
+        "parameters": [
+          {
+            "name": "body",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "CelestialBody"
+            }
+          },
+          {
+            "name": "latitude",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "longitude",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "altitude",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "speed",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "heading",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "pitch",
+            "type": {
+              "code": "DOUBLE"
+            },
+            "default_value": "AAAAAAAAAAA="
+          },
+          {
+            "name": "roll",
+            "type": {
+              "code": "DOUBLE"
+            },
+            "default_value": "AAAAAAAAAAA="
+          },
+          {
+            "name": "angleOfAttack",
+            "type": {
+              "code": "DOUBLE"
+            },
+            "default_value": "AAAAAAAAAAA="
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nPlace the active vessel in atmospheric flight over the given point: at the given altitude\nand airspeed, pointing along the given heading at the given pitch and roll, and\nlet physics resume so that it is flying. Use this to set up an in-air scenario\nwithout flying the craft up from the runway.\n</summary>\n<remarks>\nThe pitch, heading and roll match those reported by the vessel's\n<see cref=\"T:SpaceCenter.Flight\" />.\n</remarks>\n<param name=\"body\">Body to fly over.</param>\n<param name=\"latitude\">Latitude in degrees.</param>\n<param name=\"longitude\">Longitude in degrees.</param>\n<param name=\"altitude\">Altitude in meters above sea level.</param>\n<param name=\"speed\">Airspeed in meters per second, relative to the surface.</param>\n<param name=\"heading\">Compass heading to point along, in degrees (90 is east).</param>\n<param name=\"pitch\">Pitch above the horizon, in degrees. Defaults to 0 (level).</param>\n<param name=\"roll\">Roll, in degrees. Defaults to 0 (wings level).</param>\n<param name=\"angleOfAttack\">Angle of attack in degrees: how far the airspeed vector sits\nbelow the nose, in the pitch plane. 0 (the default) puts the airspeed along the nose;\na positive value gives a nose-up attitude relative to the flight path, so the\nflight-path angle is <paramref name=\"pitch\" /> minus this.</param>\n</doc>"
+      },
+      "SetPosition": {
+        "id": 5,
+        "parameters": [
+          {
+            "name": "position",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame",
+              "nullable": true
+            },
+            "default_value": null
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nMove the active vessel to the given position, leaving its velocity as it is. To put it\nalongside another vessel, pass a position in that vessel's reference frame.\n</summary>\n<remarks>\nThis is the inverse of <see cref=\"M:SpaceCenter.Vessel.Position\" /> in the same\nreference frame.\n</remarks>\n<param name=\"position\">Position of the vessel's center of mass, in meters.</param>\n<param name=\"referenceFrame\">Reference frame the position is in. Defaults to the\nreference frame of the body being orbited.</param>\n</doc>"
+      },
+      "SetVelocity": {
+        "id": 6,
+        "parameters": [
+          {
+            "name": "velocity",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame",
+              "nullable": true
+            },
+            "default_value": null
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the velocity of the active vessel, leaving it where it is. The vessel is moved onto the\norbit that passes through its current position at the new velocity, so this works\nin orbit and in the atmosphere alike.\n</summary>\n<remarks>\nThis is the inverse of <see cref=\"M:SpaceCenter.Vessel.Velocity\" /> in the same\nreference frame.\n</remarks>\n<param name=\"velocity\">Velocity in meters per second.</param>\n<param name=\"referenceFrame\">Reference frame the velocity is in. Defaults to the\nreference frame of the body being orbited, which rotates with it, so a zero velocity\nleaves the vessel at rest relative to the ground.</param>\n</doc>"
+      },
+      "SetPitchHeadingRoll": {
+        "id": 7,
+        "parameters": [
+          {
+            "name": "pitch",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "heading",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "roll",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame",
+              "nullable": true
+            },
+            "default_value": null
+          },
+          {
+            "name": "vessel",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel",
+              "nullable": true
+            },
+            "default_value": null
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the attitude of a vessel to the given pitch, heading and roll in the given\nreference frame, and stop it rotating. Lets a script start from a fixed, still\npose without first flying the autopilot there.\n</summary>\n<remarks>\nThe angles match those reported by the vessel's\n<see cref=\"T:SpaceCenter.Flight\" />.\n</remarks>\n<param name=\"pitch\">Target pitch, in degrees.</param>\n<param name=\"heading\">Target heading, in degrees.</param>\n<param name=\"roll\">Target roll, in degrees.</param>\n<param name=\"referenceFrame\">Reference frame the angles are in. Defaults to the\nvessel's surface reference frame.</param>\n<param name=\"vessel\">Vessel to rotate. Defaults to the active vessel.</param>\n</doc>"
+      },
+      "SetDirection": {
+        "id": 8,
+        "parameters": [
+          {
+            "name": "direction",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "roll",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame",
+              "nullable": true
+            },
+            "default_value": null
+          },
+          {
+            "name": "vessel",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel",
+              "nullable": true
+            },
+            "default_value": null
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nPoint a vessel along the given direction in the given reference frame, and stop it\nrotating. This is <see cref=\"M:Debug.SetPitchHeadingRoll\" /> with a pointing vector instead\nof a pitch and heading, matching the attitude the autopilot holds for the same\ntarget direction and roll.\n</summary>\n<param name=\"direction\">Direction to point the nose of the vessel in.</param>\n<param name=\"roll\">Target roll, in degrees, or <c>NaN</c> to leave the roll\nuncontrolled.</param>\n<param name=\"referenceFrame\">Reference frame the direction and roll are in. Defaults\nto the vessel's surface reference frame.</param>\n<param name=\"vessel\">Vessel to rotate. Defaults to the active vessel.</param>\n</doc>"
+      },
+      "ApplyRotation": {
+        "id": 9,
+        "parameters": [
+          {
+            "name": "angle",
+            "type": {
+              "code": "DOUBLE"
+            }
+          },
+          {
+            "name": "axis",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "vessel",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel",
+              "nullable": true
+            },
+            "default_value": null
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nRotate a vessel about the given axis, in its own reference frame, by the given angle.\n</summary>\n<param name=\"angle\">Angle to rotate by, in degrees.</param>\n<param name=\"axis\">Axis to rotate about.</param>\n<param name=\"vessel\">Vessel to rotate. Defaults to the active vessel.</param>\n</doc>"
+      },
+      "SetAngularVelocity": {
+        "id": 10,
+        "parameters": [
+          {
+            "name": "angularVelocity",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame",
+              "nullable": true
+            },
+            "default_value": null
+          },
+          {
+            "name": "vessel",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel",
+              "nullable": true
+            },
+            "default_value": null
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nSet the angular velocity of a vessel, expressed in the given reference frame. Pass a\nzero vector to stop the vessel rotating.\n</summary>\n<remarks>\nThe whole vessel is put into a rigid rotation about its center of mass, so it spins in\nplace rather than shearing apart or translating.\n</remarks>\n<param name=\"angularVelocity\">Angular velocity, in radians per second. The direction\nis the axis of rotation and the magnitude is the rate.</param>\n<param name=\"referenceFrame\">Reference frame the angular velocity is in. Defaults to\nthe vessel's surface reference frame.</param>\n<param name=\"vessel\">Vessel to rotate. Defaults to the active vessel.</param>\n</doc>"
+      },
+      "AddForce": {
+        "id": 11,
+        "parameters": [
+          {
+            "name": "part",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Part"
+            }
+          },
+          {
+            "name": "force",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "position",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          }
+        ],
+        "return_type": {
+          "code": "CLASS",
+          "service": "SpaceCenter",
+          "name": "Force"
+        },
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nExert a constant force on a part, acting at the given position.\n</summary>\n<returns>An object that can be used to remove or modify the force.</returns>\n<param name=\"part\">The part to apply the force to.</param>\n<param name=\"force\">A vector pointing in the direction that the force acts,\nwith its magnitude equal to the strength of the force in Newtons.</param>\n<param name=\"position\">The position at which the force acts, as a vector.</param>\n<param name=\"referenceFrame\">The reference frame that the\nforce and position are in.</param>\n<remarks>\nThe force is removed when the client that added it disconnects.\n</remarks>\n</doc>"
+      },
+      "InstantaneousForce": {
+        "id": 12,
+        "parameters": [
+          {
+            "name": "part",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Part"
+            }
+          },
+          {
+            "name": "force",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "position",
+            "type": {
+              "code": "TUPLE",
+              "types": [
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                },
+                {
+                  "code": "DOUBLE"
+                }
+              ]
+            }
+          },
+          {
+            "name": "referenceFrame",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "ReferenceFrame"
+            }
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nExert an instantaneous force on a part, acting at the given position.\n</summary>\n<param name=\"part\">The part to apply the force to.</param>\n<param name=\"force\">A vector pointing in the direction that the force acts,\nwith its magnitude equal to the strength of the force in Newtons.</param>\n<param name=\"position\">The position at which the force acts, as a vector.</param>\n<param name=\"referenceFrame\">The reference frame that the\nforce and position are in.</param>\n<remarks>The force is applied instantaneously in a single physics update.</remarks>\n</doc>"
+      },
+      "FillAllResources": {
+        "id": 13,
+        "parameters": [
+          {
+            "name": "vessel",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel",
+              "nullable": true
+            },
+            "default_value": null
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nFill every resource tank on a vessel to its maximum capacity.\n</summary>\n<param name=\"vessel\">Vessel to fill. Defaults to the active vessel.</param>\n</doc>"
+      },
+      "FillResources": {
+        "id": 14,
+        "parameters": [
+          {
+            "name": "resourceName",
+            "type": {
+              "code": "STRING"
+            }
+          },
+          {
+            "name": "vessel",
+            "type": {
+              "code": "CLASS",
+              "service": "SpaceCenter",
+              "name": "Vessel",
+              "nullable": true
+            },
+            "default_value": null
+          }
+        ],
+        "game_scenes": [
+          "FLIGHT"
+        ],
+        "documentation": "<doc>\n<summary>\nFill the tanks of a single resource on a vessel to their maximum capacity.\n</summary>\n<param name=\"resourceName\">Name of the resource to fill, for example\n<c>\"LiquidFuel\"</c>.</param>\n<param name=\"vessel\">Vessel to fill. Defaults to the active vessel.</param>\n</doc>"
+      },
+      "UnlockTechnologyTree": {
+        "id": 15,
+        "parameters": [],
+        "documentation": "<doc>\n<summary>\nResearch every node in the technology tree and purchase every part in it.\nOnly available in career and science mode.\n</summary>\n</doc>"
+      },
+      "UpgradeFacilities": {
+        "id": 16,
+        "parameters": [],
+        "documentation": "<doc>\n<summary>\nUpgrade every building at the space center to its highest level.\nOnly available in career mode.\n</summary>\n</doc>"
+      },
+      "MaxKerbalExperience": {
+        "id": 17,
+        "parameters": [],
+        "documentation": "<doc>\n<summary>\nRaise every kerbal in the roster to the highest experience level.\n</summary>\n</doc>"
+      },
+      "get_InfinitePropellant": {
+        "id": 18,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether engines and RCS thrusters draw no propellant.\n</summary>\n</doc>"
+      },
+      "set_InfinitePropellant": {
+        "id": 19,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether engines and RCS thrusters draw no propellant.\n</summary>\n</doc>"
+      },
+      "get_InfiniteElectricity": {
+        "id": 20,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether parts draw no electric charge.\n</summary>\n</doc>"
+      },
+      "set_InfiniteElectricity": {
+        "id": 21,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether parts draw no electric charge.\n</summary>\n</doc>"
+      },
+      "get_NoCrashDamage": {
+        "id": 22,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether parts survive collisions that would otherwise destroy them.\n</summary>\n</doc>"
+      },
+      "set_NoCrashDamage": {
+        "id": 23,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether parts survive collisions that would otherwise destroy them.\n</summary>\n</doc>"
+      },
+      "get_UnbreakableJoints": {
+        "id": 24,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the joints between parts are rigid and cannot break.\n</summary>\n</doc>"
+      },
+      "set_UnbreakableJoints": {
+        "id": 25,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the joints between parts are rigid and cannot break.\n</summary>\n</doc>"
+      },
+      "get_IgnoreMaxTemperature": {
+        "id": 26,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether parts survive temperatures above their maximum, instead of exploding.\n</summary>\n</doc>"
+      },
+      "set_IgnoreMaxTemperature": {
+        "id": 27,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether parts survive temperatures above their maximum, instead of exploding.\n</summary>\n</doc>"
+      },
+      "get_AllowPartClipping": {
+        "id": 28,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether parts may be placed so that they intersect one another in the editor.\n</summary>\n</doc>"
+      },
+      "set_AllowPartClipping": {
+        "id": 29,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether parts may be placed so that they intersect one another in the editor.\n</summary>\n</doc>"
+      },
+      "get_NonStrictAttachmentOrientation": {
+        "id": 30,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether parts may be attached in any orientation, rather than only the ones their\nattachment nodes allow.\n</summary>\n</doc>"
+      },
+      "set_NonStrictAttachmentOrientation": {
+        "id": 31,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether parts may be attached in any orientation, rather than only the ones their\nattachment nodes allow.\n</summary>\n</doc>"
+      },
+      "get_IgnoreKerbalInventoryLimits": {
+        "id": 32,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether a kerbal's inventory may hold more than its slot and mass limits allow.\n</summary>\n</doc>"
+      },
+      "set_IgnoreKerbalInventoryLimits": {
+        "id": 33,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether a kerbal's inventory may hold more than its slot and mass limits allow.\n</summary>\n</doc>"
+      },
+      "get_IgnoreEVAConstructionMassLimit": {
+        "id": 34,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether EVA construction may move parts heavier than a kerbal can normally carry.\n</summary>\n</doc>"
+      },
+      "set_IgnoreEVAConstructionMassLimit": {
+        "id": 35,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether EVA construction may move parts heavier than a kerbal can normally carry.\n</summary>\n</doc>"
+      },
+      "get_IgnoreAgencyMindsetOnContracts": {
+        "id": 36,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether contracts are offered regardless of the agency mindset that normally\nrestricts which ones appear.\n</summary>\n</doc>"
+      },
+      "set_IgnoreAgencyMindsetOnContracts": {
+        "id": 37,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether contracts are offered regardless of the agency mindset that normally\nrestricts which ones appear.\n</summary>\n</doc>"
+      },
+      "get_PauseOnVesselUnpack": {
+        "id": 38,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether the game pauses whenever a vessel comes off rails.\n</summary>\n</doc>"
+      },
+      "set_PauseOnVesselUnpack": {
+        "id": 39,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the game pauses whenever a vessel comes off rails.\n</summary>\n</doc>"
+      },
+      "get_BiomesVisible": {
+        "id": 40,
+        "parameters": [],
+        "return_type": {
+          "code": "BOOL"
+        },
+        "documentation": "<doc>\n<summary>\nWhether biome boundaries are drawn on the surface of bodies.\n</summary>\n</doc>"
+      },
+      "set_BiomesVisible": {
+        "id": 41,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "BOOL"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nWhether biome boundaries are drawn on the surface of bodies.\n</summary>\n</doc>"
+      },
+      "get_GravityMultiplier": {
+        "id": 42,
+        "parameters": [],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nMultiplier applied to the force of gravity on every vessel. 1 is normal gravity,\n0 is weightlessness.\n</summary>\n</doc>"
+      },
+      "set_GravityMultiplier": {
+        "id": 43,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nMultiplier applied to the force of gravity on every vessel. 1 is normal gravity,\n0 is weightlessness.\n</summary>\n</doc>"
+      },
+      "get_Funds": {
+        "id": 44,
+        "parameters": [],
+        "return_type": {
+          "code": "DOUBLE"
+        },
+        "documentation": "<doc>\n<summary>\nThe number of funds the player has. Only available in career mode.\n</summary>\n</doc>"
+      },
+      "set_Funds": {
+        "id": 45,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "DOUBLE"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe number of funds the player has. Only available in career mode.\n</summary>\n</doc>"
+      },
+      "get_Science": {
+        "id": 46,
+        "parameters": [],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "documentation": "<doc>\n<summary>\nThe amount of science the player has. Only available in career and science mode.\n</summary>\n</doc>"
+      },
+      "set_Science": {
+        "id": 47,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe amount of science the player has. Only available in career and science mode.\n</summary>\n</doc>"
+      },
+      "get_Reputation": {
+        "id": 48,
+        "parameters": [],
+        "return_type": {
+          "code": "FLOAT"
+        },
+        "documentation": "<doc>\n<summary>\nThe player's reputation. Only available in career mode.\n</summary>\n</doc>"
+      },
+      "set_Reputation": {
+        "id": 49,
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "code": "FLOAT"
+            }
+          }
+        ],
+        "documentation": "<doc>\n<summary>\nThe player's reputation. Only available in career mode.\n</summary>\n</doc>"
+      }
+    },
+    "classes": {},
+    "enumerations": {},
+    "structs": {},
+    "exceptions": {}
+  }
+}

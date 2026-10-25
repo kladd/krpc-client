@@ -20,7 +20,6 @@
           "service": "DockingCamera",
           "name": "Camera"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nGet a Camera part.\n</summary>\n</doc>"
       },
       "get_Available": {
@@ -29,7 +28,6 @@
         "return_type": {
           "code": "BOOL"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nCheck if the Camera API is available.\n</summary>\n</doc>"
       },
       "Camera_get_Part": {
@@ -49,7 +47,6 @@
           "service": "SpaceCenter",
           "name": "Part"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nGet the part containing this camera.\n</summary>\n</doc>"
       },
       "Camera_get_Image": {
@@ -67,7 +64,6 @@
         "return_type": {
           "code": "BYTES"
         },
-        "return_is_nullable": false,
         "documentation": "<doc>\n<summary>\nGet an image.\nReturns an empty byte array on failure.\n</summary>\n</doc>"
       }
     },
@@ -77,6 +73,7 @@
       }
     },
     "enumerations": {},
+    "structs": {},
     "exceptions": {}
   }
 }
