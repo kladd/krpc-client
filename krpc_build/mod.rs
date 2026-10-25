@@ -1,4 +1,4 @@
-use std::{env, ffi::OsStr, fs, io, path::Path};
+use std::{collections::HashSet, env, ffi::OsStr, fs, io, path::Path};
 
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
@@ -87,6 +87,7 @@ fn generate_module_definition(
 
     let classes = generate_class_definitions(service_definition);
     let enums = generate_enum_definitions(service_definition);
+    let structs = generate_struct_definitions(service_definition, service_name);
     let procedures = generate_procedure_definitions(
         service_definition,
         service_name,
@@ -98,7 +99,7 @@ fn generate_module_definition(
     };
 
     quote! {
-        #[allow(clippy::type_complexity)]
+        #[allow(clippy::type_complexity, clippy::too_many_arguments, deprecated)]
         pub mod #service_mod_name {
             use crate::{
                 schema::{ToArgument, FromResponse},
@@ -118,6 +119,7 @@ fn generate_module_definition(
 
             #(#classes)*
             #(#enums)*
+            #(#structs)*
             #(#procedures)*
         }
     }
@@ -129,9 +131,12 @@ fn generate_class_definitions(json: &Value) -> TokenSet<'_> {
             .unwrap()
             .as_object()
             .unwrap()
-            .keys()
-            .map(|k| format_ident!("{}", k))
-            .map(|name| quote! {crate::schema::rpc_object!(#name);}),
+            .iter()
+            .map(|(name, definition)| {
+                let name = format_ident!("{}", name);
+                let deprecated = deprecated_attribute(definition);
+                quote! {crate::schema::rpc_object!(#deprecated #name);}
+            }),
     )
 }
 
@@ -139,11 +144,103 @@ fn generate_enum_definitions(json: &Value) -> TokenSet<'_> {
     let enums = json.get("enumerations").unwrap().as_object().unwrap();
     Box::new(enums.into_iter().map(|(name, values)| {
         let name = format_ident!("{name}");
+        let deprecated = deprecated_attribute(values);
         let variants = generate_enum_variant_definitions(values);
         quote! {
-            crate::schema::rpc_enum!(#name, [#(#variants,)*]);
+            crate::schema::rpc_enum!(#deprecated #name, [#(#variants,)*]);
         }
     }))
+}
+
+fn generate_struct_definitions<'a>(
+    json: &'a Value,
+    service_name: &'a str,
+) -> TokenSet<'a> {
+    let structs = json
+        .get("structs")
+        .and_then(Value::as_object)
+        .into_iter()
+        .flatten();
+    Box::new(structs.map(move |(name, definition)| {
+        let fields = definition.get("fields").unwrap().as_array().unwrap();
+        let field_names = fields
+            .iter()
+            .map(|field| {
+                let name = field.get("name").unwrap().as_str().unwrap();
+                format_ident!("{}", rewrite_keywords(name.to_case(Case::Snake)))
+            })
+            .collect::<Vec<_>>();
+        let field_types = fields.iter().map(|field| {
+            let field_name = field.get("name").unwrap().as_str().unwrap();
+            decode_type(field.get("type").unwrap().as_object().unwrap(), false)
+                .unwrap_or_else(|e| {
+                    panic!("{service_name}.{name}.{field_name}: {e}")
+                })
+        });
+        let deprecated = deprecated_attribute(definition);
+        let name = format_ident!("{name}");
+        quote! {
+            #deprecated
+            #[derive(Debug, Clone, PartialEq)]
+            pub struct #name {
+                #(pub #field_names: #field_types,)*
+            }
+
+            impl crate::schema::DecodeUntagged for #name {
+                fn decode_untagged(
+                    client: ::std::sync::Arc<crate::client::Client>,
+                    buf: &[u8],
+                ) -> Result<Self, RpcError> {
+                    let tuple = <crate::schema::Tuple as crate::schema::DecodeUntagged>::decode_untagged(
+                        client.clone(),
+                        buf,
+                    )?;
+                    let mut items = tuple.items.iter();
+                    Ok(Self {
+                        #(#field_names: crate::schema::DecodeUntagged::decode_untagged(
+                            client.clone(),
+                            items.next().ok_or(RpcError::Encoding(
+                                "structure field out of range".into(),
+                            ))?,
+                        )?,)*
+                    })
+                }
+            }
+
+            impl crate::schema::EncodeUntagged for #name {
+                fn encode_untagged(&self) -> Result<Vec<u8>, RpcError> {
+                    crate::schema::EncodeUntagged::encode_untagged(
+                        &crate::schema::Tuple {
+                            items: vec![
+                                #(crate::schema::EncodeUntagged::encode_untagged(
+                                    &self.#field_names,
+                                )?),*
+                            ],
+                            ..Default::default()
+                        },
+                    )
+                }
+            }
+        }
+    }))
+}
+
+fn deprecated_attribute(json: &Value) -> TokenStream {
+    if !json
+        .get("deprecated")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+    {
+        return quote!();
+    }
+    match json
+        .get("deprecated_reason")
+        .and_then(Value::as_str)
+        .filter(|reason| !reason.is_empty())
+    {
+        Some(reason) => quote!(#[deprecated(note = #reason)]),
+        None => quote!(#[deprecated]),
+    }
 }
 
 fn generate_enum_variant_definitions(json: &Value) -> TokenSet<'_> {
@@ -156,12 +253,13 @@ fn generate_enum_variant_definitions(json: &Value) -> TokenSet<'_> {
             .unwrap()
             .iter()
             .map(|value| {
-                format_ident!(
+                let ident = format_ident!(
                     "{}",
                     value.get("name").unwrap().as_str().unwrap()
-                )
-            })
-            .map(|ident| quote!(#ident)),
+                );
+                let deprecated = deprecated_attribute(value);
+                quote!(#deprecated #ident)
+            }),
     )
 }
 
@@ -170,49 +268,92 @@ fn generate_procedure_definitions<'a>(
     service_name: &'a str,
     q_service_name: &'a Ident,
 ) -> TokenSet<'a> {
-    Box::new(
-        json.get("procedures")
-            .unwrap()
-            .as_object()
-            .unwrap()
-            .iter()
-            .map(|(name, definition)| {
-                generate_procedure_definition(
-                    name,
-                    definition,
-                    service_name,
-                    q_service_name,
-                )
-                .to_token_stream()
-            }),
-    )
+    let procedures = json.get("procedures").unwrap().as_object().unwrap();
+    let accessors = procedures
+        .keys()
+        .filter(|name| is_property_accessor(name))
+        .map(|name| procedure_method_name(name))
+        .collect::<HashSet<_>>();
+    Box::new(procedures.iter().map(move |(name, definition)| {
+        let (class_name, mut fn_name) = procedure_method_name(name);
+        if !is_property_accessor(name)
+            && accessors.contains(&(class_name.clone(), fn_name.clone()))
+        {
+            let params = parameter_names(definition);
+            if params.is_empty() {
+                panic!(
+                    "{service_name}.{name}: method name `{fn_name}` \
+                     collides with a property accessor"
+                );
+            }
+            fn_name = format!("{fn_name}_by_{}", params.join("_and_"));
+        }
+        generate_procedure_definition(
+            name,
+            definition,
+            service_name,
+            class_name
+                .map(|class| format_ident!("{class}"))
+                .unwrap_or_else(|| q_service_name.clone()),
+            fn_name,
+        )
+        .to_token_stream()
+    }))
+}
+
+fn procedure_method_name(name: &str) -> (Option<String>, String) {
+    let name_tokens = name.split('_').collect::<Vec<&str>>();
+    let class_name = get_struct(&name_tokens);
+    let fn_name = get_fn_name(&name_tokens, &class_name);
+    (class_name.map(|class| class.to_string()), fn_name)
+}
+
+fn is_property_accessor(name: &str) -> bool {
+    let name_tokens = name.split('_').collect::<Vec<&str>>();
+    let rest = match get_struct(&name_tokens) {
+        Some(_) => &name_tokens[1..],
+        None => &name_tokens[..],
+    };
+    rest.len() == 2 && matches!(rest[0], "get" | "set")
+}
+
+fn parameter_names(definition: &Value) -> Vec<String> {
+    definition
+        .get("parameters")
+        .unwrap()
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|param| param.get("name").unwrap().as_str().unwrap())
+        .filter(|name| !name.eq_ignore_ascii_case("this"))
+        .map(|name| name.to_case(Case::Snake))
+        .collect()
 }
 
 fn generate_procedure_definition(
     name: &str,
     definition: &Value,
     service_name: &str,
-    q_service_name: &Ident,
+    q_class_name: Ident,
+    fn_name: String,
 ) -> impl ToTokens {
-    let name_tokens = name.split('_').collect::<Vec<&str>>();
-    let class_name = get_struct(&name_tokens);
-
-    let fn_name = get_fn_name(&name_tokens, &class_name);
-    let q_class_name = class_name.unwrap_or_else(|| q_service_name.clone());
-
     let Parameters {
         names,
         types,
         as_args,
-    } = Parameters::from_json(definition);
+    } = Parameters::from_json(definition)
+        .unwrap_or_else(|e| panic!("{service_name}.{name}: {e}"));
 
     let call_name = format_ident!("{fn_name}_call");
     let stream_name = format_ident!("{fn_name}_stream");
-    let fn_name = format_ident!("{fn_name}");
-    let ret = get_return_type(definition);
+    let fn_name = format_ident!("{}", rewrite_keywords(fn_name));
+    let ret = get_return_type(definition)
+        .unwrap_or_else(|e| panic!("{service_name}.{name}: {e}"));
+    let deprecated = deprecated_attribute(definition);
     if env::var("CARGO_FEATURE_TOKIO").is_ok() {
         quote! {
             impl #q_class_name {
+                #deprecated
                 pub(crate) fn #call_name(
                     &self, #(#names: #types),*
                 ) -> Result<crate::schema::ProcedureCall, RpcError> {
@@ -223,6 +364,7 @@ fn generate_procedure_definition(
                     ))
                 }
 
+                #deprecated
                 pub async fn #stream_name(
                     &self, #(#names: #types),*
                 ) -> Result<crate::stream::Stream<#ret>, RpcError> {
@@ -232,6 +374,7 @@ fn generate_procedure_definition(
                     ).await
                 }
 
+                #deprecated
                 pub async fn #fn_name(
                     &self, #(#names: #types),*
                 ) -> Result<#ret, RpcError> {
@@ -246,6 +389,7 @@ fn generate_procedure_definition(
     } else {
         quote! {
             impl #q_class_name {
+                #deprecated
                 pub(crate) fn #call_name(
                     &self, #(#names: #types),*
                 ) -> Result<crate::schema::ProcedureCall, RpcError> {
@@ -256,6 +400,7 @@ fn generate_procedure_definition(
                     ))
                 }
 
+                #deprecated
                 pub fn #stream_name(
                     &self, #(#names: #types),*
                 ) -> Result<crate::stream::Stream<#ret>, RpcError> {
@@ -265,6 +410,7 @@ fn generate_procedure_definition(
                     )
                 }
 
+                #deprecated
                 pub fn #fn_name(
                     &self, #(#names: #types),*
                 ) -> Result<#ret, RpcError> {
@@ -295,7 +441,7 @@ struct Parameters {
 }
 
 impl Parameters {
-    fn from_json(json: &Value) -> Self {
+    fn from_json(json: &Value) -> Result<Self, String> {
         let mut names = Vec::new();
         let mut types = Vec::new();
         let mut args = Vec::new();
@@ -325,22 +471,20 @@ impl Parameters {
                 args.push(quote!(#name.to_argument(#pos as u32)?));
                 names.push(name);
 
-                let nullable = param
-                    .get("nullable")
-                    .map(|b| b.as_bool().unwrap())
-                    .unwrap_or(false);
-                types.push(decode_type(
-                    param.get("type").unwrap().as_object().unwrap(),
-                    true,
-                    nullable,
-                ));
+                let mut ty =
+                    param.get("type").unwrap().as_object().unwrap().clone();
+                if param.get("nullable").and_then(Value::as_bool) == Some(true)
+                {
+                    ty.insert("nullable".into(), Value::Bool(true));
+                }
+                types.push(decode_type(&ty, true)?);
             }
         }
-        Self {
+        Ok(Self {
             names,
             types,
             as_args: args,
-        }
+        })
     }
 }
 
@@ -356,13 +500,13 @@ fn get_fn_name<T>(proc_tokens: &[&str], class: &Option<T>) -> String {
 fn decode_type(
     ty: &serde_json::Map<String, Value>,
     borrow: bool,
-    nullable: bool,
-) -> TokenStream {
+) -> Result<TokenStream, String> {
     let code = ty.get("code").unwrap().as_str().unwrap();
 
     let mut type_stream = match code {
         "STRING" => quote!(String),
         "SINT32" => quote!(i32),
+        "SINT64" => quote!(i64),
         "UINT32" => quote!(u32),
         "UINT64" => quote!(u64),
         "BOOL" => quote!(bool),
@@ -370,18 +514,19 @@ fn decode_type(
         "DOUBLE" => quote!(f64),
         // TODO(kladd): maybe not Vec<u8>
         "BYTES" => quote!(Vec<u8>),
-        "TUPLE" => decode_tuple(ty),
-        "LIST" => decode_list(ty),
-        "SET" => decode_set(ty),
-        "DICTIONARY" => decode_dictionary(ty),
+        "TUPLE" => decode_tuple(ty)?,
+        "LIST" => decode_list(ty)?,
+        "SET" => decode_set(ty)?,
+        "DICTIONARY" => decode_dictionary(ty)?,
         "ENUMERATION" => decode_class(ty),
         "CLASS" => decode_class(ty),
+        "STRUCT" => decode_class(ty),
         "EVENT" => quote!(crate::schema::Event),
         "PROCEDURE_CALL" => quote!(crate::schema::ProcedureCall),
         "STREAM" => quote!(crate::schema::Stream),
         "SERVICES" => quote!(crate::schema::Services),
         "STATUS" => quote!(crate::schema::Status),
-        _ => quote!(),
+        _ => return Err(format!("unsupported type code `{code}`")),
     };
 
     if borrow {
@@ -391,42 +536,48 @@ fn decode_type(
         }
     };
 
-    if nullable {
+    if ty.get("nullable").and_then(Value::as_bool) == Some(true) {
         type_stream = quote!(Option<#type_stream>)
     }
 
-    type_stream
+    Ok(type_stream)
 }
 
-fn get_return_type(definition: &Value) -> TokenStream {
-    let mut ret = quote!(());
-    if let Some(return_value) = definition.get("return_type") {
-        let nullable = definition
-            .get("return_is_nullable")
-            .map(|b| b.as_bool().unwrap())
-            .unwrap_or(false);
-        let ty = return_value.as_object().unwrap();
-        ret = decode_type(ty, false, nullable);
+fn get_return_type(definition: &Value) -> Result<TokenStream, String> {
+    let Some(return_value) = definition.get("return_type") else {
+        return Ok(quote!(()));
+    };
+    let mut ty = return_value.as_object().unwrap().clone();
+    if definition
+        .get("return_is_nullable")
+        .and_then(Value::as_bool)
+        == Some(true)
+    {
+        ty.insert("nullable".into(), Value::Bool(true));
     }
-    ret
+    decode_type(&ty, false)
 }
 
-fn decode_tuple(ty: &serde_json::Map<String, Value>) -> TokenStream {
+fn decode_tuple(
+    ty: &serde_json::Map<String, Value>,
+) -> Result<TokenStream, String> {
     let types = ty
         .get("types")
         .unwrap()
         .as_array()
         .unwrap()
         .iter()
-        .map(|ty| decode_type(ty.as_object().unwrap(), false, false));
-    quote! {(#(#types),*)}
+        .map(|ty| decode_type(ty.as_object().unwrap(), false))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(quote! {(#(#types),*)})
 }
 
-fn decode_list(ty: &serde_json::Map<String, Value>) -> TokenStream {
+fn decode_list(
+    ty: &serde_json::Map<String, Value>,
+) -> Result<TokenStream, String> {
     let types = ty.get("types").unwrap().as_array().unwrap();
-    let ty =
-        decode_type(types.first().unwrap().as_object().unwrap(), false, false);
-    quote!( Vec<#ty> )
+    let ty = decode_type(types.first().unwrap().as_object().unwrap(), false)?;
+    Ok(quote!( Vec<#ty> ))
 }
 
 fn decode_class(ty: &serde_json::Map<String, Value>) -> TokenStream {
@@ -445,29 +596,39 @@ fn decode_class(ty: &serde_json::Map<String, Value>) -> TokenStream {
     )
 }
 
-fn decode_dictionary(ty: &serde_json::Map<String, Value>) -> TokenStream {
+fn decode_dictionary(
+    ty: &serde_json::Map<String, Value>,
+) -> Result<TokenStream, String> {
     let types = ty.get("types").unwrap().as_array().unwrap();
 
     let key_name =
-        decode_type(types.first().unwrap().as_object().unwrap(), false, false);
+        decode_type(types.first().unwrap().as_object().unwrap(), false)?;
     let value_name =
-        decode_type(types.get(1).unwrap().as_object().unwrap(), false, false);
+        decode_type(types.get(1).unwrap().as_object().unwrap(), false)?;
 
-    quote!(std::collections::HashMap<#key_name, #value_name>)
+    Ok(quote!(std::collections::HashMap<#key_name, #value_name>))
 }
 
-fn decode_set(ty: &serde_json::Map<String, Value>) -> TokenStream {
+fn decode_set(
+    ty: &serde_json::Map<String, Value>,
+) -> Result<TokenStream, String> {
     let types = ty.get("types").unwrap().as_array().unwrap();
-    let ty =
-        decode_type(types.first().unwrap().as_object().unwrap(), false, false);
-    quote!(
+    let ty = decode_type(types.first().unwrap().as_object().unwrap(), false)?;
+    Ok(quote!(
         std::collections::HashSet<#ty>
-    )
+    ))
 }
 
 fn rewrite_keywords(sample: String) -> String {
     match sample.as_str() {
-        "type" => "r#type".into(),
+        "as" | "break" | "const" | "continue" | "else" | "enum" | "extern"
+        | "false" | "fn" | "for" | "if" | "impl" | "in" | "let" | "loop"
+        | "match" | "mod" | "move" | "mut" | "pub" | "ref" | "return"
+        | "static" | "struct" | "trait" | "true" | "type" | "unsafe"
+        | "use" | "where" | "while" | "async" | "await" | "dyn"
+        | "abstract" | "become" | "box" | "do" | "final" | "macro"
+        | "override" | "priv" | "typeof" | "unsized" | "virtual" | "yield"
+        | "try" | "gen" => format!("r#{sample}"),
         _ => sample,
     }
 }
